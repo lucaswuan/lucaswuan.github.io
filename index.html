@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080a0d">
+  <meta name="description" content="A small corner of the internet for projects, experiments, and things worth making.">
+  <title>Your Name — A personal space</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23080a0d'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23c4dcd9' stroke-width='2'/%3E%3Cellipse cx='32' cy='32' rx='8' ry='17' fill='none' stroke='%23c4dcd9'/%3E%3Cpath d='M15 32h34' stroke='%23c4dcd9'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="planet-renderer.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#projects">Skip to projects</a>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <header class="site-header">
+    <a class="wordmark" href="#home" aria-label="Your Name, home"><span class="wordmark-symbol" aria-hidden="true">✳</span> yourname<span class="dim">.</span></a>
+    <nav aria-label="Main navigation"><a href="#projects">Projects <span class="nav-count">03</span></a><a href="#about">About</a></nav>
+    <button class="motion-button" id="motion-toggle" aria-pressed="false" aria-label="Pause animation"><span class="pause-symbol" aria-hidden="true">Ⅱ</span><span class="motion-text">Motion on</span></button>
+  </header>
+
+  <main>
+    <section class="journey" id="home" aria-label="Introduction">
+      <div class="space-stage">
+        <div class="planet-scene" aria-hidden="true"><div class="planet-glow"></div><canvas id="earth"></canvas></div>
+        <div class="hero-content">
+          <p class="eyebrow"><span class="tiny-cross">+</span> HELLO, WORLD. I'M YOUR NAME.</p>
+          <h1>A little corner<br>of the <em>universe.</em></h1>
+          <p class="intro">I make things for the web.<br>Some useful. Some just because.</p>
+          <a class="explore-link" href="#projects"><span class="scroll-orbit" aria-hidden="true"><span></span></span> Explore my projects</a>
+        </div>
+        <div class="planet-label" aria-hidden="true"><span class="coordinate">SOL / OUR SMALL NEIGHBORHOOD</span><span class="planet-name">Somewhere out here.</span></div>
+        <div class="hero-bottom"><span class="coordinate">PERSONAL SPACE — EST. 2026</span><span class="scroll-cue"><span class="scroll-line"></span> SCROLL TO LAND</span><span class="coordinate desktop-only">ALWAYS A WORK IN PROGRESS</span></div>
+        <div class="arrival" aria-hidden="true"><span class="eyebrow">FROM IDEAS TO REAL THINGS</span><p>Let's take a closer look.</p></div>
+      </div>
+    </section>
+
+    <section class="projects-section section-shell" id="projects" aria-labelledby="projects-title">
+      <div class="section-heading reveal"><div><p class="eyebrow">01 — SELECTED PROJECTS</p><h2 id="projects-title">Things I've put<br>into <em>orbit.</em></h2></div><p>A few experiments that became something.<br>Built with curiosity, one detail at a time.</p></div>
+      <div class="project-grid">
+        <button class="project-card reveal" data-project="0" aria-label="Explore Atlas project">
+          <span class="project-art atlas-art"><span class="art-topline"><span>ATLAS</span><span>YOUR NEXT CHAPTER</span></span><span class="atlas-coordinates">45°31′ N &nbsp; 73°34′ W</span><span class="terrain" aria-hidden="true"></span><span class="atlas-title">Get a little<br><i>lost.</i></span><span class="art-bottomline">A JOURNAL FOR EVERYWHERE.</span><span class="open-badge">Explore</span></span>
+          <span class="project-info"><span class="project-number">01</span><span class="project-description"><strong>Atlas</strong><span>A home for places worth remembering.</span></span><span class="project-type">WEB APP</span></span>
+        </button>
+        <button class="project-card reveal" data-project="1" aria-label="Explore Frequency project">
+          <span class="project-art frequency-art"><span class="art-topline"><span>FREQUENCY®</span><span>MAKE ROOM FOR FOCUS</span></span><span class="frequency-title">Find your<br><i>frequency.</i></span><span class="waveform" aria-hidden="true"></span><span class="player-line"><span>DEEP SPACE</span><span class="player-control">Ⅱ</span><span>24:08</span></span><span class="open-badge">Explore</span></span>
+          <span class="project-info"><span class="project-number">02</span><span class="project-description"><strong>Frequency</strong><span>A quieter internet, one sound at a time.</span></span><span class="project-type">EXPERIMENT</span></span>
+        </button>
+        <button class="project-card reveal wide-project" data-project="2" aria-label="Explore Commonplace project">
+          <span class="project-art commonplace-art"><span class="common-side"><span class="art-topline">COMMONPLACE / A DIGITAL GARDEN</span><span class="common-title">Good ideas<br>need a place<br><i>to grow.</i></span><span class="art-bottomline">COLLECT. CONNECT. COME BACK.</span></span><span class="note-stack"><span class="note note-back">THINGS TO THINK ABOUT<br><br>What if the internet<br>felt a little smaller?</span><span class="note note-front"><span class="note-label">A PASSING THOUGHT &nbsp; / &nbsp; 003</span><span>Stay curious.<br>Notice more.<br>Make something.</span><span class="note-foot">Filed under: everyday things</span></span></span><span class="open-badge">Explore</span></span>
+          <span class="project-info"><span class="project-number">03</span><span class="project-description"><strong>Commonplace</strong><span>A little garden for links, notes, and passing thoughts.</span></span><span class="project-type">PERSONAL TOOL</span></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="about-section section-shell" id="about" aria-labelledby="about-title"><div class="about-label reveal"><p class="eyebrow">02 — THE HUMAN BEHIND THE SCREEN</p><span class="ascii-star" aria-hidden="true">&nbsp;&nbsp;&nbsp; .<br>&nbsp;&nbsp; /|\<br>--+ * +--<br>&nbsp;&nbsp; \|/<br>&nbsp;&nbsp;&nbsp; '</span></div><div class="about-copy reveal"><h2 id="about-title">A curious mind.<br>A few open <em>tabs.</em></h2><p>I'm Your Name. I like turning “what if?” into something you can actually click on. This is where I keep my projects, explore new ideas, and learn by making.</p><p>Outside the screen? Usually collecting inspiration for whatever comes next.</p><div class="about-tags"><span>Building for the web</span><span>Learning as I go</span><span>Based on Earth</span></div></div></section>
+  </main>
+
+  <footer class="site-footer section-shell"><a class="wordmark" href="#home"><span class="wordmark-symbol" aria-hidden="true">✳</span> yourname<span class="dim">.</span></a><span class="coordinate">MADE WITH CURIOSITY. © <span id="year">2026</span></span><a class="back-top" href="#home">Back to the stars</a></footer>
+  <dialog id="project-dialog" aria-labelledby="dialog-title"><button class="dialog-close" aria-label="Close project">×</button><div class="dialog-inner"><p id="dialog-type" class="eyebrow"></p><h2 id="dialog-title"></h2><p id="dialog-summary" class="dialog-summary"></p><div id="dialog-tags" class="about-tags"></div><div class="dialog-rule"></div><p class="eyebrow">THE IDEA</p><p id="dialog-body"></p><p class="eyebrow dialog-label">A CLOSER LOOK</p><ul id="dialog-details"></ul><p class="sample-note">Sample project · Replace with your own story.</p></div></dialog>
+</body>
+</html>
