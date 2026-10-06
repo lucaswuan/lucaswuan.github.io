@@ -35,3 +35,4 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 @media(max-width:1000px){.contact-section{grid-template-columns:1fr;gap:36px}.site-footer{flex-wrap:wrap}.footer-links{order:2;width:100%}.site-footer>.coordinate{order:3;width:100%}}
 @media(max-width:400px){.site-header{padding:0 5%}.site-header .wordmark{font-size:17px}.site-header nav{gap:14px}.site-header nav a{font-size:12px}}
 @media(max-width:650px){.contact-section{padding-top:50px;padding-bottom:65px;gap:28px}.contact-text .eyebrow{font-size:9px}.contact-text h2{font-size:45px;letter-spacing:-2px}.contact-text>p:not(.eyebrow){font-size:15px;line-height:1.8}.contact-list li{flex-direction:column;gap:6px;padding:14px 0}.contact-key{flex:none;font-size:10px}.contact-list a{font-size:clamp(14px,4.1vw,16px)}.footer-links{gap:8px}.footer-links a{font-size:12px}}
+.space-stage{height:100vh;height:100dvh}#earth{height:100%}#stars{height:100vh;height:100lvh}

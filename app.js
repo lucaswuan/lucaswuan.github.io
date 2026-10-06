@@ -18,6 +18,7 @@
   try { paused = paused || localStorage.getItem('orbit-motion') === 'off'; } catch {}
   const motionButton = document.querySelector('#motion-toggle');
   const journey = document.querySelector('.journey');
+  const stage = document.querySelector('.space-stage');
   const scene = document.querySelector('.planet-scene');
   const hero = document.querySelector('.hero-content');
   const bottom = document.querySelector('.hero-bottom');
@@ -27,7 +28,8 @@
   let trackLength = 1, viewportHeight = innerHeight;
   const clamp = n => Math.max(0,Math.min(1,n));
   const smooth = (a,b,x) => {const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
-  function measure(){viewportHeight=innerHeight;trackLength=Math.max(1,journey.offsetHeight-viewportHeight);}
+  // Use the stage's real height, not innerHeight: on phones it tracks the browser toolbar sliding in and out.
+  function measure(){viewportHeight=stage.clientHeight||innerHeight;trackLength=Math.max(1,journey.offsetHeight-viewportHeight);}
   function motionState(){document.body.classList.toggle('motion-paused',paused);motionButton.setAttribute('aria-pressed',String(paused));motionButton.setAttribute('aria-label',paused?'Resume animation':'Pause animation');motionButton.querySelector('.motion-text').textContent=paused?'Motion off':'Motion on';motionButton.querySelector('.pause-symbol').textContent=paused?'▷':'Ⅱ';}
   motionButton.addEventListener('click',()=>{paused=!paused;motionState();try{localStorage.setItem('orbit-motion',paused?'off':'on');}catch{}});
   media.addEventListener('change',()=>{paused=media.matches;motionState();measure();});
@@ -40,6 +42,8 @@
   const renderTimings=[],profiling=new URLSearchParams(location.search).has('profile');
   function sizeEarth(){const dpr=Math.min(devicePixelRatio,1.5);earth.width=innerWidth*dpr;earth.height=viewportHeight*dpr;if(ctx)ctx.setTransform(dpr,0,0,dpr,0,0);sceneColumns=Math.ceil(innerWidth/CELL_WIDTH)+1;sceneLines=Math.ceil(viewportHeight/CELL_HEIGHT)+1;nextScene=new Uint16Array(sceneColumns*sceneLines);previousScene=new Uint16Array(sceneColumns*sceneLines);}
   sizeEarth();addEventListener('resize',sizeEarth);
+  // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself.
+  if('ResizeObserver' in window)new ResizeObserver(()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}}).observe(stage);
   // Cache the glyphs once so rotation does not rasterize thousands of letters every frame.
   const glyphSheet=document.createElement('canvas');
   const glyphChars=['.',':','+','*','#','■'];
@@ -181,10 +185,15 @@
   }
   const starCanvas=document.querySelector('#stars'),sctx=starCanvas.getContext('2d');
   let starPoints=[],columns=0,lines=0,cellAlpha,cellGlyph,cellTone,previousStars;
-  function galaxyCurve(u,t){return innerHeight*(.92-u*.93+.09*Math.sin(u*Math.PI*1.8+t*.000017));}
+  // The star canvas is sized to the tallest viewport (toolbar hidden), so starH stays put while the toolbar moves.
+  let starW=0,starH=0,starDpr=0;
+  function galaxyCurve(u,t){return starH*(.92-u*.93+.09*Math.sin(u*Math.PI*1.8+t*.000017));}
   function stars(){
-    const dpr=Math.min(devicePixelRatio,1.5);starCanvas.width=innerWidth*dpr;starCanvas.height=innerHeight*dpr;sctx.setTransform(dpr,0,0,dpr,0,0);
-    columns=Math.ceil(innerWidth/CELL_WIDTH)+1;lines=Math.ceil(innerHeight/CELL_HEIGHT)+1;
+    const dpr=Math.min(devicePixelRatio,1.5),h=starCanvas.clientHeight||innerHeight;
+    if(innerWidth===starW&&h===starH&&dpr===starDpr)return;
+    starW=innerWidth;starH=h;starDpr=dpr;
+    starCanvas.width=innerWidth*dpr;starCanvas.height=starH*dpr;sctx.setTransform(dpr,0,0,dpr,0,0);
+    columns=Math.ceil(innerWidth/CELL_WIDTH)+1;lines=Math.ceil(starH/CELL_HEIGHT)+1;
     cellAlpha=new Float32Array(columns*lines);cellGlyph=new Uint8Array(columns*lines);cellTone=new Uint8Array(columns*lines);previousStars=new Uint16Array(columns*lines);
     let seed=23;const rand=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
     starPoints=[];
@@ -204,11 +213,11 @@
     for(const p of starPoints){
       const flowSpeed=SHARED_STAR_FLOW?(p.spread?.000010*(1+.08*Math.sin(p.v*1.5)):.0000035):.000006*p.speed;
       const u=((p.u+.2+t*flowSpeed)%1.4)-.2,x=u*innerWidth;
-      const width=innerHeight*(.255+.035*Math.sin(u*3+t*(SHARED_STAR_FLOW?.000022:.000009)));
-      const current=Math.sin(u*5.5-t*.000065)*innerHeight*.026;
-      const y=SHARED_STAR_FLOW?(p.spread?galaxyCurve(u,t)+p.v*width+current:p.v*innerHeight+current*.3):(p.spread?galaxyCurve(u,t)+p.v*width+Math.sin(u*7+p.phase+t*.000045)*9:p.v*innerHeight+Math.sin(t*.00005+p.phase)*5);
-      if(y<-10||y>innerHeight+10)continue;
-      const distance=Math.hypot((x-innerWidth*.26)/(innerWidth*.39),(y-innerHeight*.43)/(innerHeight*.36));
+      const width=starH*(.255+.035*Math.sin(u*3+t*(SHARED_STAR_FLOW?.000022:.000009)));
+      const current=Math.sin(u*5.5-t*.000065)*starH*.026;
+      const y=SHARED_STAR_FLOW?(p.spread?galaxyCurve(u,t)+p.v*width+current:p.v*starH+current*.3):(p.spread?galaxyCurve(u,t)+p.v*width+Math.sin(u*7+p.phase+t*.000045)*9:p.v*starH+Math.sin(t*.00005+p.phase)*5);
+      if(y<-10||y>starH+10)continue;
+      const distance=Math.hypot((x-innerWidth*.26)/(innerWidth*.39),(y-starH*.43)/(starH*.36));
       const quiet=.48+.52*smooth(.25,1.2,distance);
       const shapeBrightness=p.character===5?.95:p.character===3?.77:p.character===2?.6:.45;
       const intensity=p.spread?( .17+.73*p.core)*shapeBrightness:.14+p.tone*.2;
