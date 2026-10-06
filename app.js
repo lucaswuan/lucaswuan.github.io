@@ -158,7 +158,7 @@
     const driftY=Math.sin(spaceTime*.00014)*viewportHeight*.055;
     const moveX=(innerWidth*.5-baseX)*focus+(driftX+(paused?0:pointerX))*(1-focus);
     const moveY=(viewportHeight*.48-baseY)*focus+(driftY+(paused?0:pointerY))*(1-focus);
-    const diameter=mobile?90:Math.max(110,Math.min(innerWidth*.105,160));
+    const diameter=mobile?117:Math.max(143,Math.min(innerWidth*.1365,208));
     earthState={x:baseX+moveX,y:baseY+moveY,r:diameter*.44*(paused?1:zoom)};
     otherWorlds=[
       {kind:'saturn',x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00016)*innerWidth*.055-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00018)*30+focus*100,r:mobile?20:29,spin:spaceTime*.00012},
