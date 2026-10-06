@@ -1,0 +1,148 @@
+{
+  "featured": ["uwasic", "signed", "vex-robotics"],
+  "projects": [
+    {
+      "slug": "uwasic",
+      "title": "UWASIC",
+      "subtitle": "Digital design, from RTL to layout.",
+      "category": "Digital design",
+      "year": "2026–Present",
+      "role": "RTL Design Member",
+      "status": "Ongoing",
+      "art": "chip",
+      "artTitle": "From logic\nto silicon.",
+      "artLabel": "RTL / VERIFICATION / ASIC",
+      "summary": "Designing functional-unit RTL for Waterloo’s ray-tracing ASIC, building on a completed SPI/PWM onboarding project.",
+      "tags": ["Verilog", "SPI", "CDC", "Python / cocotb", "Tiny Tapeout"],
+      "links": [{"label": "Onboarding code", "url": "https://github.com/lucaswuan/digital-onboarding"}],
+      "cover": null,
+      "highlights": [
+        {"value": "5", "label": "Onboarding registers"},
+        {"value": "16", "label": "Peripheral outputs"},
+        {"value": "3 kHz", "label": "PWM tested"}
+      ],
+      "overview": [
+        "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team. My current work is functional-unit RTL for a ray-tracing ASIC, collaborating with the verification team toward passing functional tests and a lint-clean RTL-to-GDS flow.",
+        "Before that work, I completed a digital-design onboarding project: a Verilog SPI Mode 0 peripheral with register-controlled outputs and PWM. That project connected RTL implementation, automated verification, and physical-layout generation."
+      ],
+      "sections": [
+        {"title": "The peripheral", "body": ["The onboarding peripheral has five registers and sixteen outputs. I implemented SPI Mode 0 communication and two-stage clock-domain crossing to move signals between clock domains."], "bullets": ["Verilog RTL for the SPI peripheral and output controls.", "Register interface for configuring peripheral behavior.", "Two-stage CDC for signals crossing clock domains."]},
+        {"title": "Verification & tooling", "body": ["I wrote Python/cocotb tests for 3 kHz PWM, checking 0%, 50%, and 100% duty cycles as well as output-enable behavior. I configured Tiny Tapeout and GitHub Actions to run simulation tests and generate GDS layout files."]},
+        {"title": "Current work", "body": ["I’m now applying that foundation to functional-unit RTL for UWASIC’s ray-tracing ASIC. This is ongoing team work; the completed peripheral and its verification flow are the onboarding portion of the project."]}
+      ],
+      "images": [],
+      "outcome": ["Completed the SPI/PWM onboarding project with automated simulation tests and GDS generation. The next stage is continuing functional-unit design and verification with the UWASIC team."]
+    },
+    {
+      "slug": "signed",
+      "title": "SignEd",
+      "subtitle": "A more hands-on way to learn ASL.",
+      "category": "Computer vision",
+      "year": "2026",
+      "role": "Sole programmer",
+      "status": "Hackathon project",
+      "art": "landmarks",
+      "artTitle": "Learn by\nsigning.",
+      "artLabel": "21 LANDMARKS / REAL-TIME FEEDBACK",
+      "summary": "An interactive ASL learning website that connects live hand-pose recognition with guided lessons.",
+      "tags": ["Python", "Flask", "MediaPipe", "OpenCV", "JavaScript", "HTML / CSS"],
+      "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/hackTheBias2026"}],
+      "cover": null,
+      "highlights": [
+        {"value": "Winner", "label": "Hack the Bias · Beginner Track"},
+        {"value": "21", "label": "3D hand landmarks"},
+        {"value": "3 sec", "label": "Correct-sign hold to progress"}
+      ],
+      "overview": ["SignEd is an ASL learning website built for Hack the Bias. As the team’s sole programmer, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
+      "sections": [
+        {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize ASL poses."]},
+        {"title": "Connecting recognition to learning", "body": ["Live recognition feedback is connected to guided lessons. A learner unlocks progression after holding the correct sign for three seconds, connecting the recognition result to a clear practice goal."]},
+        {"title": "My contribution", "bullets": ["Implemented the Python/Flask application and the browser interface.", "Built the hand-landmark normalization and pose-classification pipeline.", "Connected live feedback to lesson progression."]}
+      ],
+      "images": [],
+      "outcome": ["SignEd won the Beginner Track at Hack the Bias. The project brought together computer vision, a web interface, and guided practice in one ASL learning experience."]
+    },
+    {
+      "slug": "vex-robotics",
+      "title": "VEX Robotics",
+      "subtitle": "Build. Test. Tune. Compete.",
+      "category": "Robotics",
+      "year": "2020–2023",
+      "role": "Robot design, build & programming",
+      "status": "Competition project",
+      "art": "robot",
+      "artTitle": "Built for\nthe field.",
+      "artLabel": "DRIVETRAIN / INTAKE / FLYWHEEL",
+      "summary": "A VEX V5 competition robot, from mechanical design and autonomous routines to the 2023 World Championship.",
+      "tags": ["VEX V5", "Mechanical design", "Autonomous programming", "Iterative testing"],
+      "links": [],
+      "cover": null,
+      "highlights": [
+        {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
+        {"value": "2023", "label": "World Championship · Dallas"},
+        {"value": "V5", "label": "VEX robotics platform"}
+      ],
+      "overview": ["I designed and built a VEX V5 competition robot and programmed its autonomous routines. My work covered the drivetrain, disc intake, and flywheel launcher, with repeated testing and mechanical adjustments between iterations."],
+      "sections": [
+        {"title": "Mechanical design", "body": ["I designed and built the drivetrain, intake, and flywheel launcher. These systems needed to work together to move around the field, collect discs, and launch them consistently."]},
+        {"title": "Testing & iteration", "body": ["I iteratively tuned flywheel speed and intake spacing to improve shooting consistency and reduce jams. This work connected observations on the field with changes to the mechanism and its settings."]},
+        {"title": "Autonomous routines", "body": ["Alongside the mechanical work, I programmed the robot’s autonomous routines. The project combined robot construction, programming, and competition testing."]}
+      ],
+      "images": [],
+      "outcome": ["Our team placed second in Alberta Provincial Robot Skills and qualified for the VEX Robotics World Championship. We competed in Dallas in 2023."]
+    },
+    {
+      "slug": "cpp-ray-tracer",
+      "title": "C++ Ray Tracer",
+      "subtitle": "Following light, one ray at a time.",
+      "category": "Computer graphics",
+      "year": "2025",
+      "role": "Personal learning project",
+      "status": "Completed",
+      "art": "rays",
+      "artTitle": "A study\nin light.",
+      "artLabel": "RAYS / SPHERES / MONTE CARLO",
+      "summary": "A C++ path tracer exploring ray geometry, diffuse shading, and the trade-off between image noise and render time.",
+      "tags": ["C++", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
+      "links": [],
+      "cover": null,
+      "highlights": [],
+      "overview": ["I built a C++ path tracer using the framework from Ray Tracing in One Weekend. This was a learning project focused on understanding how geometric intersections and repeated light sampling turn a scene into an image."],
+      "sections": [
+        {"title": "Geometry & intersections", "body": ["I implemented parametric rays, ray-sphere intersections, and surface normals. These establish where a ray meets the scene and the orientation of the surface at that point."]},
+        {"title": "Shading & sampling", "body": ["I implemented Monte Carlo diffuse shading and multisample anti-aliasing to render spheres with smoother edges and reduced image noise."]},
+        {"title": "Quality versus rendering time", "body": ["I analyzed how samples per pixel affect image noise and rendering time. This made sampling a practical trade-off to investigate as well as a part of the rendering algorithm."]}
+      ],
+      "images": [],
+      "outcome": ["Built a working C++ path tracer and explored the relationship between geometry, shading, sampling, and image quality. The implementation follows the educational framework of Ray Tracing in One Weekend."]
+    },
+    {
+      "slug": "calgary-ace",
+      "title": "Calgary Ace Learning Center",
+      "subtitle": "Learning together. Giving back.",
+      "category": "Community & education",
+      "year": "2024–Present",
+      "role": "Co-founder & volunteer",
+      "status": "Ongoing",
+      "art": "community",
+      "artTitle": "Small lessons.\nLasting impact.",
+      "artLabel": "TEACHING / VOLUNTEERING / FUNDRAISING",
+      "summary": "A student-run nonprofit bringing together tutoring, volunteer organizing, and fundraising for children’s healthcare.",
+      "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising"],
+      "links": [],
+      "cover": null,
+      "highlights": [
+        {"value": "400+", "label": "Volunteer hours contributed"},
+        {"value": "$5,000+", "label": "Raised for the Alberta Children’s Hospital Foundation"}
+      ],
+      "overview": ["I co-founded Calgary Ace Learning Center, a student-run nonprofit. My work focuses on tutoring, organizing, and fundraising: contributing time to help students learn while supporting a cause beyond the classroom."],
+      "sections": [
+        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours through tutoring and organizing. Teaching is a central part of my involvement, alongside the work needed to help a student-run organization operate."]},
+        {"title": "Fundraising for children’s healthcare", "body": ["I led fundraising that raised more than $5,000 for the Alberta Children’s Hospital Foundation. This work connected our student-led organization with a broader community purpose."]},
+        {"title": "Building the organization", "body": ["As a co-founder, I contribute to both the educational work and the organization behind it. I also built its WordPress website to support its online presence."]}
+      ],
+      "images": [],
+      "outcome": ["An ongoing commitment to education and community service, with more than 400 volunteer hours contributed and $5,000+ raised for the Alberta Children’s Hospital Foundation."]
+    }
+  ]
+}

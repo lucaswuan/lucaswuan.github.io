@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="An interactive ASL learning website that connects live hand-pose recognition with guided lessons.">
+  <title>SignEd | Lucas Wu</title>
+  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="stylesheet" href="/projects.css?v=4">
+  <script src="/galaxy.js?v=4" defer></script>
+  <script src="/site.js?v=1" defer></script>
+</head>
+<body class="inner-page">
+  <a class="skip-link" href="#main">Skip to project</a>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <header class="site-header"><a class="wordmark" href="/" aria-label="Lucas Wu, home">Lucas Wu</a><nav aria-label="Main navigation"><a href="/#projects">Projects <span class="nav-count">05</span></a><a href="/#about">About</a><a href="/#contact">Resume</a></nav><button class="motion-button" id="motion-toggle" aria-pressed="false" aria-label="Pause animation"><span class="pause-symbol" aria-hidden="true"><svg class="icon-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg><svg class="icon-play" viewBox="0 0 16 16"><path d="M5.5 3.5 12.5 8l-7 4.5z"/></svg></span><span class="motion-text">Motion on</span></button></header>
+  <main id="main" class="project-page section-shell">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/projects/">All projects</a><span aria-hidden="true">/</span><span aria-current="page">SignEd</span></nav>
+    <header class="project-heading">
+      <p class="eyebrow">Computer vision <span>/ 02</span></p>
+      <h1>SignEd</h1>
+      <p class="project-subtitle">A more hands-on way to learn ASL.</p>
+      <p class="project-summary">An interactive ASL learning website that connects live hand-pose recognition with guided lessons.</p>
+      <div class="project-links"><a class="outline-link" href="https://github.com/lucaswuan/hackTheBias2026" target="_blank" rel="noopener">Project code <span aria-hidden="true">↗</span></a></div>
+    </header>
+    <dl class="project-facts"><div><dt>My role</dt><dd>Sole programmer</dd></div><div><dt>Timeline</dt><dd>2026</dd></div><div><dt>Status</dt><dd>Hackathon project</dd></div></dl>
+    <ul class="project-tags" aria-label="Skills and tools"><li>Python</li><li>Flask</li><li>MediaPipe</li><li>OpenCV</li><li>JavaScript</li><li>HTML / CSS</li></ul>
+    <figure class="project-cover"><span class="project-art work-art art-landmarks"><span class="art-topline"><span>SignEd</span><span aria-hidden="true">PROJECT NOTES</span></span><span class="work-art-title">Learn by<br>signing.</span><svg class="work-illustration" viewBox="0 0 420 320" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M191 266 133 218 104 180 111 171 144 187 168 208 150 135 145 84 158 80 176 130 187 169 181 104 183 49 198 47 208 100 216 160 219 99 225 62 240 66 238 115 243 172 251 128 266 98 279 104 269 145 268 205 240 244Z"/><path opacity=".35" d="m191 266-23-58 19-39 29-9 27 12 25 33m-81-36 4 97 25-106 24 84 3-72"/><g fill="currentColor"><circle cx="191" cy="266" r="3.5"/><circle cx="133" cy="218" r="3.5"/><circle cx="104" cy="180" r="3.5"/><circle cx="144" cy="187" r="3.5"/><circle cx="168" cy="208" r="3.5"/><circle cx="150" cy="135" r="3.5"/><circle cx="145" cy="84" r="3.5"/><circle cx="176" cy="130" r="3.5"/><circle cx="187" cy="169" r="3.5"/><circle cx="181" cy="104" r="3.5"/><circle cx="183" cy="49" r="3.5"/><circle cx="208" cy="100" r="3.5"/><circle cx="216" cy="160" r="3.5"/><circle cx="219" cy="99" r="3.5"/><circle cx="225" cy="62" r="3.5"/><circle cx="238" cy="115" r="3.5"/><circle cx="243" cy="172" r="3.5"/><circle cx="251" cy="128" r="3.5"/><circle cx="266" cy="98" r="3.5"/><circle cx="269" cy="145" r="3.5"/><circle cx="268" cy="205" r="3.5"/></g></svg><span class="art-bottomline">21 LANDMARKS / REAL-TIME FEEDBACK</span></span><figcaption>Project illustration</figcaption></figure>
+    <dl class="project-highlights"><div><dt>Hack the Bias · Beginner Track</dt><dd>Winner</dd></div><div><dt>3D hand landmarks</dt><dd>21</dd></div><div><dt>Correct-sign hold to progress</dt><dd>3 sec</dd></div></dl>
+    <div class="case-layout">
+      <nav class="case-nav" aria-label="On this page"><p class="eyebrow">IN THIS PROJECT</p><a href="#overview">01 / Overview</a><a href="#work">02 / The work</a><a href="#outcome">03 / Outcome</a></nav>
+      <div class="case-content">
+        <section id="overview" class="case-section"><p class="eyebrow">01 / CONTEXT</p><h2>Overview</h2><p>SignEd is an ASL learning website built for Hack the Bias. As the team’s sole programmer, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience.</p></section>
+        <section id="work" class="case-section"><p class="eyebrow">02 / CONTRIBUTION</p><h2>The work</h2><div class="work-section"><h3>Recognizing a sign</h3><p>MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize ASL poses.</p></div>
+<div class="work-section"><h3>Connecting recognition to learning</h3><p>Live recognition feedback is connected to guided lessons. A learner unlocks progression after holding the correct sign for three seconds, connecting the recognition result to a clear practice goal.</p></div>
+<div class="work-section"><h3>My contribution</h3><ul><li>Implemented the Python/Flask application and the browser interface.</li><li>Built the hand-landmark normalization and pose-classification pipeline.</li><li>Connected live feedback to lesson progression.</li></ul></div></section>
+
+        <section id="outcome" class="case-section"><p class="eyebrow">03 / REFLECTION</p><h2>Outcome</h2><p>SignEd won the Beginner Track at Hack the Bias. The project brought together computer vision, a web interface, and guided practice in one ASL learning experience.</p></section>
+      </div>
+    </div>
+    <div class="project-pagination"><a class="text-link" href="/projects/"><span aria-hidden="true">←</span> All projects</a><a class="next-project" href="/projects/vex-robotics/"><span class="eyebrow">NEXT PROJECT</span><span>VEX Robotics <span aria-hidden="true">↗</span></span></a></div>
+  </main>
+  <footer class="site-footer section-shell"><a class="wordmark" href="/">Lucas Wu</a><a class="footer-email" href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a><span class="coordinate">© <span data-current-year>2026</span> LUCAS WU</span><a class="back-top" href="#main">Back to top ↑</a></footer>
+</body>
+</html>

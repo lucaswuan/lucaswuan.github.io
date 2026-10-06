@@ -1,4 +1,4 @@
-// GPU projection into a fixed terminal grid. The glyph atlas is shared with the stars.
+// GPU projection into a fixed terminal grid, with separate Saturn, Jupiter, and Earth palettes.
 window.createPlanetRenderer = function(gl, atlas) {
   const vertex = `#version 300 es
   void main(){ vec2 p=vec2((gl_VertexID==1)?3.0:-1.0,(gl_VertexID==2)?3.0:-1.0);gl_Position=vec4(p,0,1);}`;
@@ -16,7 +16,7 @@ window.createPlanetRenderer = function(gl, atlas) {
   const float PI=3.14159265359;
   vec4 character(int ch,int row,float alpha,vec2 offset,float visibility){
     int shade=int(clamp(floor(alpha*12.0+.5)-1.0,0.0,11.0));
-    vec2 uv=(vec2(float(ch*120+shade*10),float(row*12))+offset)/vec2(720,48);
+    vec2 uv=(vec2(float(ch*120+shade*10),float(row*12))+offset)/vec2(textureSize(glyphs,0));
     vec4 ink=texture(glyphs,uv);
     return vec4(ink.rgb*ink.a*visibility,visibility);
   }
@@ -41,7 +41,7 @@ window.createPlanetRenderer = function(gl, atlas) {
       bool hasRing=false; bool ringFront=false; float ringStrength=0.0;
       if(k==0){
         hasRing=ring(cell,world,ringStrength,ringFront);
-        if(hasRing&&!ringFront)result=character(ringStrength>.6?3:2,1,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
+        if(hasRing&&!ringFront)result=character(ringStrength>.6?3:2,ringStrength>.6?1:0,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
       }
       vec2 n=(cell-world.xy)/world.z;
       float d=dot(n,n);
@@ -58,19 +58,20 @@ window.createPlanetRenderer = function(gl, atlas) {
           bool isLand=texture(land,uv).a>.24;
           bool cloud=sin(lon*12.0+lat*9.0+sin(lat*7.0))*sin(lat*18.0-lon*5.0)>.66;
           float noise=fract(sin(n.x*129.89+n.y*78.233)*43758.5453);
-          if(isLand){ch=light>.6?4:light>.32?3:2;alpha=.43+.57*light;row=0;}
-          else if(cloud&&cloudStrength>0.0&&noise<cloudStrength){ch=noise>.3?2:1;alpha=.17+.42*light+.08*cloudStrength;row=1;}
-          else{ch=noise>.3?1:0;alpha=.17+.42*light;row=2;}
+          if(isLand){ch=light>.6?4:light>.32?3:2;alpha=.43+.57*light;row=4;}
+          else if(cloud&&cloudStrength>0.0&&noise<cloudStrength){ch=noise>.3?2:1;alpha=.17+.42*light+.08*cloudStrength;row=5;}
+          // Match the CPU renderer's fuller ocean glyphs (+, with : in shadow).
+          else{ch=light>.25?2:1;alpha=.24+.5*light;row=6;}
         }else{
           float bands=.5+.5*sin(lat*(k==1?17.0:23.0)+sin(lon*3.0+lat*6.0)*.75);
           float value=light*(.54+.46*bands);
           ch=value>.65?4:value>.42?3:value>.22?2:1;
-          alpha=.22+.65*value;row=k==1?1:0;
+          alpha=.22+.65*value;row=k==1?(bands>.48?2:3):(bands>.45?1:0);
         }
-        if(z<.1){ch=0;alpha=.5;row=0;}
+        if(z<.1){ch=0;alpha=.5;row=k==2?7:k==1?2:1;}
         result=character(ch,row,alpha,offset,visibility);
       }
-      if(k==0&&hasRing&&ringFront)result=character(ringStrength>.6?3:2,1,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
+      if(k==0&&hasRing&&ringFront)result=character(ringStrength>.6?3:2,ringStrength>.6?1:0,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
     }
     outputColor=result;
   }`;

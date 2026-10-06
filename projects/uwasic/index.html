@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Designing functional-unit RTL for Waterloo’s ray-tracing ASIC, building on a completed SPI/PWM onboarding project.">
+  <title>UWASIC | Lucas Wu</title>
+  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="stylesheet" href="/projects.css?v=4">
+  <script src="/galaxy.js?v=4" defer></script>
+  <script src="/site.js?v=1" defer></script>
+</head>
+<body class="inner-page">
+  <a class="skip-link" href="#main">Skip to project</a>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <header class="site-header"><a class="wordmark" href="/" aria-label="Lucas Wu, home">Lucas Wu</a><nav aria-label="Main navigation"><a href="/#projects">Projects <span class="nav-count">05</span></a><a href="/#about">About</a><a href="/#contact">Resume</a></nav><button class="motion-button" id="motion-toggle" aria-pressed="false" aria-label="Pause animation"><span class="pause-symbol" aria-hidden="true"><svg class="icon-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg><svg class="icon-play" viewBox="0 0 16 16"><path d="M5.5 3.5 12.5 8l-7 4.5z"/></svg></span><span class="motion-text">Motion on</span></button></header>
+  <main id="main" class="project-page section-shell">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/projects/">All projects</a><span aria-hidden="true">/</span><span aria-current="page">UWASIC</span></nav>
+    <header class="project-heading">
+      <p class="eyebrow">Digital design <span>/ 01</span></p>
+      <h1>UWASIC</h1>
+      <p class="project-subtitle">Digital design, from RTL to layout.</p>
+      <p class="project-summary">Designing functional-unit RTL for Waterloo’s ray-tracing ASIC, building on a completed SPI/PWM onboarding project.</p>
+      <div class="project-links"><a class="outline-link" href="https://github.com/lucaswuan/digital-onboarding" target="_blank" rel="noopener">Onboarding code <span aria-hidden="true">↗</span></a></div>
+    </header>
+    <dl class="project-facts"><div><dt>My role</dt><dd>RTL Design Member</dd></div><div><dt>Timeline</dt><dd>2026–Present</dd></div><div><dt>Status</dt><dd>Ongoing</dd></div></dl>
+    <ul class="project-tags" aria-label="Skills and tools"><li>Verilog</li><li>SPI</li><li>CDC</li><li>Python / cocotb</li><li>Tiny Tapeout</li></ul>
+    <figure class="project-cover"><span class="project-art work-art art-chip"><span class="art-topline"><span>UWASIC</span><span aria-hidden="true">PROJECT NOTES</span></span><span class="work-art-title">From logic<br>to silicon.</span><svg class="work-illustration" viewBox="0 0 420 320" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><g><path d="M154 70v30m0 120v30M104 90h36m128 0h36"/><path d="M170 70v30m0 120v30M104 110h36m128 0h36"/><path d="M186 70v30m0 120v30M104 130h36m128 0h36"/><path d="M202 70v30m0 120v30M104 150h36m128 0h36"/><path d="M218 70v30m0 120v30M104 170h36m128 0h36"/><path d="M234 70v30m0 120v30M104 190h36m128 0h36"/><path d="M250 70v30m0 120v30M104 210h36m128 0h36"/><path d="M266 70v30m0 120v30M104 230h36m128 0h36"/><rect x="140" y="100" width="128" height="120" rx="5"/><rect x="160" y="120" width="88" height="80" rx="2"/><path d="M176 140h24v40h28m-52-24h48v-16m-8 40v-24"/><path opacity=".4" d="M24 72h65v68h50M302 180h58v76h39M50 274h57v-74h32M269 122h58V40h62"/><g fill="currentColor"><circle cx="24" cy="72" r="3"/><circle cx="399" cy="256" r="3"/><circle cx="50" cy="274" r="3"/><circle cx="389" cy="40" r="3"/></g></g></svg><span class="art-bottomline">RTL / VERIFICATION / ASIC</span></span><figcaption>Project illustration</figcaption></figure>
+    <dl class="project-highlights"><div><dt>Onboarding registers</dt><dd>5</dd></div><div><dt>Peripheral outputs</dt><dd>16</dd></div><div><dt>PWM tested</dt><dd>3 kHz</dd></div></dl>
+    <div class="case-layout">
+      <nav class="case-nav" aria-label="On this page"><p class="eyebrow">IN THIS PROJECT</p><a href="#overview">01 / Overview</a><a href="#work">02 / The work</a><a href="#outcome">03 / Outcome</a></nav>
+      <div class="case-content">
+        <section id="overview" class="case-section"><p class="eyebrow">01 / CONTEXT</p><h2>Overview</h2><p>I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team. My current work is functional-unit RTL for a ray-tracing ASIC, collaborating with the verification team toward passing functional tests and a lint-clean RTL-to-GDS flow.</p>
+<p>Before that work, I completed a digital-design onboarding project: a Verilog SPI Mode 0 peripheral with register-controlled outputs and PWM. That project connected RTL implementation, automated verification, and physical-layout generation.</p></section>
+        <section id="work" class="case-section"><p class="eyebrow">02 / CONTRIBUTION</p><h2>The work</h2><div class="work-section"><h3>The peripheral</h3><p>The onboarding peripheral has five registers and sixteen outputs. I implemented SPI Mode 0 communication and two-stage clock-domain crossing to move signals between clock domains.</p><ul><li>Verilog RTL for the SPI peripheral and output controls.</li><li>Register interface for configuring peripheral behavior.</li><li>Two-stage CDC for signals crossing clock domains.</li></ul></div>
+<div class="work-section"><h3>Verification &amp; tooling</h3><p>I wrote Python/cocotb tests for 3 kHz PWM, checking 0%, 50%, and 100% duty cycles as well as output-enable behavior. I configured Tiny Tapeout and GitHub Actions to run simulation tests and generate GDS layout files.</p></div>
+<div class="work-section"><h3>Current work</h3><p>I’m now applying that foundation to functional-unit RTL for UWASIC’s ray-tracing ASIC. This is ongoing team work; the completed peripheral and its verification flow are the onboarding portion of the project.</p></div></section>
+
+        <section id="outcome" class="case-section"><p class="eyebrow">03 / REFLECTION</p><h2>Outcome</h2><p>Completed the SPI/PWM onboarding project with automated simulation tests and GDS generation. The next stage is continuing functional-unit design and verification with the UWASIC team.</p></section>
+      </div>
+    </div>
+    <div class="project-pagination"><a class="text-link" href="/projects/"><span aria-hidden="true">←</span> All projects</a><a class="next-project" href="/projects/signed/"><span class="eyebrow">NEXT PROJECT</span><span>SignEd <span aria-hidden="true">↗</span></span></a></div>
+  </main>
+  <footer class="site-footer section-shell"><a class="wordmark" href="/">Lucas Wu</a><a class="footer-email" href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a><span class="coordinate">© <span data-current-year>2026</span> LUCAS WU</span><a class="back-top" href="#main">Back to top ↑</a></footer>
+</body>
+</html>
