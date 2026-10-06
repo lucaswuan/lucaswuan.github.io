@@ -26,5 +26,5 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 #stars,#earth{width:100vw;height:100vh}
 @media(max-width:650px){.ringed-world{width:125px;left:19%;top:63%}.striped-world{width:70px;left:84%;top:16%}.planet-label{left:7%;top:auto;bottom:90px}.planet-name{font-size:19px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.journey{height:100svh;min-height:640px}.space-stage{position:relative}.projects-section{margin-top:0}.arrival{display:none}body.js-ready .reveal{opacity:1;transform:none}}
-.hero-content .intro{max-width:470px}.hero-content .hero-school{margin-bottom:8px}.hero-availability .tiny-cross{visibility:hidden}
-@media(max-width:650px){.hero-content .intro{max-width:none}.hero-content .hero-school{margin-bottom:6px}}
+.hero-content .intro{max-width:470px}.hero-content .tiny-cross{line-height:1}.hero-content .hero-school{margin-bottom:4px}.hero-content .hero-availability{margin-bottom:14px}.hero-availability .tiny-cross{visibility:hidden}.nowrap{white-space:nowrap}
+@media(max-width:650px){.hero-content .intro{max-width:none}.hero-content .hero-school{margin-bottom:3px}.hero-content .hero-availability{margin-bottom:12px}}
