@@ -99,7 +99,9 @@
     }}
     sctx.globalAlpha=1;
   }
-  stars();addEventListener('resize',stars);
+  // iOS browsers can run this before styles.css applies, while the canvas is still its default 150px tall.
+  // Measure again once the page (and its stylesheets) has loaded so the stars aren't stretched until a resize.
+  stars();addEventListener('resize',stars);addEventListener('load',stars);
   window.portfolioGalaxy={canvas:starCanvas,glyphSheet,media,get paused(){return paused;}};
   let lastTime=0,frame=0;
   function animate(t){
