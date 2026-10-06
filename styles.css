@@ -26,3 +26,5 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 #stars,#earth{width:100vw;height:100vh}
 @media(max-width:650px){.ringed-world{width:125px;left:19%;top:63%}.striped-world{width:70px;left:84%;top:16%}.planet-label{left:7%;top:auto;bottom:90px}.planet-name{font-size:19px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.journey{height:100svh;min-height:640px}.space-stage{position:relative}.projects-section{margin-top:0}.arrival{display:none}body.js-ready .reveal{opacity:1;transform:none}}
+.hero-content .intro{max-width:470px}.status{display:inline-flex;align-items:center;gap:10px;margin:0;font:12px var(--mono);letter-spacing:.5px;color:#c2c7d0;border:1px solid #ffffff30;border-radius:20px;padding:9px 14px}.status-dot{width:7px;height:7px;border-radius:50%;background:#7fd4a0;box-shadow:0 0 0 3px #7fd4a026}
+@media(max-width:650px){.hero-content .intro{max-width:none}.status{font-size:10px;padding:8px 12px}}
