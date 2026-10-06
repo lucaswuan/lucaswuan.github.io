@@ -20,7 +20,6 @@
   const journey = document.querySelector('.journey');
   const scene = document.querySelector('.planet-scene');
   const hero = document.querySelector('.hero-content');
-  const label = document.querySelector('.planet-label');
   const bottom = document.querySelector('.hero-bottom');
   const arrival = document.querySelector('.arrival');
   let spaceTime = 0;
@@ -169,8 +168,7 @@
     hero.style.opacity=String(heroOpacity);
     hero.style.transform=`translate3d(0,${paused?0:-progress*100}px,0)`;
     hero.inert=heroOpacity<.05;
-    label.style.opacity=bottom.style.opacity=String(1-smooth(.01,.18,progress));
-    label.style.transform=`translate3d(${driftX*.45}px,${driftY*.45}px,0)`;
+    bottom.style.opacity=String(1-smooth(.01,.18,progress));
     arrival.style.opacity=paused?'0':String(smooth(.28,.43,progress)*(1-smooth(.59,.77,progress)));
     arrival.style.transform=`translate3d(0,${(1-smooth(.28,.6,progress))*20}px,0)`;
     starCanvas.style.opacity=String(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
