@@ -52,7 +52,10 @@
   function sizeEarth(){const dpr=Math.min(devicePixelRatio,1.5);earth.width=innerWidth*dpr;earth.height=viewportHeight*dpr;if(ctx)ctx.setTransform(dpr,0,0,dpr,0,0);sceneColumns=Math.ceil(innerWidth/CELL_WIDTH)+1;sceneLines=Math.ceil(viewportHeight/CELL_HEIGHT)+1;nextScene=new Uint16Array(sceneColumns*sceneLines);previousScene=new Uint16Array(sceneColumns*sceneLines);}
   sizeEarth();addEventListener('resize',sizeEarth);
   // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself.
-  if('ResizeObserver' in window)new ResizeObserver(()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}}).observe(stage);
+  // Start after load: iOS can run this before styles.css applies, when the stage is only as tall as its content,
+  // this canvas included, so each resize would make the stage taller and trigger another one.
+  const resizeStage=()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}};
+  addEventListener('load',()=>{resizeStage();if('ResizeObserver' in window)new ResizeObserver(resizeStage).observe(stage);});
   if(gl){try{gpu=window.createPlanetRenderer(gl,glyphSheet);}catch(error){console.warn('Using the compatible text renderer.',error.message);const replacement=earth.cloneNode(true);earth.replaceWith(replacement);earth=replacement;gl=null;ctx=earth.getContext('2d',{alpha:true});sizeEarth();}}
   function drawEarth() {
     if(gpu){gpu.render(otherWorlds,earthState,rotation,spaceTime,1-smooth(.05,.6,progress),1-smooth(90,300,earthState.r));return;}
@@ -158,7 +161,7 @@
     const driftY=Math.sin(spaceTime*.00014)*viewportHeight*.055;
     const moveX=(innerWidth*.5-baseX)*focus+(driftX+(paused?0:pointerX))*(1-focus);
     const moveY=(viewportHeight*.48-baseY)*focus+(driftY+(paused?0:pointerY))*(1-focus);
-    const diameter=mobile?90:Math.max(110,Math.min(innerWidth*.105,160));
+    const diameter=mobile?117:Math.max(143,Math.min(innerWidth*.1365,208));
     earthState={x:baseX+moveX,y:baseY+moveY,r:diameter*.44*(paused?1:zoom)};
     otherWorlds=[
       {kind:'saturn',x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00016)*innerWidth*.055-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00018)*30+focus*100,r:mobile?20:29,spin:spaceTime*.00012},

@@ -47,25 +47,26 @@
 .inner-page h1{max-width:1050px}
 .portfolio-index{padding-top:38px;padding-bottom:85px}
 .index-home-link{margin-bottom:40px}
-.index-heading{max-width:850px;margin-bottom:70px}
-.index-heading .eyebrow>span{color:#707c8d;margin-left:14px}
-.index-heading h1{font-size:clamp(62px,7.3vw,104px);line-height:1.02;letter-spacing:-4px;margin:0 0 28px}
-.index-description{color:#a3a9b3;max-width:530px;font-size:17px;line-height:1.85;margin:0}
+.index-heading{max-width:850px;margin-bottom:56px}
+.index-heading h1{font-size:clamp(62px,7.3vw,104px);line-height:1.02;letter-spacing:-4px;margin:0}
 .index-toolbar{border-top:1px solid var(--line);padding:23px 0 27px;display:flex;justify-content:space-between;gap:20px;font:10px var(--mono);letter-spacing:1.2px;color:#9ba7b6}
-.index-toolbar>span:last-child{color:#768291}
-.archive-grid{row-gap:58px}
+.archive-grid{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:58px}
+@media(min-width:1001px){
+  /* Three narrower cards per row: keep the artwork titles clear of the illustrations. */
+  .archive-grid .work-art-title{font-size:clamp(28px,2.6vw,40px);letter-spacing:-1.2px}
+  .archive-grid .art-community .work-art-title{font-size:clamp(25px,2.3vw,35px)}
+}
 .index-bottom{margin-top:84px;padding-top:34px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:24px}
 .index-bottom p{font:italic 30px Georgia,serif;color:var(--accent);margin:0}
 .inner-page .footer-email{font-size:13px;color:#a4afbe;overflow-wrap:anywhere}
 
 /* One template, with optional links, highlights, and any number of images. */
 .project-page{padding-top:38px;padding-bottom:84px}
-.breadcrumb{display:flex;justify-content:flex-start;gap:14px;flex-wrap:wrap;font:11px/1.6 var(--mono);color:#788697;margin-bottom:56px}
+/* Folder-style path (home / projects / slug) above each page title. */
+.breadcrumb{display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;font:13px/1.6 var(--mono);letter-spacing:.4px;color:#788697;margin-bottom:24px}
 .breadcrumb a{font:inherit;color:var(--accent-soft)}
 .breadcrumb a:hover{text-decoration:underline;text-underline-offset:5px}
 .project-heading{max-width:970px}
-.project-heading .eyebrow{text-transform:uppercase;margin-bottom:22px}
-.project-heading .eyebrow>span{color:#667283;margin-left:12px}
 .project-heading h1{font-size:clamp(48px,6.8vw,90px);letter-spacing:-3.6px;line-height:1.08;margin-bottom:22px;overflow-wrap:break-word}
 .project-subtitle{font:italic clamp(25px,3vw,37px)/1.3 Georgia,serif;color:var(--accent);margin:0 0 20px}
 .project-summary{font-size:17px;line-height:1.85;color:#a3aab5;max-width:660px;margin:0}
@@ -119,6 +120,7 @@
 @media(min-width:1500px){.work-art-title{font-size:54px}}
 @media(max-width:1000px){
   .inner-page .section-shell{width:86%}
+  .archive-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .case-layout{grid-template-columns:170px minmax(0,1fr);gap:6%}
   .featured-project .project-type{display:none}
   .work-art .art-topline{left:22px;right:22px;font-size:8px}
@@ -145,19 +147,15 @@
   .inner-page .site-header nav a{font-size:12px}
   .portfolio-index{padding-top:27px;padding-bottom:58px}
   .index-home-link{margin-bottom:32px}
-  .index-heading{margin-bottom:44px}
+  .index-heading{margin-bottom:40px}
   .index-heading h1{font-size:clamp(54px,13vw,78px);letter-spacing:-2.7px}
-  .index-heading .eyebrow{font-size:9px;letter-spacing:1px}
-  .index-description{font-size:15px;line-height:1.8}
   .index-toolbar{font-size:9px;letter-spacing:.6px;padding:21px 0}
-  .index-toolbar>span:last-child{display:none}
-  .archive-grid{gap:39px}
+  .archive-grid{grid-template-columns:1fr;gap:39px}
   .index-bottom{margin-top:56px;align-items:flex-start;flex-direction:column;gap:18px}
   .index-bottom p{font-size:27px}
   .project-page{padding-top:27px;padding-bottom:55px}
-  .breadcrumb{font-size:10px;gap:10px;margin-bottom:37px}
+  .breadcrumb{font-size:11px;gap:9px;margin-bottom:18px}
   .project-heading h1{font-size:clamp(41px,10.5vw,62px);letter-spacing:-1.9px;margin-bottom:19px}
-  .project-heading .eyebrow{font-size:9px;letter-spacing:1px}
   .project-subtitle{font-size:26px;line-height:1.4}
   .project-summary{font-size:15px;line-height:1.85}
   .project-facts{grid-template-columns:1fr 1fr;gap:23px 18px;padding:22px 0;margin-top:32px}
