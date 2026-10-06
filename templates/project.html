@@ -7,7 +7,7 @@
   <meta name="description" content="{{description}}">
   <title>{{title}} | Lucas Wu</title>
   <link rel="stylesheet" href="/styles.css?v=11">
-  <link rel="stylesheet" href="/projects.css?v=4">
+  <link rel="stylesheet" href="/projects.css?v=5">
   <script src="/galaxy.js?v=5" defer></script>
   <script src="/site.js?v=1" defer></script>
 </head>
@@ -16,9 +16,8 @@
   <canvas id="stars" aria-hidden="true"></canvas>
   {{header}}
   <main id="main" class="project-page section-shell">
-    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/projects/">All projects</a><span aria-hidden="true">/</span><span aria-current="page">{{title}}</span></nav>
     <header class="project-heading">
-      <p class="eyebrow">{{category}} <span>/ {{number}}</span></p>
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">home</a><span aria-hidden="true">/</span><a href="/projects/">projects</a><span aria-hidden="true">/</span><span aria-current="page">{{slug}}</span></nav>
       <h1>{{title}}</h1>
       <p class="project-subtitle">{{subtitle}}</p>
       <p class="project-summary">{{description}}</p>

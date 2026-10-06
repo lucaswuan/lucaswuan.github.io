@@ -83,8 +83,8 @@ export async function build() {
   for (const [i,project] of data.projects.entries()) {
     const next=data.projects[(i+1)%data.projects.length];
     const links=(project.links ?? []).map(link=>`<a class="outline-link" href="${escape(link.url)}" target="_blank" rel="noopener">${escape(link.label)} <span aria-hidden="true">↗</span></a>`).join('');
-    const values={...shared,...Object.fromEntries(['title','subtitle','category','role','year','status'].map(key=>[key,escape(project[key])])),
-      number:number(i+1), description:escape(project.summary),
+    const values={...shared,...Object.fromEntries(['slug','title','subtitle','role','year','status'].map(key=>[key,escape(project[key])])),
+      description:escape(project.summary),
       links:links ? `<div class="project-links">${links}</div>` : '',
       tags:(project.tags ?? []).map(tag=>`<li>${escape(tag)}</li>`).join(''),
       cover:artwork(project,{detail:true})+`<figcaption>${escape(project.cover?.caption ?? (project.cover ? '' : 'Project illustration'))}</figcaption>`,
