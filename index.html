@@ -6,9 +6,10 @@
   <meta name="description" content="Lucas Wu is an Electrical Engineering student at the University of Waterloo, designing RTL for a ray-tracing ASIC with UWASIC. Open to Jan–Apr 2027 co-op.">
   <title>Lucas Wu | Electrical Engineering @ UWaterloo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23080a0d'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23c4dcd9' stroke-width='2'/%3E%3Cellipse cx='32' cy='32' rx='8' ry='17' fill='none' stroke='%23c4dcd9'/%3E%3Cpath d='M15 32h34' stroke='%23c4dcd9'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
-  <script src="planet-renderer.js" defer></script>
-  <script src="app.js" defer></script>
+  <!-- Bump ?v= whenever a file changes so browsers don't keep a stale cached copy. -->
+  <link rel="stylesheet" href="styles.css?v=7">
+  <script src="planet-renderer.js?v=7" defer></script>
+  <script src="app.js?v=7" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#projects">Skip to projects</a>
@@ -54,18 +55,21 @@
 
     <section class="about-section section-shell" id="about" aria-labelledby="about-title"><div class="about-label reveal"><p class="eyebrow">02 — THE HUMAN BEHIND THE SCREEN</p><span class="ascii-star" aria-hidden="true">&nbsp;&nbsp;&nbsp; .<br>&nbsp;&nbsp; /|\<br>--+ * +--<br>&nbsp;&nbsp; \|/<br>&nbsp;&nbsp;&nbsp; '</span></div><div class="about-copy reveal"><h2 id="about-title">A curious mind.<br>A few open <em>tabs.</em></h2><p>I'm Your Name. I like turning “what if?” into something you can actually click on. This is where I keep my projects, explore new ideas, and learn by making.</p><p>Outside the screen? Usually collecting inspiration for whatever comes next.</p><div class="about-tags"><span>Building for the web</span><span>Learning as I go</span><span>Based on Earth</span></div></div></section>
 
-    <section class="about-section contact-section section-shell" id="contact" aria-labelledby="contact-title">
-      <div class="about-label reveal"><p class="eyebrow">03 / CONTACT</p></div>
-      <div class="about-copy reveal">
-        <h2 id="contact-title">Let's <em>talk.</em></h2>
+    <section class="contact-section section-shell" id="contact" aria-labelledby="contact-title">
+      <div class="contact-text reveal">
+        <p class="eyebrow">03 / CONTACT</p>
+        <h2 id="contact-title">Contact <em>me.</em></h2>
         <p>I'm looking for a Jan–Apr 2027 co-op. The fastest way to reach me is email.</p>
-        <a class="contact-email" href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a>
-        <div class="contact-links"><a href="https://github.com/lucaswuan" target="_blank" rel="noopener">GitHub</a><a href="https://www.linkedin.com/in/lucas-wu-339616352/" target="_blank" rel="noopener">LinkedIn</a></div>
       </div>
+      <ul class="contact-list reveal">
+        <li><span class="contact-key">Email:</span> <a href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a></li>
+        <li><span class="contact-key">GitHub:</span> <a href="https://github.com/lucaswuan" target="_blank" rel="noopener">github.com/lucaswuan</a></li>
+        <li><span class="contact-key">LinkedIn:</span> <a href="https://www.linkedin.com/in/lucas-wu-339616352/" target="_blank" rel="noopener">linkedin.com/in/lucas-wu-339616352</a></li>
+      </ul>
     </section>
   </main>
 
-  <footer class="site-footer section-shell"><a class="wordmark" href="#home">Lucas Wu</a><div class="footer-links"><a href="mailto:lucaswu2018@gmail.com">Email</a><a href="https://github.com/lucaswuan" target="_blank" rel="noopener">GitHub</a><a href="https://www.linkedin.com/in/lucas-wu-339616352/" target="_blank" rel="noopener">LinkedIn</a></div><span class="coordinate">© <span id="year">2026</span> LUCAS WU</span><a class="back-top" href="#home">Back to the stars</a></footer>
+  <footer class="site-footer section-shell"><a class="wordmark" href="#home">Lucas Wu</a><ul class="footer-links" aria-label="Contact links"><li><a href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a></li><li><a href="https://github.com/lucaswuan" target="_blank" rel="noopener">github.com/lucaswuan</a></li><li><a href="https://www.linkedin.com/in/lucas-wu-339616352/" target="_blank" rel="noopener">linkedin.com/in/lucas-wu-339616352</a></li></ul><span class="coordinate">© <span id="year">2026</span> LUCAS WU</span><a class="back-top" href="#home">Back to the stars</a></footer>
   <dialog id="project-dialog" aria-labelledby="dialog-title"><button class="dialog-close" aria-label="Close project">×</button><div class="dialog-inner"><p id="dialog-type" class="eyebrow"></p><h2 id="dialog-title"></h2><p id="dialog-summary" class="dialog-summary"></p><div id="dialog-tags" class="about-tags"></div><div class="dialog-rule"></div><p class="eyebrow">THE IDEA</p><p id="dialog-body"></p><p class="eyebrow dialog-label">A CLOSER LOOK</p><ul id="dialog-details"></ul><p class="sample-note">Sample project · Replace with your own story.</p></div></dialog>
 </body>
 </html>
