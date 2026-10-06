@@ -1,8 +1,6 @@
 (() => {
   'use strict';
   const CELL_WIDTH=6, CELL_HEIGHT=9;
-  // Turn off only this flag to restore the previous star motion, keeping the zoom fixes.
-  const SHARED_STAR_FLOW=true;
   let earth = document.querySelector('#earth');
   let gl=earth.getContext('webgl2',{alpha:true,antialias:false,depth:false,stencil:false,powerPreference:'high-performance'});
   let ctx=gl?null:earth.getContext('2d', {alpha:true});
@@ -13,10 +11,23 @@
   let landPixels = null;
   let rotation = 0;
   let frame = 0;
-  const media = matchMedia('(prefers-reduced-motion: reduce)');
-  let paused = media.matches;
-  try { paused = paused || localStorage.getItem('orbit-motion') === 'off'; } catch {}
-  const motionButton = document.querySelector('#motion-toggle');
+  const {canvas:starCanvas,glyphSheet:sourceGlyphSheet,media}=window.portfolioGalaxy;
+  // Each planet has its own palette, independent of the Milky Way's star colors.
+  const earthColors=['#87e5a2','#e1eff7','#369cff','#9bd2f0']; // land, clouds, ocean, rim
+  const planetColors=['#d8b77e','#ecdbb8','#f1d6cc','#ee9c92',...earthColors];
+  // Rows 0–1: Saturn gold/cream; 2–3: Jupiter pale cream/coral; 4–7: Earth.
+  const glyphSheet=document.createElement('canvas');
+  glyphSheet.width=sourceGlyphSheet.width;glyphSheet.height=planetColors.length*12;
+  const planetGlyphCtx=glyphSheet.getContext('2d');
+  planetColors.forEach((color,row)=>{
+    const strip=document.createElement('canvas');
+    strip.width=glyphSheet.width;strip.height=12;
+    const ink=strip.getContext('2d');
+    ink.drawImage(sourceGlyphSheet,0,0,strip.width,12,0,0,strip.width,12);
+    ink.globalCompositeOperation='source-in';
+    ink.fillStyle=color;ink.fillRect(0,0,strip.width,12);
+    planetGlyphCtx.drawImage(strip,0,row*12);
+  });
   const journey = document.querySelector('.journey');
   const stage = document.querySelector('.space-stage');
   const scene = document.querySelector('.planet-scene');
@@ -30,10 +41,8 @@
   const smooth = (a,b,x) => {const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
   // Use the stage's real height, not innerHeight: on phones it tracks the browser toolbar sliding in and out.
   function measure(){viewportHeight=stage.clientHeight||innerHeight;trackLength=Math.max(1,journey.offsetHeight-viewportHeight);}
-  function motionState(){document.body.classList.toggle('motion-paused',paused);motionButton.setAttribute('aria-pressed',String(paused));motionButton.setAttribute('aria-label',paused?'Resume animation':'Pause animation');motionButton.querySelector('.motion-text').textContent=paused?'Motion off':'Motion on';}
-  motionButton.addEventListener('click',()=>{paused=!paused;motionState();try{localStorage.setItem('orbit-motion',paused?'off':'on');}catch{}});
-  media.addEventListener('change',()=>{paused=media.matches;motionState();measure();});
-  motionState();measure();
+  media.addEventListener('change',measure);
+  measure();
   addEventListener('resize',measure);
   addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){pointerX=(e.clientX/innerWidth-.5)*8;pointerY=(e.clientY/innerHeight-.5)*8;}},{passive:true});
   let earthState={x:innerWidth*.74,y:innerHeight*.52,r:innerWidth*.1056};
@@ -44,20 +53,6 @@
   sizeEarth();addEventListener('resize',sizeEarth);
   // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself.
   if('ResizeObserver' in window)new ResizeObserver(()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}}).observe(stage);
-  // Cache the glyphs once so rotation does not rasterize thousands of letters every frame.
-  const glyphSheet=document.createElement('canvas');
-  const glyphChars=['.',':','+','*','#','■'];
-  glyphSheet.width=720;glyphSheet.height=48;
-  const glyphCtx=glyphSheet.getContext('2d');
-  glyphCtx.font='8px monospace';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';
-  ['250,251,253','227,230,235','175,181,191','211,229,248'].forEach((color,row)=>{
-    glyphChars.forEach((character,col)=>{
-      for(let shade=0;shade<12;shade++){
-        glyphCtx.fillStyle=`rgba(${color},${(shade+1)/12})`;
-        glyphCtx.fillText(character,(col*12+shade)*10+5,row*12+6);
-      }
-    });
-  });
   if(gl){try{gpu=window.createPlanetRenderer(gl,glyphSheet);}catch(error){console.warn('Using the compatible text renderer.',error.message);const replacement=earth.cloneNode(true);earth.replaceWith(replacement);earth=replacement;gl=null;ctx=earth.getContext('2d',{alpha:true});sizeEarth();}}
   function drawEarth() {
     if(gpu){gpu.render(otherWorlds,earthState,rotation,spaceTime,1-smooth(.05,.6,progress),1-smooth(90,300,earthState.r));return;}
@@ -73,8 +68,8 @@
       const x=(index%sceneColumns)*CELL_WIDTH,y=Math.floor(index/sceneColumns)*CELL_HEIGHT;
       ctx.clearRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
       if(code){
-        const character=(code&7)-1,row=(code>>3)&3,shade=(code>>5)&15;
-        ctx.globalAlpha=((code>>9)&31)/31;
+        const character=(code&7)-1,row=(code>>3)&7,shade=(code>>6)&15;
+        ctx.globalAlpha=((code>>10)&31)/31;
         ctx.fillRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
         ctx.drawImage(glyphSheet,(character*12+shade)*10,row*12,10,12,x-5,y-6,10,12);
       }
@@ -86,7 +81,7 @@
   function writeSceneCell(x,y,character,row,shade,opacity=1){
     const column=Math.round(x/CELL_WIDTH),line=Math.round(y/CELL_HEIGHT);
     if(column<0||column>=sceneColumns||line<0||line>=sceneLines||opacity<.02)return;
-    nextScene[line*sceneColumns+column]=(character+1)|(row<<3)|(shade<<5)|(Math.round(opacity*31)<<9);
+    nextScene[line*sceneColumns+column]=(character+1)|(row<<3)|(shade<<6)|(Math.round(opacity*31)<<10);
   }
   function drawRings(world,front){
     const angle=-.28+Math.sin(spaceTime*.00009)*.07;
@@ -102,7 +97,7 @@
       const core=1-Math.abs(band-.84)/.16;
       const character=core>.6?3:2;
       const shade=Math.min(11,Math.floor(7+core*3));
-      writeSceneCell(x,y,character,1,shade,world.opacity);
+      writeSceneCell(x,y,character,core>.6?1:0,shade,world.opacity);
     }}
   }
   function drawBody(world){
@@ -128,12 +123,13 @@
         const texture=.54+.46*bands;
         const value=brightness*texture;
         character=value>.65?4:value>.42?3:value>.22?2:1;
-        alpha=.22+.65*value;row=world.kind==='jupiter'?1:0;
+        alpha=.22+.65*value;row=world.kind==='jupiter'?(bands>.48?2:3):(bands>.45?1:0);
       }
-      else if(land){character=brightness>.6?4:brightness>.32?3:2;alpha=.43+.57*brightness;row=0;}
-      else if(cloud&&cloudStrength>0&&p.noise-Math.floor(p.noise)<cloudStrength){character=p.noise>.3?2:1;alpha=.17+.42*brightness+.08*cloudStrength;row=1;}
-      else{character=p.noise>.3?1:0;alpha=.17+.42*brightness;row=2;}
-      if(p.z<.1){character=0;alpha=.5;row=0;}
+      else if(land){character=brightness>.6?4:brightness>.32?3:2;alpha=.43+.57*brightness;row=4;}
+      else if(cloud&&cloudStrength>0&&p.noise-Math.floor(p.noise)<cloudStrength){character=p.noise>.3?2:1;alpha=.17+.42*brightness+.08*cloudStrength;row=5;}
+      // Broader + glyphs carry the ocean blue; shaded water stays lighter with :.
+      else{character=brightness>.25?2:1;alpha=.24+.5*brightness;row=6;}
+      if(p.z<.1){character=0;alpha=.5;row=world.kind==='earth'?7:world.kind==='jupiter'?2:1;}
       const shade=Math.max(0,Math.min(11,Math.round(alpha*12)-1));
       writeSceneCell(p.x,p.y,character,row,shade,world.opacity);
     }}
@@ -146,6 +142,7 @@
   }).catch(()=>drawEarth());
   const frameTimings=[];
   function animate(t){
+    const paused=window.portfolioGalaxy.paused;
     const elapsed=t-lastTime||16;
     if(profiling&&elapsed<250){frameTimings.push(elapsed);if(frameTimings.length===120){const sorted=[...frameTimings].sort((a,b)=>a-b);console.info('Animation: '+(120000/frameTimings.reduce((a,b)=>a+b,0)).toFixed(1)+' fps; p95 interval '+sorted[114].toFixed(1)+' ms; '+(gpu?'GPU':'compatible')+' grid');frameTimings.length=0;}}
     const dt=Math.min(elapsed,64);lastTime=t;
@@ -178,94 +175,11 @@
     starCanvas.style.opacity=String(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
     if(!paused&&!document.hidden&&t-frame>33){
       if(progress<.98&&scrollY<journey.offsetHeight){rotation+=.000022*Math.min(t-frame,100);}
-      drawStars(spaceTime);frame=t;
+      frame=t;
     }
     if(progress<.98&&scrollY<journey.offsetHeight)drawEarth();
     requestAnimationFrame(animate);
   }
-  const starCanvas=document.querySelector('#stars'),sctx=starCanvas.getContext('2d');
-  let starPoints=[],columns=0,lines=0,cellAlpha,cellGlyph,cellTone,previousStars;
-  // The star canvas is sized to the tallest viewport (toolbar hidden), so starH stays put while the toolbar moves.
-  let starW=0,starH=0,starDpr=0;
-  function galaxyCurve(u,t){return starH*(.92-u*.93+.09*Math.sin(u*Math.PI*1.8+t*.000017));}
-  function stars(){
-    const dpr=Math.min(devicePixelRatio,1.5),h=starCanvas.clientHeight||innerHeight;
-    if(innerWidth===starW&&h===starH&&dpr===starDpr)return;
-    starW=innerWidth;starH=h;starDpr=dpr;
-    starCanvas.width=innerWidth*dpr;starCanvas.height=starH*dpr;sctx.setTransform(dpr,0,0,dpr,0,0);
-    columns=Math.ceil(innerWidth/CELL_WIDTH)+1;lines=Math.ceil(starH/CELL_HEIGHT)+1;
-    cellAlpha=new Float32Array(columns*lines);cellGlyph=new Uint8Array(columns*lines);cellTone=new Uint8Array(columns*lines);previousStars=new Uint16Array(columns*lines);
-    let seed=23;const rand=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
-    starPoints=[];
-    const count=innerWidth<650?1300:2800;
-    for(let i=0;i<count;i++){
-      const across=Math.sqrt(-2*Math.log(Math.max(.0001,rand())))*Math.cos(rand()*Math.PI*2);
-      const spread=i<count*.83,choice=rand(),core=Math.exp(-across*across*.6);
-      const character=spread&&core>.7&&choice>.87?5:choice>.77?3:choice>.42?2:choice>.25?1:0;
-      starPoints.push({u:rand()*1.4-.2,v:spread?across:rand(),spread,character,tone:rand(),phase:rand()*Math.PI*2,speed:.6+rand()*.6,core});
-    }
-    drawStars(spaceTime);
-  }
-  function drawStars(t){
-    cellAlpha.fill(0);
-    // The galaxy is made entirely of text: no painted haze, gradients, or glow.
-    sctx.font='8px monospace';sctx.textAlign='center';sctx.textBaseline='middle';
-    for(const p of starPoints){
-      const flowSpeed=SHARED_STAR_FLOW?(p.spread?.000010*(1+.08*Math.sin(p.v*1.5)):.0000035):.000006*p.speed;
-      const u=((p.u+.2+t*flowSpeed)%1.4)-.2,x=u*innerWidth;
-      const width=starH*(.255+.035*Math.sin(u*3+t*(SHARED_STAR_FLOW?.000022:.000009)));
-      const current=Math.sin(u*5.5-t*.000065)*starH*.026;
-      const y=SHARED_STAR_FLOW?(p.spread?galaxyCurve(u,t)+p.v*width+current:p.v*starH+current*.3):(p.spread?galaxyCurve(u,t)+p.v*width+Math.sin(u*7+p.phase+t*.000045)*9:p.v*starH+Math.sin(t*.00005+p.phase)*5);
-      if(y<-10||y>starH+10)continue;
-      const distance=Math.hypot((x-innerWidth*.26)/(innerWidth*.39),(y-starH*.43)/(starH*.36));
-      const quiet=.48+.52*smooth(.25,1.2,distance);
-      const shapeBrightness=p.character===5?.95:p.character===3?.77:p.character===2?.6:.45;
-      const intensity=p.spread?( .17+.73*p.core)*shapeBrightness:.14+p.tone*.2;
-      const shimmer=.91+.09*Math.sin(t*.00025+p.phase);
-      const alpha=intensity*quiet*shimmer;
-      const row=p.character===5||p.tone>.72?3:0;
-      // The flow is sampled into fixed terminal cells; symbols never slide between cells.
-      const column=Math.round(x/CELL_WIDTH),line=Math.round(y/CELL_HEIGHT);
-      if(column<0||column>=columns||line<0||line>=lines)continue;
-      const index=line*columns+column;
-      if(alpha>cellAlpha[index]){cellAlpha[index]=alpha;cellGlyph[index]=p.character;cellTone[index]=row;}
-    }
-    for(let line=0;line<lines;line++){for(let column=0;column<columns;column++){
-      const index=line*columns+column,opacity=Math.round(cellAlpha[index]*31);
-      const code=opacity?((cellGlyph[index]+1)|(cellTone[index]<<3)|(opacity<<5)):0;
-      if(code===previousStars[index])continue;
-      const x=column*CELL_WIDTH,y=line*CELL_HEIGHT;
-      sctx.clearRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
-      if(code){sctx.globalAlpha=opacity/31;sctx.drawImage(glyphSheet,(cellGlyph[index]*12+11)*10,cellTone[index]*12,10,12,x-5,y-6,10,12);}
-      previousStars[index]=code;
-    }}
-    sctx.globalAlpha=1;
-  }
-  stars();addEventListener('resize',stars);
+
   drawEarth();requestAnimationFrame(animate);
-  const wave=document.querySelector('.waveform');for(let i=0;i<87;i++){const b=document.createElement('span');b.style.height=(8+Math.abs(Math.sin(i*.46)*Math.cos(i*.13))*92)+'%';wave.append(b);}
-  const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target);}});},{threshold:.08});
-  document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-  document.body.classList.add('js-ready');
-  document.querySelector('#year').textContent=String(new Date().getFullYear());
-  const projects=[
-    {name:'Atlas',type:'01 / WEB APP',summary:'A home for places worth remembering.',tags:['Travel journal','Maps','Personal project'],body:'A place to collect the cafés, quiet streets, and little discoveries that make a trip your own. Atlas brings your saved places and personal notes into one thoughtful travel journal.',details:['Save places alongside the stories behind them.','Organize discoveries into collections for each trip.','Revisit a journey through a map of your memories.']},
-    {name:'Frequency',type:'02 / EXPERIMENT',summary:'A quieter internet, one sound at a time.',tags:['Creative coding','Sound','Interaction design'],body:'An exploration of how sound and a simple interface can make room for focus. Frequency imagines a small, calm listening space built around ambient textures and gentle visual feedback.',details:['Mix ambient layers to create a personal soundscape.','Set aside a little time for uninterrupted focus.','Watch a subtle visualization respond to the sound.']},
-    {name:'Commonplace',type:'03 / PERSONAL TOOL',summary:'A little garden for links, notes, and passing thoughts.',tags:['Digital garden','Knowledge','Personal project'],body:'Good ideas rarely arrive fully formed. Commonplace gives passing thoughts, interesting links, and unfinished notes a home where connections can gradually grow.',details:['Capture an idea before it gets away.','Connect notes through shared themes and curiosity.','Return to older thoughts and see them in a new light.']}
-  ];
-  const dialog=document.querySelector('#project-dialog');
-  let lastFocused=null;
-  document.querySelectorAll('[data-project]').forEach(card=>card.addEventListener('click',()=>{
-    const p=projects[Number(card.dataset.project)];lastFocused=card;
-    document.querySelector('#dialog-title').textContent=p.name;
-    document.querySelector('#dialog-type').textContent=p.type;
-    document.querySelector('#dialog-summary').textContent=p.summary;
-    document.querySelector('#dialog-body').textContent=p.body;
-    const tags=document.querySelector('#dialog-tags');tags.replaceChildren(...p.tags.map(t=>{const el=document.createElement('span');el.textContent=t;return el;}));
-    const details=document.querySelector('#dialog-details');details.replaceChildren(...p.details.map(t=>{const el=document.createElement('li');el.textContent=t;return el;}));
-    dialog.showModal();document.body.style.overflow='hidden';dialog.scrollTop=0;
-  }));
-  document.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
-  dialog.addEventListener('close',()=>{document.body.style.overflow='';lastFocused?.focus({preventScroll:true});});
 })();
