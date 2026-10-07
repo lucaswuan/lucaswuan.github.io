@@ -43,6 +43,31 @@
     markCurrent();
   }
 
+  // About photos: repeat each column once so the drift (CSS, -50% per loop) wraps seamlessly.
+  // The repeats are hidden from screen readers. Photos clipped by the wall never count as on screen
+  // for lazy loading, so load them all once the section gets close instead of as they drift in.
+  const wall = document.querySelector('.photo-wall');
+  if (wall) {
+    wall.querySelectorAll('.wall-track').forEach(track => {
+      [...track.children].forEach(img => {
+        const repeat = img.cloneNode();
+        repeat.alt = '';
+        repeat.setAttribute('aria-hidden', 'true');
+        track.append(repeat);
+      });
+    });
+    const loadAll = () => wall.querySelectorAll('img').forEach(img => { img.loading = 'eager'; });
+    if ('IntersectionObserver' in window) {
+      const near = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) { loadAll(); near.disconnect(); }
+      }, { rootMargin: '800px 0px' });
+      near.observe(wall);
+    } else {
+      loadAll();
+    }
+    wall.classList.add('is-looping');
+  }
+
   if (!('IntersectionObserver' in window)) return;
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
