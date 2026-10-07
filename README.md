@@ -36,7 +36,15 @@ To replace the symbolic illustration with your own image, change `cover` from `n
 }
 ```
 
-That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image. If a card crops away the important part, add `"position"` with a CSS `object-position` value, for example `"position": "50% 20%"` to keep the upper part in view.
+That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image.
+
+Covers are large, so make smaller copies for phones and small cards after adding or replacing one:
+
+```sh
+python3 tools/make-image-sizes.py assets/projects/vex-robotics/competition-robot.jpg
+```
+
+It writes `competition-robot-600.webp`, `-1200.webp`, and so on up to the photo's width (plus `.avif` copies when they come out smaller) next to the original. The build lists them automatically, and each browser downloads the smallest copy that looks sharp where the cover is shown. It needs Pillow (`pip install pillow`). Covers without copies still work; they just always download the full file. If a card crops away the important part, add `"position"` with a CSS `object-position` value, for example `"position": "50% 20%"` to keep the upper part in view.
 
 Each project's `images` list accepts zero, one, or any number of images:
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { gallery, artwork, validate } from './build-projects.mjs';
+import { gallery, artwork, card, validate, SIZES } from './build-projects.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
@@ -40,6 +40,16 @@ test('a real cover replaces the illustration and preserves its description',()=>
   assert.ok(!html.includes('<svg'));
 });
 
+test('covers with sized copies list them for the browser to choose from',()=>{
+  const uwasic=data.projects.find(p=>p.slug==='uwasic');
+  const html=card(uwasic,0,true,SIZES.wide);
+  assert.ok(html.includes('<picture><source type="image/avif" srcset="/assets/projects/uwasic/gds-layout-600.avif 600w'));
+  assert.ok(html.includes('<source type="image/webp" srcset="/assets/projects/uwasic/gds-layout-600.webp 600w, /assets/projects/uwasic/gds-layout-1200.webp 1200w, /assets/projects/uwasic/gds-layout-2400.webp 2400w"'));
+  assert.ok(html.includes(`sizes="${SIZES.wide}"`));
+  assert.ok(html.includes('<img src="/assets/projects/uwasic/gds-layout.webp"'));
+  assert.ok(!artwork({...uwasic,cover:fixture}).includes('<picture>'),'images without copies stay a plain <img>');
+});
+
 test('content validation catches duplicate pages, invalid image paths, and missing photos',async()=>{
   await validate(data);
   const duplicate=structuredClone(data);
@@ -66,8 +76,8 @@ test('every generated page and homepage has working local navigation and assets'
     assert.equal((html.match(/<h1[ >]/g) ?? []).length,1,`${file}: one main heading`);
     assert.ok(!html.includes('{{'),`${file}: no unresolved templates`);
     assert.ok(!html.includes('<dialog'),`${file}: project links replace popups`);
-    for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
-      const link=match[1];
+    const srcsets=[...html.matchAll(/srcset="([^"]+)"/g)].flatMap(m=>m[1].split(',').map(c=>c.trim().split(/\s+/)[0]));
+    for (const link of [...[...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(m=>m[1]),...srcsets]) {
       if (/^(?:https?:|mailto:|data:)/.test(link)) continue;
       const parsed=new URL(link,'https://local.test/'+file);
       let target=path.join(root,decodeURIComponent(parsed.pathname));

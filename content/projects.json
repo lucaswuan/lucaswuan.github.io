@@ -154,22 +154,30 @@
       "art": "community",
       "artTitle": "Small lessons.\nLasting impact.",
       "artLabel": "TEACHING / VOLUNTEERING / FUNDRAISING",
-      "summary": "A student-run nonprofit bringing together tutoring, volunteer organizing, and fundraising for children’s healthcare.",
-      "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising"],
+      "summary": "A student-run tutoring nonprofit that gives all of its proceeds to children’s healthcare: $5,335 so far for the Alberta Children’s Hospital Foundation.",
+      "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising", "WordPress"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/calgary-ace/cheque-presentation.webp",
+        "alt": "Six members of Calgary Ace Learning Center in front of the Alberta Children’s Hospital Foundation logo, holding a large cheque made out to the foundation for $5,335.",
+        "caption": "Presenting our cheque for $5,335 to the Alberta Children’s Hospital Foundation, December 2025."
+      },
       "highlights": [
         {"value": "400+", "label": "Volunteer hours contributed"},
-        {"value": "$5,000+", "label": "Raised for the Alberta Children’s Hospital Foundation"}
+        {"value": "$5,335", "label": "Donated to the Alberta Children’s Hospital Foundation"}
       ],
-      "overview": ["I co-founded Calgary Ace Learning Center, a student-run nonprofit. My work focuses on tutoring, organizing, and fundraising: contributing time to help students learn while supporting a cause beyond the classroom."],
+      "overview": ["I co-founded Calgary Ace Learning Center (CALC), a nonprofit where IB and AP students tutor younger students. All of the proceeds from tutoring go to the Alberta Children’s Hospital Foundation.", "I tutor, help run the organization, led our fundraising, and built our website."],
       "sections": [
-        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours through tutoring and organizing. Teaching is a central part of my involvement, alongside the work needed to help a student-run organization operate."]},
-        {"title": "Fundraising for children’s healthcare", "body": ["I led fundraising that raised more than $5,000 for the Alberta Children’s Hospital Foundation. This work connected our student-led organization with a broader community purpose."]},
-        {"title": "Building the organization", "body": ["As a co-founder, I contribute to both the educational work and the organization behind it. I also built its WordPress website to support its online presence."]}
+        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours to tutoring and organizing. Teaching is the core of what we do: students who have been through demanding courses help younger students build the same skills."]},
+        {"title": "Giving it all to children’s healthcare", "body": ["Every dollar from tutoring goes to the Alberta Children’s Hospital Foundation. On December 4, 2025, we presented the foundation with a cheque for $5,335, and we signed our names on a heart that is still on the wall there."], "images": [
+          {"src": "/assets/projects/calgary-ace/signed-heart.webp", "alt": "A red paper heart on a painted green wall, signed “Calgary Ace Learning” with six names, including Lucas Wu, and a smiley face.", "caption": "The heart we signed, still on the wall."}
+        ]},
+        {"title": "Building the website", "body": ["I built CALC’s website in WordPress. It introduces our services and our team, shares updates on a bulletin page, and lets families book tutoring sessions."], "images": [
+          {"src": "/assets/projects/calgary-ace/calc-website.webp", "alt": "The Calgary Ace Learning Center home page: a pink banner reading “Get Ahead Today” and a Book button beside a photo of a tutoring session framed by hand-drawn math doodles, with Our Team, Bulletin, Home, and Book links above.", "caption": "The home page of the WordPress site I built."}
+        ]}
       ],
       "images": [],
-      "outcome": ["An ongoing commitment to education and community service, with more than 400 volunteer hours contributed and $5,000+ raised for the Alberta Children’s Hospital Foundation."]
+      "outcome": ["An ongoing commitment to education and community service: more than 400 volunteer hours, and $5,335 donated to the Alberta Children’s Hospital Foundation so far."]
     }
   ]
 }

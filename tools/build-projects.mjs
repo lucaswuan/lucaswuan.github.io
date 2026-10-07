@@ -1,4 +1,5 @@
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -7,6 +8,28 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&am
 const number = n => String(n).padStart(2, '0');
 const url = project => `/projects/${project.slug}/`;
 const paragraphs = values => (values ?? []).map(value => `<p>${escape(value)}</p>`).join('\n');
+
+// How wide a cover is drawn in each place (from projects.css), so the browser can pick the smallest sharp copy.
+export const SIZES = {
+  wide: '(max-width: 1000px) 86vw, min(1220px, 82vw)',                                  // featured home card, project page
+  half: '(max-width: 650px) 86vw, (max-width: 1000px) 43vw, min(595px, 41vw)',          // other home cards
+  third: '(max-width: 650px) 86vw, (max-width: 1000px) 43vw, min(387px, 27vw)'          // project index cards
+};
+
+// Smaller copies made by tools/make-image-sizes.py sit beside the image as <name>-<width>.avif / .webp.
+function sizedCopies(src) {
+  const dir = path.posix.dirname(src), stem = path.posix.basename(src).replace(/\.[^.]+$/, '');
+  let files = [];
+  try { files = readdirSync(path.join(root, '.' + dir)); } catch { return []; }
+  const widths = {avif: [], webp: []};
+  for (const file of files) {
+    const match = file.match(/^(.+)-(\d+)\.(avif|webp)$/);
+    if (match && match[1] === stem) widths[match[3]].push(Number(match[2]));
+  }
+  return ['avif', 'webp'].filter(type => widths[type].length).map(type => ({
+    type, srcset: widths[type].sort((a, b) => a - b).map(w => `${dir}/${stem}-${w}.${type} ${w}w`).join(', ')
+  }));
+}
 
 // These are symbolic illustrations, not photographs, screenshots, or circuit schematics.
 function illustration(kind) {
@@ -24,15 +47,19 @@ function illustration(kind) {
   return `<svg class="work-illustration" viewBox="0 0 420 320" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${art[kind] ?? art.chip}</svg>`;
 }
 
-export function artwork(project, {detail=false}={}) {
-  // An optional cover.position (a CSS object-position) chooses which part stays visible when a card crops the image.
-  const focus = project.cover?.position ? ` style="object-position:${escape(project.cover.position)}"` : '';
-  if (project.cover) return `<span class="project-art photo-art"><img src="${escape(project.cover.src)}" alt="${escape(project.cover.alt)}"${focus} ${detail ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></span>`;
+export function artwork(project, {detail=false, sizes=SIZES.third}={}) {
+  if (project.cover) {
+    // An optional cover.position (a CSS object-position) chooses which part stays visible when a card crops the image.
+    const focus = project.cover.position ? ` style="object-position:${escape(project.cover.position)}"` : '';
+    const img = `<img src="${escape(project.cover.src)}" alt="${escape(project.cover.alt)}"${focus} ${detail ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
+    const sources = sizedCopies(project.cover.src).map(s => `<source type="image/${s.type}" srcset="${escape(s.srcset)}" sizes="${sizes}">`).join('');
+    return `<span class="project-art photo-art">${sources ? `<picture>${sources}${img}</picture>` : img}</span>`;
+  }
   return `<span class="project-art work-art art-${escape(project.art)}"><span class="art-topline"><span>${escape(project.title)}</span><span aria-hidden="true">${detail ? 'PROJECT NOTES' : 'EXPLORE ↗'}</span></span><span class="work-art-title">${project.artTitle.split('\n').map(escape).join('<br>')}</span>${illustration(project.art)}<span class="art-bottomline">${escape(project.artLabel)}</span></span>`;
 }
 
-export function card(project, index, featured=false) {
-  return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project)}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true">↗</span></span></a>`;
+export function card(project, index, featured=false, sizes=SIZES.third) {
+  return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project,{sizes})}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true">↗</span></span></a>`;
 }
 
 // Gallery items ending in .mp4 or .webm play as videos; an optional "poster" is the still shown before playing.
@@ -100,7 +127,7 @@ export async function build() {
       description:escape(project.summary),
       links:links ? `<div class="project-links">${links}</div>` : '',
       tags:(project.tags ?? []).map(tag=>`<li>${escape(tag)}</li>`).join(''),
-      cover:artwork(project,{detail:true})+`<figcaption>${escape(project.cover?.caption ?? (project.cover ? '' : 'Project illustration'))}</figcaption>`,
+      cover:artwork(project,{detail:true,sizes:SIZES.wide})+`<figcaption>${escape(project.cover?.caption ?? (project.cover ? '' : 'Project illustration'))}</figcaption>`,
       highlights:project.highlights?.length ? `<dl class="project-highlights">${project.highlights.map(h=>`<div><dt>${escape(h.label)}</dt><dd>${escape(h.value)}</dd></div>`).join('')}</dl>` : '',
       overview:paragraphs(project.overview),
       sections:(project.sections ?? []).map(section=>`<div class="work-section"><h3>${escape(section.title)}</h3>${paragraphs(section.body)}${section.bullets?.length ? `<ul>${section.bullets.map(b=>`<li>${escape(b)}</li>`).join('')}</ul>` : ''}${gallery(section.images,false)}</div>`).join('\n'),
@@ -117,7 +144,7 @@ export async function build() {
   const start='<!-- featured-projects:start -->',end='<!-- featured-projects:end -->';
   const startAt=home.indexOf(start),endAt=home.indexOf(end);
   if (startAt<0 || endAt<startAt) throw new Error('Homepage featured-project markers are missing.');
-  const cards=data.featured.map((slug,i)=>card(data.projects.find(p=>p.slug===slug),i,i===0)).join('\n');
+  const cards=data.featured.map((slug,i)=>card(data.projects.find(p=>p.slug===slug),i,i===0,i===0?SIZES.wide:SIZES.half)).join('\n');
   home=home.slice(0,startAt+start.length)+'\n'+cards+'\n'+home.slice(endAt);
   home=home.replace(/(<span class="nav-count">)\d+(<\/span>)/,(_,before,after)=>before+count+after);
   await writeFile(homeFile,home);
