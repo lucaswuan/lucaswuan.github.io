@@ -46,7 +46,6 @@
 .inner-page .section-shell{width:min(1220px,82%)}
 .inner-page h1{max-width:1050px}
 .portfolio-index{padding-top:38px;padding-bottom:85px}
-.index-home-link{margin-bottom:40px}
 .index-heading{max-width:850px;margin-bottom:56px}
 .index-heading h1{font-size:clamp(62px,7.3vw,104px);line-height:1.02;letter-spacing:-4px;margin:0}
 .index-toolbar{border-top:1px solid var(--line);padding:23px 0 27px;display:flex;justify-content:space-between;gap:20px;font:10px var(--mono);letter-spacing:1.2px;color:#9ba7b6}
@@ -62,8 +61,11 @@
 
 /* One template, with optional links, highlights, and any number of images. */
 .project-page{padding-top:38px;padding-bottom:84px}
-/* Folder-style path (home / projects / slug) above each page title. */
-.breadcrumb{display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;font:13px/1.6 var(--mono);letter-spacing:.4px;color:#788697;margin-bottom:24px}
+/* Top row of interior pages: the folder-style path (home / projects / slug) on the left and a
+   way back on the right, in the same place on every page. */
+.page-bar{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:14px}
+.page-back{flex-shrink:0}
+.breadcrumb{display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;font:13px/1.6 var(--mono);letter-spacing:.4px;color:#788697}
 .breadcrumb a{font:inherit;color:var(--accent-soft)}
 .breadcrumb a:hover{text-decoration:underline;text-underline-offset:5px}
 .project-heading{max-width:970px}
@@ -146,7 +148,6 @@
   .inner-page .site-header nav{gap:18px}
   .inner-page .site-header nav a{font-size:12px}
   .portfolio-index{padding-top:27px;padding-bottom:58px}
-  .index-home-link{margin-bottom:32px}
   .index-heading{margin-bottom:40px}
   .index-heading h1{font-size:clamp(54px,13vw,78px);letter-spacing:-2.7px}
   .index-toolbar{font-size:9px;letter-spacing:.6px;padding:21px 0}
@@ -154,7 +155,8 @@
   .index-bottom{margin-top:56px;align-items:flex-start;flex-direction:column;gap:18px}
   .index-bottom p{font-size:27px}
   .project-page{padding-top:27px;padding-bottom:55px}
-  .breadcrumb{font-size:11px;gap:9px;margin-bottom:18px}
+  .page-bar{flex-direction:column-reverse;align-items:flex-start;gap:26px;margin-bottom:18px}
+  .breadcrumb{font-size:11px;gap:9px}
   .project-heading h1{font-size:clamp(41px,10.5vw,62px);letter-spacing:-1.9px;margin-bottom:19px}
   .project-subtitle{font-size:26px;line-height:1.4}
   .project-summary{font-size:15px;line-height:1.85}
