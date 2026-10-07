@@ -52,7 +52,11 @@
       "summary": "An interactive ASL learning website that connects live hand-pose recognition with guided lessons.",
       "tags": ["Python", "Flask", "MediaPipe", "OpenCV", "JavaScript", "HTML / CSS"],
       "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/hackTheBias2026"}],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/signed/team-win.webp",
+        "alt": "The five-person SignEd team standing in front of a projected slide that reads “1st Place Winner, Beginner Tier, $650, SignEd”, most of them making the ASL “I love you” sign.",
+        "caption": "Our team after SignEd won first place in the Beginner Track at Hack the Bias."
+      },
       "highlights": [
         {"value": "Winner", "label": "Hack the Bias · Beginner Track"},
         {"value": "21", "label": "3D hand landmarks"},
