@@ -18,7 +18,8 @@
         link.style.setProperty('--grow', String(Math.max(0, 1 - distance / 72)));
       });
     });
-    sectionNav.addEventListener('pointerleave', () => links.forEach(link => link.style.setProperty('--grow', '0')));
+    const shrink = () => links.forEach(link => link.style.setProperty('--grow', '0'));
+    sectionNav.addEventListener('pointerleave', shrink);
     let queued = false;
     const markCurrent = () => {
       queued = false;
@@ -29,6 +30,10 @@
       // The last section may be too short to reach that line, so the bottom of the page selects it.
       if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) current = sections.length - 1;
       links.forEach((link, i) => i === current ? link.setAttribute('aria-current', 'true') : link.removeAttribute('aria-current'));
+      // Stay out of the opening banner: appear once the planet has gone and Projects is in view.
+      const visible = current > 0;
+      if (!visible) shrink();
+      sectionNav.classList.toggle('is-visible', visible);
     };
     const queue = () => {
       if (!queued) { queued = true; requestAnimationFrame(markCurrent); }

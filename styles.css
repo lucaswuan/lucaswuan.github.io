@@ -45,7 +45,8 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 /* Homepage side navigation, wide screens only: section titles that grow under the pointer. */
 .section-nav{display:none}
 @media(min-width:1200px){
-  .section-nav{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:9;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+  .section-nav{position:fixed;left:24px;top:50%;transform:translate(-8px,-50%);z-index:9;display:flex;flex-direction:column;align-items:flex-start;gap:0;opacity:0;visibility:hidden;transition:opacity .35s,transform .35s,visibility 0s linear .35s}
+  .section-nav.is-visible{opacity:1;visibility:visible;transform:translate(0,-50%);transition:opacity .35s,transform .35s}
   .section-nav a{--grow:0;padding:7px 0;font:11px var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:#969ca6;opacity:calc(.55 + var(--grow)*.45);transition:opacity .25s,color .2s}
   .section-nav span{display:inline-block;transform:scale(calc(1 + var(--grow)*.3));transform-origin:left center;transition:transform .25s cubic-bezier(.2,.7,.2,1)}
   .section-nav a:hover{color:var(--paper)}
