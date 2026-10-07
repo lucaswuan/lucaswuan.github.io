@@ -36,7 +36,15 @@ To replace the symbolic illustration with your own image, change `cover` from `n
 }
 ```
 
-That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image. If a card crops away the important part, add `"position"` with a CSS `object-position` value, for example `"position": "50% 20%"` to keep the upper part in view.
+That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image.
+
+Covers are large, so make smaller copies for phones and small cards after adding or replacing one:
+
+```sh
+python3 tools/make-image-sizes.py assets/projects/vex-robotics/competition-robot.jpg
+```
+
+It writes `competition-robot-600.webp`, `-1200.webp`, and so on up to the photo's width (plus `.avif` copies when they come out smaller) next to the original. The build lists them automatically, and each browser downloads the smallest copy that looks sharp where the cover is shown. It needs Pillow (`pip install pillow`). Covers without copies still work; they just always download the full file. If a card crops away the important part, add `"position"` with a CSS `object-position` value, for example `"position": "50% 20%"` to keep the upper part in view.
 
 Each project's `images` list accepts zero, one, or any number of images:
 
@@ -59,6 +67,19 @@ Each project's `images` list accepts zero, one, or any number of images:
 Empty galleries are omitted entirely. One image fills the width. Multiple images use two columns on desktop and one on mobile; an odd-numbered gallery starts with a full-width image. `wide: true` can make any image full-width. Images retain their proportions and link to the original file. The build checks that files exist and have alt text.
 
 For images beside a particular part of the story, add an `images` list inside any entry in `sections`. It uses the same format. You can have both section images and the main gallery.
+
+Gallery items can also be short videos. Use an `.mp4` (H.264, plays in every browser) or `.webm` file as `src`, and add a `poster` image to show before it plays:
+
+```json
+{
+  "src": "/assets/projects/vex-robotics/catapult-launch.mp4",
+  "poster": "/assets/projects/vex-robotics/catapult-launch-poster.webp",
+  "alt": "Describe what happens in the video",
+  "caption": "An optional caption."
+}
+```
+
+Videos play in place with the browser's controls. Keep them short and compressed; phone videos also carry location data, so re-encode them without metadata before adding them. Covers must be images.
 
 ## Add a project
 

@@ -52,7 +52,11 @@
       "summary": "An interactive ASL learning website that connects live hand-pose recognition with guided lessons.",
       "tags": ["Python", "Flask", "MediaPipe", "OpenCV", "JavaScript", "HTML / CSS"],
       "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/hackTheBias2026"}],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/signed/team-win.webp",
+        "alt": "The five-person SignEd team standing in front of a projected slide that reads “1st Place Winner, Beginner Tier, $650, SignEd”, most of them making the ASL “I love you” sign.",
+        "caption": "Our team after SignEd won first place in the Beginner Track at Hack the Bias."
+      },
       "highlights": [
         {"value": "Winner", "label": "Hack the Bias · Beginner Track"},
         {"value": "21", "label": "3D hand landmarks"},
@@ -73,28 +77,35 @@
       "subtitle": "Build. Test. Tune. Compete.",
       "category": "Robotics",
       "year": "2020–2023",
-      "role": "Robot design, build & programming",
+      "role": "Built the intake, flywheel & catapult; programmed autonomous",
       "status": "Competition project",
       "art": "robot",
       "artTitle": "Built for\nthe field.",
-      "artLabel": "DRIVETRAIN / INTAKE / FLYWHEEL",
-      "summary": "A VEX V5 competition robot, from mechanical design and autonomous routines to the 2023 World Championship.",
+      "artLabel": "INTAKE / FLYWHEEL / CATAPULT",
+      "summary": "A VEX competition robot: a flywheel design that qualified our team for the 2023 World Championship, then a catapult rebuild.",
       "tags": ["VEX V5", "Mechanical design", "Autonomous programming", "Iterative testing"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/vex-robotics/flywheel-robot.webp",
+        "alt": "Team 2088D’s first robot on the floor: an aluminum VEX frame on omni wheels with a disc intake, a flywheel, and a red 2088D license plate.",
+        "caption": "Design 1: the flywheel robot that qualified our team for Worlds.",
+        "position": "50% 35%"
+      },
       "highlights": [
         {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
-        {"value": "2023", "label": "World Championship · Dallas"},
-        {"value": "V5", "label": "VEX robotics platform"}
+        {"value": "2023", "label": "World Championship · Dallas"}
       ],
-      "overview": ["I designed and built a VEX V5 competition robot and programmed its autonomous routines. My work covered the drivetrain, disc intake, and flywheel launcher, with repeated testing and mechanical adjustments between iterations."],
+      "overview": ["I competed in VEX robotics on team 2088D. Over the 2022–23 season we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I built the intake, the flywheel, and the catapult, and I programmed the autonomous routines."],
       "sections": [
-        {"title": "Mechanical design", "body": ["I designed and built the drivetrain, intake, and flywheel launcher. These systems needed to work together to move around the field, collect discs, and launch them consistently."]},
-        {"title": "Testing & iteration", "body": ["I iteratively tuned flywheel speed and intake spacing to improve shooting consistency and reduce jams. This work connected observations on the field with changes to the mechanism and its settings."]},
-        {"title": "Autonomous routines", "body": ["Alongside the mechanical work, I programmed the robot’s autonomous routines. The project combined robot construction, programming, and competition testing."]}
+        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I built both, then tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
+        {"title": "Autonomous routines", "body": ["I programmed the robot’s autonomous routines: the code that drives it on its own at the start of each match and in programming skills runs."]},
+        {"title": "Design 2: the catapult rebuild", "body": ["Even after tuning, the flywheel wasn’t as reliable as we wanted. After qualifying for Worlds, we rebuilt the robot around a catapult, which launches a whole stack of discs in one motion. I built the catapult."], "images": [
+          {"src": "/assets/projects/vex-robotics/catapult-rebuild.webp", "alt": "The rebuilt robot on a workbench, nearly finished: an aluminum frame on omni wheels with a geared catapult arm held back by rubber bands, and a practice field behind it.", "caption": "The catapult rebuild, nearly finished."},
+          {"src": "/assets/projects/vex-robotics/catapult-launch.mp4", "poster": "/assets/projects/vex-robotics/catapult-launch-poster.webp", "alt": "Video of the catapult launching a stack of three discs into the goal.", "caption": "The catapult launching three discs into the goal."}
+        ]}
       ],
       "images": [],
-      "outcome": ["Our team placed second in Alberta Provincial Robot Skills and qualified for the VEX Robotics World Championship. We competed in Dallas in 2023."]
+      "outcome": ["The flywheel robot placed second in Alberta Provincial Robot Skills and qualified our team for the VEX Robotics World Championship, where we competed in Dallas in 2023. Its reliability problems led to the catapult rebuild."]
     },
     {
       "slug": "cpp-ray-tracer",
@@ -107,19 +118,30 @@
       "art": "rays",
       "artTitle": "A study\nin light.",
       "artLabel": "RAYS / SPHERES / MONTE CARLO",
-      "summary": "A C++ path tracer exploring ray geometry, diffuse shading, and the trade-off between image noise and render time.",
-      "tags": ["C++", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
+      "summary": "A C++ path tracer built up in stages, from a first ray–sphere hit test to Monte Carlo diffuse lighting.",
+      "tags": ["C++", "Vector math", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/cpp-ray-tracer/04-diffuse-final.webp",
+        "alt": "The ray tracer’s final render: a matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise.",
+        "caption": "The final render: diffuse lighting averaged over many random samples per pixel."
+      },
       "highlights": [],
-      "overview": ["I built a C++ path tracer using the framework from Ray Tracing in One Weekend. This was a learning project focused on understanding how geometric intersections and repeated light sampling turn a scene into an image."],
+      "overview": ["I built a path tracer from scratch in C++, following the approach in Ray Tracing in One Weekend. It sends rays from the camera through each pixel into the scene and works out what colour each one should be.", "I built it up in four stages, each adding one idea and checked with a render before moving on: first finding what a ray hits, then the surface’s orientation, then a sky, and finally how light bounces."],
       "sections": [
-        {"title": "Geometry & intersections", "body": ["I implemented parametric rays, ray-sphere intersections, and surface normals. These establish where a ray meets the scene and the orientation of the surface at that point."]},
-        {"title": "Shading & sampling", "body": ["I implemented Monte Carlo diffuse shading and multisample anti-aliasing to render spheres with smoother edges and reduced image noise."]},
-        {"title": "Quality versus rendering time", "body": ["I analyzed how samples per pixel affect image noise and rendering time. This made sampling a practical trade-off to investigate as well as a part of the rendering algorithm."]}
+        {"title": "Stage 1: rays and a sphere", "body": ["Each ray is a parametric line, P(t) = O + t·d. Substituting it into the sphere’s equation gives a quadratic in t: the discriminant says whether the ray misses, grazes, or hits the sphere, and the smallest positive root is the point the camera sees.", "For the first render, rays that hit the sphere were coloured red and rays that missed were black."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/01-hit-test.webp", "alt": "A flat red circle on a black background.", "caption": "Stage 1: the hit test. Red where a ray hits the sphere, black where it misses."}
+        ]},
+        {"title": "Stage 2: surface normals", "body": ["To make the sphere look three-dimensional, each hit point needs a surface normal. For a sphere it is the direction from the centre to the hit point, (P − C) / R. Before adding any lighting, I checked the normals visually by mapping their x, y, and z components from [−1, 1] to red, green, and blue."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/02-surface-normals.webp", "alt": "A sphere on a black background, shaded in a smooth gradient of cyan, blue, purple, and pink by the direction its surface faces.", "caption": "Stage 2: each pixel coloured by the direction of the surface normal."}
+        ]},
+        {"title": "Stage 3: a sky", "body": ["Next, I replaced the black background with a sky. Each ray that misses takes its colour from a linear blend between white and blue, based on how far up it points."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/03-sky-gradient.webp", "alt": "The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom.", "caption": "Stage 3: a gradient sky behind the sphere."}
+        ]},
+        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders. The result is at the top of this page."]}
       ],
       "images": [],
-      "outcome": ["Built a working C++ path tracer and explored the relationship between geometry, shading, sampling, and image quality. The implementation follows the educational framework of Ray Tracing in One Weekend."]
+      "outcome": ["The finished ray tracer turns vectors, quadratic equations, and random sampling into soft, realistic shading. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes."]
     },
     {
       "slug": "calgary-ace",
@@ -132,22 +154,30 @@
       "art": "community",
       "artTitle": "Small lessons.\nLasting impact.",
       "artLabel": "TEACHING / VOLUNTEERING / FUNDRAISING",
-      "summary": "A student-run nonprofit bringing together tutoring, volunteer organizing, and fundraising for children’s healthcare.",
-      "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising"],
+      "summary": "A student-run tutoring nonprofit that gives all of its proceeds to children’s healthcare: $5,335 so far for the Alberta Children’s Hospital Foundation.",
+      "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising", "WordPress"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/calgary-ace/cheque-presentation.webp",
+        "alt": "Six members of Calgary Ace Learning Center in front of the Alberta Children’s Hospital Foundation logo, holding a large cheque made out to the foundation for $5,335.",
+        "caption": "Presenting our cheque for $5,335 to the Alberta Children’s Hospital Foundation, December 2025."
+      },
       "highlights": [
         {"value": "400+", "label": "Volunteer hours contributed"},
-        {"value": "$5,000+", "label": "Raised for the Alberta Children’s Hospital Foundation"}
+        {"value": "$5,335", "label": "Donated to the Alberta Children’s Hospital Foundation"}
       ],
-      "overview": ["I co-founded Calgary Ace Learning Center, a student-run nonprofit. My work focuses on tutoring, organizing, and fundraising: contributing time to help students learn while supporting a cause beyond the classroom."],
+      "overview": ["I co-founded Calgary Ace Learning Center (CALC), a nonprofit where IB and AP students tutor younger students. All of the proceeds from tutoring go to the Alberta Children’s Hospital Foundation.", "I tutor, help run the organization, led our fundraising, and built our website."],
       "sections": [
-        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours through tutoring and organizing. Teaching is a central part of my involvement, alongside the work needed to help a student-run organization operate."]},
-        {"title": "Fundraising for children’s healthcare", "body": ["I led fundraising that raised more than $5,000 for the Alberta Children’s Hospital Foundation. This work connected our student-led organization with a broader community purpose."]},
-        {"title": "Building the organization", "body": ["As a co-founder, I contribute to both the educational work and the organization behind it. I also built its WordPress website to support its online presence."]}
+        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours to tutoring and organizing. Teaching is the core of what we do: students who have been through demanding courses help younger students build the same skills."]},
+        {"title": "Giving it all to children’s healthcare", "body": ["Every dollar from tutoring goes to the Alberta Children’s Hospital Foundation. On December 4, 2025, we presented the foundation with a cheque for $5,335, and we signed our names on a heart that is still on the wall there."], "images": [
+          {"src": "/assets/projects/calgary-ace/signed-heart.webp", "alt": "A red paper heart on a painted green wall, signed “Calgary Ace Learning” with six names, including Lucas Wu, and a smiley face.", "caption": "The heart we signed, still on the wall."}
+        ]},
+        {"title": "Building the website", "body": ["I built CALC’s website in WordPress. It introduces our services and our team, shares updates on a bulletin page, and lets families book tutoring sessions."], "images": [
+          {"src": "/assets/projects/calgary-ace/calc-website.webp", "alt": "The Calgary Ace Learning Center home page: a pink banner reading “Get Ahead Today” and a Book button beside a photo of a tutoring session framed by hand-drawn math doodles, with Our Team, Bulletin, Home, and Book links above.", "caption": "The home page of the WordPress site I built."}
+        ]}
       ],
       "images": [],
-      "outcome": ["An ongoing commitment to education and community service, with more than 400 volunteer hours contributed and $5,000+ raised for the Alberta Children’s Hospital Foundation."]
+      "outcome": ["An ongoing commitment to education and community service: more than 400 volunteer hours, and $5,335 donated to the Alberta Children’s Hospital Foundation so far."]
     }
   ]
 }

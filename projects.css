@@ -34,6 +34,7 @@
 .featured-project .project-type{display:block;text-transform:uppercase}
 .photo-art{aspect-ratio:1.4;background:#080b10}
 .photo-art img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.photo-art picture{display:contents}
 .project-card:hover .photo-art img{transform:scale(1.025)}
 
 /* Interior pages have a short introduction and no homepage animation dependency. */
@@ -46,7 +47,6 @@
 .inner-page .section-shell{width:min(1220px,82%)}
 .inner-page h1{max-width:1050px}
 .portfolio-index{padding-top:38px;padding-bottom:85px}
-.index-home-link{margin-bottom:40px}
 .index-heading{max-width:850px;margin-bottom:56px}
 .index-heading h1{font-size:clamp(62px,7.3vw,104px);line-height:1.02;letter-spacing:-4px;margin:0}
 .index-toolbar{border-top:1px solid var(--line);padding:23px 0 27px;display:flex;justify-content:space-between;gap:20px;font:10px var(--mono);letter-spacing:1.2px;color:#9ba7b6}
@@ -62,8 +62,11 @@
 
 /* One template, with optional links, highlights, and any number of images. */
 .project-page{padding-top:38px;padding-bottom:84px}
-/* Folder-style path (home / projects / slug) above each page title. */
-.breadcrumb{display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;font:13px/1.6 var(--mono);letter-spacing:.4px;color:#788697;margin-bottom:24px}
+/* Top row of interior pages: the folder-style path (home / projects / slug) on the left and a
+   way back on the right, in the same place on every page. */
+.page-bar{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:14px}
+.page-back{flex-shrink:0}
+.breadcrumb{display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;font:13px/1.6 var(--mono);letter-spacing:.4px;color:#788697}
 .breadcrumb a{font:inherit;color:var(--accent-soft)}
 .breadcrumb a:hover{text-decoration:underline;text-underline-offset:5px}
 .project-heading{max-width:970px}
@@ -84,8 +87,9 @@
 .project-cover .art-topline,.project-cover .art-bottomline{left:5%;right:5%}
 .project-cover figcaption{font:10px/1.6 var(--mono);color:#778594;margin-top:12px}
 .project-cover figcaption:empty{display:none}
-.project-cover .photo-art{height:auto;aspect-ratio:auto;border-color:#ffffff24}
-.project-cover .photo-art img{height:auto;max-height:720px;object-fit:contain}
+/* The frame takes the photo's own shape (no letterboxing), up to the page width and 720px tall. */
+.project-cover .photo-art{width:fit-content;max-width:100%;height:auto;aspect-ratio:auto;border-color:#ffffff24}
+.project-cover .photo-art img{width:auto;max-width:100%;height:auto;max-height:720px}
 .project-highlights{display:flex;flex-wrap:wrap;gap:30px;margin:0 0 74px;padding:30px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .project-highlights>div{flex:1 1 190px;display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:10px}
 .project-highlights dt{font:11px/1.65 var(--mono);color:#94a2b4;max-width:280px}
@@ -107,8 +111,10 @@
 .project-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 20px}
 .gallery-item{margin:0;min-width:0}
 .gallery-wide{grid-column:1/-1}
-.gallery-item a{display:block;background:#090c10;border:1px solid #ffffff24;border-radius:3px;overflow:hidden}
-.gallery-item img{display:block;width:100%;height:auto;max-height:650px;object-fit:contain}
+/* Like the cover, each frame takes its image's shape: tall photos aren't letterboxed into a wide box. */
+.gallery-item a{display:block;width:fit-content;max-width:100%;background:#090c10;border:1px solid #ffffff24;border-radius:3px;overflow:hidden}
+.gallery-item img{display:block;width:auto;max-width:100%;height:auto;max-height:650px}
+.gallery-item video{display:block;width:auto;max-width:100%;height:auto;max-height:650px;margin:0 auto;background:#090c10;border:1px solid #ffffff24;border-radius:3px}
 .gallery-item figcaption{font:11px/1.7 var(--mono);color:#8c9aac;margin-top:11px}
 .project-pagination{border-top:1px solid var(--line);padding-top:33px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:35px}
 .next-project{text-align:right;max-width:65%;display:flex;flex-direction:column;gap:12px}
@@ -146,7 +152,6 @@
   .inner-page .site-header nav{gap:18px}
   .inner-page .site-header nav a{font-size:12px}
   .portfolio-index{padding-top:27px;padding-bottom:58px}
-  .index-home-link{margin-bottom:32px}
   .index-heading{margin-bottom:40px}
   .index-heading h1{font-size:clamp(54px,13vw,78px);letter-spacing:-2.7px}
   .index-toolbar{font-size:9px;letter-spacing:.6px;padding:21px 0}
@@ -154,7 +159,8 @@
   .index-bottom{margin-top:56px;align-items:flex-start;flex-direction:column;gap:18px}
   .index-bottom p{font-size:27px}
   .project-page{padding-top:27px;padding-bottom:55px}
-  .breadcrumb{font-size:11px;gap:9px;margin-bottom:18px}
+  .page-bar{flex-direction:column-reverse;align-items:flex-start;gap:26px;margin-bottom:18px}
+  .breadcrumb{font-size:11px;gap:9px}
   .project-heading h1{font-size:clamp(41px,10.5vw,62px);letter-spacing:-1.9px;margin-bottom:19px}
   .project-subtitle{font-size:26px;line-height:1.4}
   .project-summary{font-size:15px;line-height:1.85}

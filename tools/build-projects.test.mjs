@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { gallery, artwork, validate } from './build-projects.mjs';
+import { gallery, artwork, card, validate, SIZES } from './build-projects.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
@@ -23,12 +23,31 @@ test('galleries support zero, one, even, and odd image counts',()=>{
   assert.ok(!gallery([fixture],false).includes('id="gallery"'));
 });
 
+test('gallery videos play inline with their poster instead of linking out',()=>{
+  const html=gallery([{src:'/assets/clip.mp4',poster:'/assets/clip.webp',alt:'A catapult & its "launch"',caption:'A launch'}]);
+  assert.ok(html.includes('<video controls playsinline'));
+  assert.ok(html.includes('poster="/assets/clip.webp"'));
+  assert.ok(html.includes('<source src="/assets/clip.mp4" type="video/mp4">'));
+  assert.ok(html.includes('aria-label="A catapult &amp; its &quot;launch&quot;"'));
+  assert.ok(!html.includes('<a '));
+});
+
 test('a real cover replaces the illustration and preserves its description',()=>{
   const html=artwork({...data.projects[0],cover:fixture},{detail:true});
   assert.ok(html.includes('<img'));
   assert.ok(html.includes('fetchpriority="high"'));
   assert.ok(html.includes('A robot &amp; its &quot;intake&quot;'));
   assert.ok(!html.includes('<svg'));
+});
+
+test('covers with sized copies list them for the browser to choose from',()=>{
+  const uwasic=data.projects.find(p=>p.slug==='uwasic');
+  const html=card(uwasic,0,true,SIZES.wide);
+  assert.ok(html.includes('<picture><source type="image/avif" srcset="/assets/projects/uwasic/gds-layout-600.avif 600w'));
+  assert.ok(html.includes('<source type="image/webp" srcset="/assets/projects/uwasic/gds-layout-600.webp 600w, /assets/projects/uwasic/gds-layout-1200.webp 1200w, /assets/projects/uwasic/gds-layout-2400.webp 2400w"'));
+  assert.ok(html.includes(`sizes="${SIZES.wide}"`));
+  assert.ok(html.includes('<img src="/assets/projects/uwasic/gds-layout.webp"'));
+  assert.ok(!artwork({...uwasic,cover:fixture}).includes('<picture>'),'images without copies stay a plain <img>');
 });
 
 test('content validation catches duplicate pages, invalid image paths, and missing photos',async()=>{
@@ -43,6 +62,11 @@ test('content validation catches duplicate pages, invalid image paths, and missi
   await assert.rejects(validate(invalid),/Image not found/);
   invalid.projects[0].images=[{src:'/assets/photo.jpg',alt:''}];
   await assert.rejects(validate(invalid),/alt text/);
+  invalid.projects[0].images=[{src:'/assets/land.geojson',poster:'/assets/missing-poster.webp',alt:'Clip'}];
+  await assert.rejects(validate(invalid),/Image not found: \/assets\/missing-poster/);
+  const videoCover=structuredClone(data);
+  videoCover.projects[0].cover={src:'/assets/projects/vex-robotics/catapult-launch.mp4',alt:'Clip'};
+  await assert.rejects(validate(videoCover),/cover must be an image/);
 });
 
 test('every generated page and homepage has working local navigation and assets',async()=>{
@@ -52,8 +76,8 @@ test('every generated page and homepage has working local navigation and assets'
     assert.equal((html.match(/<h1[ >]/g) ?? []).length,1,`${file}: one main heading`);
     assert.ok(!html.includes('{{'),`${file}: no unresolved templates`);
     assert.ok(!html.includes('<dialog'),`${file}: project links replace popups`);
-    for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
-      const link=match[1];
+    const srcsets=[...html.matchAll(/srcset="([^"]+)"/g)].flatMap(m=>m[1].split(',').map(c=>c.trim().split(/\s+/)[0]));
+    for (const link of [...[...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(m=>m[1]),...srcsets]) {
       if (/^(?:https?:|mailto:|data:)/.test(link)) continue;
       const parsed=new URL(link,'https://local.test/'+file);
       let target=path.join(root,decodeURIComponent(parsed.pathname));
