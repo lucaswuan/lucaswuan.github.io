@@ -54,15 +54,15 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 }
 
 /* About: two columns of photos drifting in opposite directions beside the text.
-   site.js duplicates each column and adds .is-looping; the shared motion rules pause or stop the drift. */
+   site.js moves them: hovering stops the drift and the wheel scrolls the column under the pointer. */
 .about-section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7%;align-items:center}
-.about-copy .eyebrow{margin-bottom:23px}
 .photo-wall{height:620px;display:grid;grid-template-columns:1fr 1fr;gap:14px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)}
 .wall-column{min-width:0}
+.wall-track{will-change:transform}
 .wall-track img{display:block;width:100%;height:auto;margin-bottom:14px;border:1px solid #ffffff14;border-radius:3px}
-@keyframes wall-drift{from{transform:translateY(0)}to{transform:translateY(-50%)}}
-.photo-wall.is-looping .wall-track{animation:wall-drift 112s linear infinite;will-change:transform}
-.photo-wall.is-looping .wall-column-down .wall-track{animation-direction:reverse;animation-duration:131s}
-.photo-wall:hover .wall-track{animation-play-state:paused}
 @media(max-width:1000px){.about-section{gap:40px}.photo-wall{height:520px;gap:10px}.wall-track img{margin-bottom:10px}}
 @media(max-width:650px){.about-section{grid-template-columns:1fr;gap:30px}.about-copy{order:-1}.photo-wall{height:420px}}
+
+/* The three section labels (01 Projects, 02 About me, 03 Contact) share one style. */
+.section-heading .eyebrow,.about-copy>p.eyebrow,.contact-text .eyebrow{font:12px var(--mono);letter-spacing:1.6px;color:var(--accent-muted);max-width:none;margin:0 0 23px}
+@media(max-width:650px){.section-heading .eyebrow,.about-copy>p.eyebrow,.contact-text .eyebrow{font-size:10px}}
