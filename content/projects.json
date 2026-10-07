@@ -15,7 +15,12 @@
       "summary": "Designing functional-unit RTL for Waterloo’s ray-tracing ASIC, building on a completed SPI/PWM onboarding project.",
       "tags": ["Verilog", "SPI", "CDC", "Python / cocotb", "Tiny Tapeout"],
       "links": [{"label": "Onboarding code", "url": "https://github.com/lucaswuan/digital-onboarding"}],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/uwasic/gds-layout.webp",
+        "alt": "Top-down view of the chip layout: rows of standard cells crossed by vertical power straps, with the routed SPI and PWM logic concentrated in the upper half.",
+        "caption": "GDS layout of my SPI/PWM onboarding design, shown in a 3D layout viewer.",
+        "position": "50% 20%"
+      },
       "highlights": [
         {"value": "5", "label": "Onboarding registers"},
         {"value": "16", "label": "Peripheral outputs"},
