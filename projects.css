@@ -86,8 +86,9 @@
 .project-cover .art-topline,.project-cover .art-bottomline{left:5%;right:5%}
 .project-cover figcaption{font:10px/1.6 var(--mono);color:#778594;margin-top:12px}
 .project-cover figcaption:empty{display:none}
-.project-cover .photo-art{height:auto;aspect-ratio:auto;border-color:#ffffff24}
-.project-cover .photo-art img{height:auto;max-height:720px;object-fit:contain}
+/* The frame takes the photo's own shape (no letterboxing), up to the page width and 720px tall. */
+.project-cover .photo-art{width:fit-content;max-width:100%;height:auto;aspect-ratio:auto;border-color:#ffffff24}
+.project-cover .photo-art img{width:auto;max-width:100%;height:auto;max-height:720px}
 .project-highlights{display:flex;flex-wrap:wrap;gap:30px;margin:0 0 74px;padding:30px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .project-highlights>div{flex:1 1 190px;display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:10px}
 .project-highlights dt{font:11px/1.65 var(--mono);color:#94a2b4;max-width:280px}

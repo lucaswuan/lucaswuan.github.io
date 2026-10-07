@@ -118,19 +118,30 @@
       "art": "rays",
       "artTitle": "A study\nin light.",
       "artLabel": "RAYS / SPHERES / MONTE CARLO",
-      "summary": "A C++ path tracer exploring ray geometry, diffuse shading, and the trade-off between image noise and render time.",
-      "tags": ["C++", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
+      "summary": "A C++ path tracer built up in stages, from a first ray–sphere hit test to Monte Carlo diffuse lighting.",
+      "tags": ["C++", "Vector math", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/cpp-ray-tracer/04-diffuse-final.webp",
+        "alt": "The ray tracer’s final render: a matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise.",
+        "caption": "The final render: diffuse lighting averaged over many random samples per pixel."
+      },
       "highlights": [],
-      "overview": ["I built a C++ path tracer using the framework from Ray Tracing in One Weekend. This was a learning project focused on understanding how geometric intersections and repeated light sampling turn a scene into an image."],
+      "overview": ["I built a path tracer from scratch in C++, following the approach in Ray Tracing in One Weekend. It sends rays from the camera through each pixel into the scene and works out what colour each one should be.", "I built it up in four stages, each adding one idea and checked with a render before moving on: first finding what a ray hits, then the surface’s orientation, then a sky, and finally how light bounces."],
       "sections": [
-        {"title": "Geometry & intersections", "body": ["I implemented parametric rays, ray-sphere intersections, and surface normals. These establish where a ray meets the scene and the orientation of the surface at that point."]},
-        {"title": "Shading & sampling", "body": ["I implemented Monte Carlo diffuse shading and multisample anti-aliasing to render spheres with smoother edges and reduced image noise."]},
-        {"title": "Quality versus rendering time", "body": ["I analyzed how samples per pixel affect image noise and rendering time. This made sampling a practical trade-off to investigate as well as a part of the rendering algorithm."]}
+        {"title": "Stage 1: rays and a sphere", "body": ["Each ray is a parametric line, P(t) = O + t·d. Substituting it into the sphere’s equation gives a quadratic in t: the discriminant says whether the ray misses, grazes, or hits the sphere, and the smallest positive root is the point the camera sees.", "For the first render, rays that hit the sphere were coloured red and rays that missed were black."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/01-hit-test.webp", "alt": "A flat red circle on a black background.", "caption": "Stage 1: the hit test. Red where a ray hits the sphere, black where it misses."}
+        ]},
+        {"title": "Stage 2: surface normals", "body": ["To make the sphere look three-dimensional, each hit point needs a surface normal. For a sphere it is the direction from the centre to the hit point, (P − C) / R. Before adding any lighting, I checked the normals visually by mapping their x, y, and z components from [−1, 1] to red, green, and blue."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/02-surface-normals.webp", "alt": "A sphere on a black background, shaded in a smooth gradient of cyan, blue, purple, and pink by the direction its surface faces.", "caption": "Stage 2: each pixel coloured by the direction of the surface normal."}
+        ]},
+        {"title": "Stage 3: a sky", "body": ["Next, I replaced the black background with a sky. Each ray that misses takes its colour from a linear blend between white and blue, based on how far up it points."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/03-sky-gradient.webp", "alt": "The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom.", "caption": "Stage 3: a gradient sky behind the sphere."}
+        ]},
+        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders. The result is at the top of this page."]}
       ],
       "images": [],
-      "outcome": ["Built a working C++ path tracer and explored the relationship between geometry, shading, sampling, and image quality. The implementation follows the educational framework of Ray Tracing in One Weekend."]
+      "outcome": ["The finished ray tracer turns vectors, quadratic equations, and random sampling into soft, realistic shading. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes."]
     },
     {
       "slug": "calgary-ace",
