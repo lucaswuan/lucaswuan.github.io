@@ -91,7 +91,7 @@ To check galleries, content validation, and local links after editing, run `node
 
 ## File map
 
-- `index.html`: homepage. Content between the featured-project markers is generated.
+- `index.html`: homepage. Content between the featured-project markers is generated. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
 - `content/projects.json`: editable project content and image lists.
 - `templates/`: shared page layouts.
 - `tools/build-projects.mjs`: dependency-free static page generator.

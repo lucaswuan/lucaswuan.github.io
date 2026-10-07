@@ -89,7 +89,7 @@ export async function validate(data, assetRoot=root) {
   for (const project of data.projects) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(project.slug) || seen.has(project.slug)) throw new Error(`Invalid or duplicate project slug: ${project.slug}`);
     seen.add(project.slug);
-    for (const key of ['title','subtitle','category','year','role','status','summary','art','artTitle','artLabel']) {
+    for (const key of ['title','category','year','role','status','summary','art','artTitle','artLabel']) {
       if (!project[key]) throw new Error(`${project.slug}: missing ${key}`);
     }
     for (const link of project.links ?? []) {
@@ -123,7 +123,7 @@ export async function build() {
   for (const [i,project] of data.projects.entries()) {
     const next=data.projects[(i+1)%data.projects.length];
     const links=(project.links ?? []).map(link=>`<a class="outline-link" href="${escape(link.url)}" target="_blank" rel="noopener">${escape(link.label)} <span aria-hidden="true">↗</span></a>`).join('');
-    const values={...shared,...Object.fromEntries(['slug','title','subtitle','role','year','status'].map(key=>[key,escape(project[key])])),
+    const values={...shared,...Object.fromEntries(['slug','title','role','year','status'].map(key=>[key,escape(project[key])])),
       description:escape(project.summary),
       links:links ? `<div class="project-links">${links}</div>` : '',
       tags:(project.tags ?? []).map(tag=>`<li>${escape(tag)}</li>`).join(''),
