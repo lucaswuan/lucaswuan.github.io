@@ -77,28 +77,35 @@
       "subtitle": "Build. Test. Tune. Compete.",
       "category": "Robotics",
       "year": "2020–2023",
-      "role": "Robot design, build & programming",
+      "role": "Built the intake, flywheel & catapult; programmed autonomous",
       "status": "Competition project",
       "art": "robot",
       "artTitle": "Built for\nthe field.",
-      "artLabel": "DRIVETRAIN / INTAKE / FLYWHEEL",
-      "summary": "A VEX V5 competition robot, from mechanical design and autonomous routines to the 2023 World Championship.",
+      "artLabel": "INTAKE / FLYWHEEL / CATAPULT",
+      "summary": "A VEX competition robot: a flywheel design that qualified our team for the 2023 World Championship, then a catapult rebuild.",
       "tags": ["VEX V5", "Mechanical design", "Autonomous programming", "Iterative testing"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/vex-robotics/flywheel-robot.webp",
+        "alt": "Team 2088D’s first robot on the floor: an aluminum VEX frame on omni wheels with a disc intake, a flywheel, and a red 2088D license plate.",
+        "caption": "Design 1: the flywheel robot that qualified our team for Worlds.",
+        "position": "50% 35%"
+      },
       "highlights": [
         {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
-        {"value": "2023", "label": "World Championship · Dallas"},
-        {"value": "V5", "label": "VEX robotics platform"}
+        {"value": "2023", "label": "World Championship · Dallas"}
       ],
-      "overview": ["I designed and built a VEX V5 competition robot and programmed its autonomous routines. My work covered the drivetrain, disc intake, and flywheel launcher, with repeated testing and mechanical adjustments between iterations."],
+      "overview": ["I competed in VEX robotics on team 2088D. Over the 2022–23 season we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I built the intake, the flywheel, and the catapult, and I programmed the autonomous routines."],
       "sections": [
-        {"title": "Mechanical design", "body": ["I designed and built the drivetrain, intake, and flywheel launcher. These systems needed to work together to move around the field, collect discs, and launch them consistently."]},
-        {"title": "Testing & iteration", "body": ["I iteratively tuned flywheel speed and intake spacing to improve shooting consistency and reduce jams. This work connected observations on the field with changes to the mechanism and its settings."]},
-        {"title": "Autonomous routines", "body": ["Alongside the mechanical work, I programmed the robot’s autonomous routines. The project combined robot construction, programming, and competition testing."]}
+        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I built both, then tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
+        {"title": "Autonomous routines", "body": ["I programmed the robot’s autonomous routines: the code that drives it on its own at the start of each match and in programming skills runs."]},
+        {"title": "Design 2: the catapult rebuild", "body": ["Even after tuning, the flywheel wasn’t as reliable as we wanted. After qualifying for Worlds, we rebuilt the robot around a catapult, which launches a whole stack of discs in one motion. I built the catapult."], "images": [
+          {"src": "/assets/projects/vex-robotics/catapult-rebuild.webp", "alt": "The rebuilt robot on a workbench, nearly finished: an aluminum frame on omni wheels with a geared catapult arm held back by rubber bands, and a practice field behind it.", "caption": "The catapult rebuild, nearly finished."},
+          {"src": "/assets/projects/vex-robotics/catapult-launch.mp4", "poster": "/assets/projects/vex-robotics/catapult-launch-poster.webp", "alt": "Video of the catapult launching a stack of three discs into the goal.", "caption": "The catapult launching three discs into the goal."}
+        ]}
       ],
       "images": [],
-      "outcome": ["Our team placed second in Alberta Provincial Robot Skills and qualified for the VEX Robotics World Championship. We competed in Dallas in 2023."]
+      "outcome": ["The flywheel robot placed second in Alberta Provincial Robot Skills and qualified our team for the VEX Robotics World Championship, where we competed in Dallas in 2023. Its reliability problems led to the catapult rebuild."]
     },
     {
       "slug": "cpp-ray-tracer",

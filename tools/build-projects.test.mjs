@@ -23,6 +23,15 @@ test('galleries support zero, one, even, and odd image counts',()=>{
   assert.ok(!gallery([fixture],false).includes('id="gallery"'));
 });
 
+test('gallery videos play inline with their poster instead of linking out',()=>{
+  const html=gallery([{src:'/assets/clip.mp4',poster:'/assets/clip.webp',alt:'A catapult & its "launch"',caption:'A launch'}]);
+  assert.ok(html.includes('<video controls playsinline'));
+  assert.ok(html.includes('poster="/assets/clip.webp"'));
+  assert.ok(html.includes('<source src="/assets/clip.mp4" type="video/mp4">'));
+  assert.ok(html.includes('aria-label="A catapult &amp; its &quot;launch&quot;"'));
+  assert.ok(!html.includes('<a '));
+});
+
 test('a real cover replaces the illustration and preserves its description',()=>{
   const html=artwork({...data.projects[0],cover:fixture},{detail:true});
   assert.ok(html.includes('<img'));
@@ -43,6 +52,11 @@ test('content validation catches duplicate pages, invalid image paths, and missi
   await assert.rejects(validate(invalid),/Image not found/);
   invalid.projects[0].images=[{src:'/assets/photo.jpg',alt:''}];
   await assert.rejects(validate(invalid),/alt text/);
+  invalid.projects[0].images=[{src:'/assets/land.geojson',poster:'/assets/missing-poster.webp',alt:'Clip'}];
+  await assert.rejects(validate(invalid),/Image not found: \/assets\/missing-poster/);
+  const videoCover=structuredClone(data);
+  videoCover.projects[0].cover={src:'/assets/projects/vex-robotics/catapult-launch.mp4',alt:'Clip'};
+  await assert.rejects(validate(videoCover),/cover must be an image/);
 });
 
 test('every generated page and homepage has working local navigation and assets',async()=>{

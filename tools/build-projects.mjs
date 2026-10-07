@@ -35,9 +35,16 @@ export function card(project, index, featured=false) {
   return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project)}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true">↗</span></span></a>`;
 }
 
+// Gallery items ending in .mp4 or .webm play as videos; an optional "poster" is the still shown before playing.
+const isVideo = src => /\.(mp4|webm)$/i.test(src ?? '');
+function media(image) {
+  if (isVideo(image.src)) return `<video controls playsinline preload="metadata"${image.poster ? ` poster="${escape(image.poster)}"` : ''} aria-label="${escape(image.alt)}"><source src="${escape(image.src)}" type="video/${image.src.split('.').pop().toLowerCase()}"></video>`;
+  return `<a href="${escape(image.src)}" target="_blank" rel="noopener" aria-label="Open image: ${escape(image.alt)}"><img src="${escape(image.src)}" alt="${escape(image.alt)}" loading="lazy" decoding="async"></a>`;
+}
+
 export function gallery(images=[], heading=true) {
   if (!images.length) return '';
-  const items=images.map((image,i) => `<figure class="gallery-item${image.wide || (images.length%2 && i===0) ? ' gallery-wide' : ''}"><a href="${escape(image.src)}" target="_blank" rel="noopener" aria-label="Open image: ${escape(image.alt)}"><img src="${escape(image.src)}" alt="${escape(image.alt)}" loading="lazy" decoding="async"></a>${image.caption ? `<figcaption>${escape(image.caption)}</figcaption>` : ''}</figure>`).join('\n');
+  const items=images.map((image,i) => `<figure class="gallery-item${image.wide || (images.length%2 && i===0) ? ' gallery-wide' : ''}">${media(image)}${image.caption ? `<figcaption>${escape(image.caption)}</figcaption>` : ''}</figure>`).join('\n');
   const grid=`<div class="project-gallery">${items}</div>`;
   return heading ? `<section id="gallery" class="case-section"><p class="eyebrow">03 / IN PICTURES</p><h2>A closer look</h2>${grid}</section>` : grid;
 }
@@ -62,11 +69,15 @@ export async function validate(data, assetRoot=root) {
       if (!link.label || !/^https:\/\//.test(link.url)) throw new Error(`${project.slug}: links need a label and an HTTPS URL.`);
     }
     for (const image of [project.cover,...(project.images ?? []),...(project.sections ?? []).flatMap(s=>s.images ?? [])].filter(Boolean)) {
-      if (!image.alt?.trim() || !image.src?.startsWith('/assets/')) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
-      const file=path.resolve(assetRoot, '.'+image.src);
-      if (!file.startsWith(path.resolve(assetRoot,'assets')+path.sep)) throw new Error('Image path must stay inside assets/.');
-      await access(file).catch(()=>{throw new Error(`Image not found: ${image.src}`);});
+      if (!image.alt?.trim()) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
+      for (const src of [image.src, ...(image.poster ? [image.poster] : [])]) {
+        if (!src?.startsWith('/assets/')) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
+        const file=path.resolve(assetRoot, '.'+src);
+        if (!file.startsWith(path.resolve(assetRoot,'assets')+path.sep)) throw new Error('Image path must stay inside assets/.');
+        await access(file).catch(()=>{throw new Error(`Image not found: ${src}`);});
+      }
     }
+    if (isVideo(project.cover?.src)) throw new Error(`${project.slug}: the cover must be an image; put videos in a gallery.`);
   }
   if (!Array.isArray(data.featured) || data.featured.length!==3 || new Set(data.featured).size!==3 || data.featured.some(slug=>!seen.has(slug))) throw new Error('Choose exactly three distinct existing projects for the homepage.');
 }

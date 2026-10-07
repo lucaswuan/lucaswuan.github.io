@@ -60,6 +60,19 @@ Empty galleries are omitted entirely. One image fills the width. Multiple images
 
 For images beside a particular part of the story, add an `images` list inside any entry in `sections`. It uses the same format. You can have both section images and the main gallery.
 
+Gallery items can also be short videos. Use an `.mp4` (H.264, plays in every browser) or `.webm` file as `src`, and add a `poster` image to show before it plays:
+
+```json
+{
+  "src": "/assets/projects/vex-robotics/catapult-launch.mp4",
+  "poster": "/assets/projects/vex-robotics/catapult-launch-poster.webp",
+  "alt": "Describe what happens in the video",
+  "caption": "An optional caption."
+}
+```
+
+Videos play in place with the browser's controls. Keep them short and compressed; phone videos also carry location data, so re-encode them without metadata before adding them. Covers must be images.
+
 ## Add a project
 
 Copy an object in `content/projects.json`, give it a unique lowercase hyphenated `slug`, and replace its content. Keep `links`, `highlights`, and `images` as empty lists when unused. `cover: null` uses the symbolic illustration. Supported illustration styles are `chip`, `landmarks`, `robot`, `rays`, and `community`.
