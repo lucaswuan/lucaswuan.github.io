@@ -7,7 +7,7 @@
   <meta name="description" content="A C++ path tracer built up in stages, from a first ray–sphere hit test to Monte Carlo diffuse lighting.">
   <title>C++ Ray Tracer | Lucas Wu</title>
   <link rel="stylesheet" href="/styles.css?v=13">
-  <link rel="stylesheet" href="/projects.css?v=9">
+  <link rel="stylesheet" href="/projects.css?v=10">
   <script src="/galaxy.js?v=5" defer></script>
   <script src="/site.js?v=3" defer></script>
 </head>
@@ -19,7 +19,6 @@
     <div class="page-bar"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">home</a><span aria-hidden="true">/</span><a href="/projects/">projects</a><span aria-hidden="true">/</span><span aria-current="page">cpp-ray-tracer</span></nav><a class="outline-link page-back" href="/projects/"><span aria-hidden="true">←</span> Back to projects</a></div>
     <header class="project-heading">
       <h1>C++ Ray Tracer</h1>
-      <p class="project-subtitle">Following light, one ray at a time.</p>
       <p class="project-summary">A C++ path tracer built up in stages, from a first ray–sphere hit test to Monte Carlo diffuse lighting.</p>
 
     </header>
@@ -37,7 +36,7 @@
 <div class="work-section"><h3>Stage 2: surface normals</h3><p>To make the sphere look three-dimensional, each hit point needs a surface normal. For a sphere it is the direction from the centre to the hit point, (P − C) / R. Before adding any lighting, I checked the normals visually by mapping their x, y, and z components from [−1, 1] to red, green, and blue.</p><div class="project-gallery"><figure class="gallery-item gallery-wide"><a href="/assets/projects/cpp-ray-tracer/02-surface-normals.webp" target="_blank" rel="noopener" aria-label="Open image: A sphere on a black background, shaded in a smooth gradient of cyan, blue, purple, and pink by the direction its surface faces."><img src="/assets/projects/cpp-ray-tracer/02-surface-normals.webp" alt="A sphere on a black background, shaded in a smooth gradient of cyan, blue, purple, and pink by the direction its surface faces." loading="lazy" decoding="async"></a><figcaption>Stage 2: each pixel coloured by the direction of the surface normal.</figcaption></figure></div></div>
 <div class="work-section"><h3>Stage 3: a sky</h3><p>Next, I replaced the black background with a sky. Each ray that misses takes its colour from a linear blend between white and blue, based on how far up it points.</p><div class="project-gallery"><figure class="gallery-item gallery-wide"><a href="/assets/projects/cpp-ray-tracer/03-sky-gradient.webp" target="_blank" rel="noopener" aria-label="Open image: The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom."><img src="/assets/projects/cpp-ray-tracer/03-sky-gradient.webp" alt="The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom." loading="lazy" decoding="async"></a><figcaption>Stage 3: a gradient sky behind the sphere.</figcaption></figure></div></div>
 <div class="work-section"><h3>Stage 4: diffuse light and random sampling</h3><p>Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.</p>
-<p>With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders. The result is at the top of this page.</p></div></section>
+<p>With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders.</p><div class="project-gallery"><figure class="gallery-item gallery-wide"><a href="/assets/projects/cpp-ray-tracer/04-diffuse-final.webp" target="_blank" rel="noopener" aria-label="Open image: A matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise."><img src="/assets/projects/cpp-ray-tracer/04-diffuse-final.webp" alt="A matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise." loading="lazy" decoding="async"></a><figcaption>Stage 4: matte surfaces lit by random bounces, averaged over many samples per pixel.</figcaption></figure></div></div></section>
 
         <section id="outcome" class="case-section"><p class="eyebrow">03 / REFLECTION</p><h2>Outcome</h2><p>The finished ray tracer turns vectors, quadratic equations, and random sampling into soft, realistic shading. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes.</p></section>
       </div>

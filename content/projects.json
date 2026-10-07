@@ -4,7 +4,6 @@
     {
       "slug": "uwasic",
       "title": "UWASIC",
-      "subtitle": "Digital design, from RTL to layout.",
       "category": "Digital design",
       "year": "2026–Present",
       "role": "RTL Design Member",
@@ -21,11 +20,7 @@
         "caption": "GDS layout of my SPI/PWM onboarding design, shown in a 3D layout viewer.",
         "position": "50% 20%"
       },
-      "highlights": [
-        {"value": "5", "label": "Onboarding registers"},
-        {"value": "16", "label": "Peripheral outputs"},
-        {"value": "3 kHz", "label": "PWM tested"}
-      ],
+      "highlights": [],
       "overview": [
         "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team. My current work is functional-unit RTL for a ray-tracing ASIC, collaborating with the verification team toward passing functional tests and a lint-clean RTL-to-GDS flow.",
         "Before that work, I completed a digital-design onboarding project: a Verilog SPI Mode 0 peripheral with register-controlled outputs and PWM. That project connected RTL implementation, automated verification, and physical-layout generation."
@@ -41,7 +36,6 @@
     {
       "slug": "signed",
       "title": "SignEd",
-      "subtitle": "A more hands-on way to learn ASL.",
       "category": "Computer vision",
       "year": "2026",
       "role": "Sole programmer",
@@ -57,11 +51,7 @@
         "alt": "The five-person SignEd team standing in front of a projected slide that reads “1st Place Winner, Beginner Tier, $650, SignEd”, most of them making the ASL “I love you” sign.",
         "caption": "Our team after SignEd won first place in the Beginner Track at Hack the Bias."
       },
-      "highlights": [
-        {"value": "Winner", "label": "Hack the Bias · Beginner Track"},
-        {"value": "21", "label": "3D hand landmarks"},
-        {"value": "3 sec", "label": "Correct-sign hold to progress"}
-      ],
+      "highlights": [],
       "overview": ["SignEd is an ASL learning website built for Hack the Bias. As the team’s sole programmer, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
       "sections": [
         {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize ASL poses."]},
@@ -74,7 +64,6 @@
     {
       "slug": "vex-robotics",
       "title": "VEX Robotics",
-      "subtitle": "Build. Test. Tune. Compete.",
       "category": "Robotics",
       "year": "2020–2023",
       "role": "Built the intake, flywheel & catapult; programmed autonomous",
@@ -110,7 +99,6 @@
     {
       "slug": "cpp-ray-tracer",
       "title": "C++ Ray Tracer",
-      "subtitle": "Following light, one ray at a time.",
       "category": "Computer graphics",
       "year": "2025",
       "role": "Personal learning project",
@@ -138,7 +126,9 @@
         {"title": "Stage 3: a sky", "body": ["Next, I replaced the black background with a sky. Each ray that misses takes its colour from a linear blend between white and blue, based on how far up it points."], "images": [
           {"src": "/assets/projects/cpp-ray-tracer/03-sky-gradient.webp", "alt": "The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom.", "caption": "Stage 3: a gradient sky behind the sphere."}
         ]},
-        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders. The result is at the top of this page."]}
+        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders."], "images": [
+          {"src": "/assets/projects/cpp-ray-tracer/04-diffuse-final.webp", "alt": "A matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise.", "caption": "Stage 4: matte surfaces lit by random bounces, averaged over many samples per pixel."}
+        ]}
       ],
       "images": [],
       "outcome": ["The finished ray tracer turns vectors, quadratic equations, and random sampling into soft, realistic shading. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes."]
@@ -146,7 +136,6 @@
     {
       "slug": "calgary-ace",
       "title": "Calgary Ace Learning Center",
-      "subtitle": "Learning together. Giving back.",
       "category": "Community & education",
       "year": "2024–Present",
       "role": "Co-founder & volunteer",
