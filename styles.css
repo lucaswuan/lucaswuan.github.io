@@ -61,8 +61,8 @@ dialog{background:#121815;color:var(--paper);border:1px solid #b0cfc23a;border-r
 .wall-column{min-width:0}
 .wall-track img{display:block;width:100%;height:auto;margin-bottom:14px;border:1px solid #ffffff14;border-radius:3px}
 @keyframes wall-drift{from{transform:translateY(0)}to{transform:translateY(-50%)}}
-.photo-wall.is-looping .wall-track{animation:wall-drift 90s linear infinite;will-change:transform}
-.photo-wall.is-looping .wall-column-down .wall-track{animation-direction:reverse;animation-duration:105s}
+.photo-wall.is-looping .wall-track{animation:wall-drift 112s linear infinite;will-change:transform}
+.photo-wall.is-looping .wall-column-down .wall-track{animation-direction:reverse;animation-duration:131s}
 .photo-wall:hover .wall-track{animation-play-state:paused}
 @media(max-width:1000px){.about-section{gap:40px}.photo-wall{height:520px;gap:10px}.wall-track img{margin-bottom:10px}}
 @media(max-width:650px){.about-section{grid-template-columns:1fr;gap:30px}.about-copy{order:-1}.photo-wall{height:420px}}
