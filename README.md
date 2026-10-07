@@ -36,7 +36,7 @@ To replace the symbolic illustration with your own image, change `cover` from `n
 }
 ```
 
-That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image.
+That image is used on the homepage/index card and at the top of the project page. Cards crop to their frame; the project page displays the complete image. If a card crops away the important part, add `"position"` with a CSS `object-position` value, for example `"position": "50% 20%"` to keep the upper part in view.
 
 Each project's `images` list accepts zero, one, or any number of images:
 

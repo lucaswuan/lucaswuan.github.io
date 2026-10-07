@@ -25,7 +25,9 @@ function illustration(kind) {
 }
 
 export function artwork(project, {detail=false}={}) {
-  if (project.cover) return `<span class="project-art photo-art"><img src="${escape(project.cover.src)}" alt="${escape(project.cover.alt)}" ${detail ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></span>`;
+  // An optional cover.position (a CSS object-position) chooses which part stays visible when a card crops the image.
+  const focus = project.cover?.position ? ` style="object-position:${escape(project.cover.position)}"` : '';
+  if (project.cover) return `<span class="project-art photo-art"><img src="${escape(project.cover.src)}" alt="${escape(project.cover.alt)}"${focus} ${detail ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></span>`;
   return `<span class="project-art work-art art-${escape(project.art)}"><span class="art-topline"><span>${escape(project.title)}</span><span aria-hidden="true">${detail ? 'PROJECT NOTES' : 'EXPLORE ↗'}</span></span><span class="work-art-title">${project.artTitle.split('\n').map(escape).join('<br>')}</span>${illustration(project.art)}<span class="art-bottomline">${escape(project.artLabel)}</span></span>`;
 }
 
