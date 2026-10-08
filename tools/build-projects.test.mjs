@@ -25,7 +25,7 @@ test('galleries support zero, one, even, and odd image counts',()=>{
 
 test('gallery videos play inline with their poster instead of linking out',()=>{
   const html=gallery([{src:'/assets/clip.mp4',poster:'/assets/clip.webp',alt:'A catapult & its "launch"',caption:'A launch'}]);
-  assert.ok(html.includes('<video controls playsinline'));
+  assert.ok(html.includes('<video controls playsinline muted'));
   assert.ok(html.includes('poster="/assets/clip.webp"'));
   assert.ok(html.includes('<source src="/assets/clip.mp4" type="video/mp4">'));
   assert.ok(html.includes('aria-label="A catapult &amp; its &quot;launch&quot;"'));

@@ -79,7 +79,7 @@ Gallery items can also be short videos. Use an `.mp4` (H.264, plays in every bro
 }
 ```
 
-Videos play in place with the browser's controls. Keep them short and compressed; phone videos also carry location data, so re-encode them without metadata before adding them. Covers must be images.
+Videos play in place, muted, with the browser's controls. Keep them short and compressed; phone videos also carry location data, so re-encode them without metadata before adding them. Covers must be images.
 
 ## Add a project
 
