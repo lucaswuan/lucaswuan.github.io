@@ -62,10 +62,10 @@ export function card(project, index, featured=false, sizes=SIZES.third) {
   return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project,{sizes})}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true">↗</span></span></a>`;
 }
 
-// Gallery items ending in .mp4 or .webm play as videos; an optional "poster" is the still shown before playing.
+// Gallery items ending in .mp4 or .webm play as videos, muted; an optional "poster" is the still shown before playing.
 const isVideo = src => /\.(mp4|webm)$/i.test(src ?? '');
 function media(image) {
-  if (isVideo(image.src)) return `<video controls playsinline preload="metadata"${image.poster ? ` poster="${escape(image.poster)}"` : ''} aria-label="${escape(image.alt)}"><source src="${escape(image.src)}" type="video/${image.src.split('.').pop().toLowerCase()}"></video>`;
+  if (isVideo(image.src)) return `<video controls playsinline muted preload="metadata"${image.poster ? ` poster="${escape(image.poster)}"` : ''} aria-label="${escape(image.alt)}"><source src="${escape(image.src)}" type="video/${image.src.split('.').pop().toLowerCase()}"></video>`;
   return `<a href="${escape(image.src)}" target="_blank" rel="noopener" aria-label="Open image: ${escape(image.alt)}"><img src="${escape(image.src)}" alt="${escape(image.alt)}" loading="lazy" decoding="async"></a>`;
 }
 
