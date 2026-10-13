@@ -41,7 +41,7 @@ test('a real cover replaces the illustration and preserves its description',()=>
 });
 
 test('covers with sized copies list them for the browser to choose from',()=>{
-  const spi=data.projects.find(p=>p.slug==='spi-pwm-peripheral');
+  const spi=data.projects.find(p=>p.slug==='uwasic');
   const html=card(spi,0,true,SIZES.wide);
   assert.ok(html.includes('<picture><source type="image/avif" srcset="/assets/projects/spi-pwm-peripheral/gds-layout-600.avif 600w'));
   assert.ok(html.includes('<source type="image/webp" srcset="/assets/projects/spi-pwm-peripheral/gds-layout-600.webp 600w, /assets/projects/spi-pwm-peripheral/gds-layout-1200.webp 1200w, /assets/projects/spi-pwm-peripheral/gds-layout-2400.webp 2400w"'));
@@ -107,13 +107,12 @@ test('home shows the featured previews in order, wide first only when the count 
   for (const p of data.projects) assert.ok(index.includes(`aria-label="Explore ${p.title}"`));
 });
 
-test('the row under the previews counts and names every project not shown, and the buttons give the total',async()=>{
+test('a full-width "View more projects" button sits under the previews only when some are hidden',async()=>{
   const home=await readFile(path.join(root,'index.html'),'utf8');
-  const hidden=data.projects.filter(p=>!data.featured.includes(p.slug));
   const row=home.slice(home.indexOf('<!-- more-projects:start -->'),home.indexOf('<!-- more-projects:end -->'));
-  assert.ok(row.includes(`<p>${hidden.length} more projects</p>`));
-  assert.deepEqual([...row.matchAll(/<li><a href="([^"]+)">/g)].map(m=>m[1]),hidden.map(p=>`/projects/${p.slug}/`));
-  assert.equal((home.match(new RegExp(`View all ${data.projects.length} projects`,'g')) ?? []).length,2);
+  assert.ok(row.includes('<a class="more-projects reveal" href="/projects/">View more projects'));
+  assert.ok(!row.includes('<li>'));
+  assert.equal((home.match(new RegExp(`View all ${data.projects.length} projects`,'g')) ?? []).length,1);
   assert.equal(moreProjects(data.projects,data.projects),'');
-  assert.ok(moreProjects(data.projects,data.projects.slice(1)).includes('<p>1 more project</p>'));
+  assert.ok(moreProjects(data.projects,data.projects.slice(1)).includes('View more projects'));
 });
