@@ -83,7 +83,7 @@ Videos play in place, muted, with the browser's controls. Keep them short and co
 
 ## Add a project
 
-Copy an object in `content/projects.json`, give it a unique lowercase hyphenated `slug`, and replace its content. Keep `links`, `highlights`, and `images` as empty lists when unused. `cover: null` uses the symbolic illustration. Supported illustration styles are `chip`, `landmarks`, `robot`, `rays`, and `community`.
+Copy an object in `content/projects.json`, give it a unique lowercase hyphenated `slug`, and replace its content. Keep `links`, `highlights`, and `images` as empty lists when unused. `cover: null` uses the symbolic illustration. Supported illustration styles are `chip`, `board`, `landmarks`, `robot`, `rays`, and `community`.
 
 Run the generator to create its page and add it to the index. If you rename or remove a project, remove its old generated `projects/<slug>/` folder as well so the old page is not published.
 
@@ -103,4 +103,4 @@ To check galleries, content validation, and local links after editing, run `node
 - `app.js`: homepage planet animation and scroll effects.
 - `planet-renderer.js`: WebGL planet renderer.
 
-Project drafts were adapted from the supplied resumes. UWASIC's ongoing ray-tracing ASIC work is distinguished from its completed SPI/PWM onboarding project. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.
+Project drafts were adapted from the supplied resumes. UWASIC's functional-unit control RTL and its SPI/PWM onboarding project are separate pages (`uwasic` and `spi-pwm-peripheral`). Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.

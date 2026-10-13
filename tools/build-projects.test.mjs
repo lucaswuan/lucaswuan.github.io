@@ -41,13 +41,13 @@ test('a real cover replaces the illustration and preserves its description',()=>
 });
 
 test('covers with sized copies list them for the browser to choose from',()=>{
-  const uwasic=data.projects.find(p=>p.slug==='uwasic');
-  const html=card(uwasic,0,true,SIZES.wide);
-  assert.ok(html.includes('<picture><source type="image/avif" srcset="/assets/projects/uwasic/gds-layout-600.avif 600w'));
-  assert.ok(html.includes('<source type="image/webp" srcset="/assets/projects/uwasic/gds-layout-600.webp 600w, /assets/projects/uwasic/gds-layout-1200.webp 1200w, /assets/projects/uwasic/gds-layout-2400.webp 2400w"'));
+  const spi=data.projects.find(p=>p.slug==='spi-pwm-peripheral');
+  const html=card(spi,0,true,SIZES.wide);
+  assert.ok(html.includes('<picture><source type="image/avif" srcset="/assets/projects/spi-pwm-peripheral/gds-layout-600.avif 600w'));
+  assert.ok(html.includes('<source type="image/webp" srcset="/assets/projects/spi-pwm-peripheral/gds-layout-600.webp 600w, /assets/projects/spi-pwm-peripheral/gds-layout-1200.webp 1200w, /assets/projects/spi-pwm-peripheral/gds-layout-2400.webp 2400w"'));
   assert.ok(html.includes(`sizes="${SIZES.wide}"`));
-  assert.ok(html.includes('<img src="/assets/projects/uwasic/gds-layout.webp"'));
-  assert.ok(!artwork({...uwasic,cover:fixture}).includes('<picture>'),'images without copies stay a plain <img>');
+  assert.ok(html.includes('<img src="/assets/projects/spi-pwm-peripheral/gds-layout.webp"'));
+  assert.ok(!artwork({...spi,cover:fixture}).includes('<picture>'),'images without copies stay a plain <img>');
 });
 
 test('content validation catches duplicate pages, invalid image paths, and missing photos',async()=>{
