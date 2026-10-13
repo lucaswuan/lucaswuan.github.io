@@ -1,5 +1,5 @@
 {
-  "featured": ["uwasic", "signed", "vex-robotics"],
+  "featured": ["uwaft", "uwasic", "signed", "vex-robotics"],
   "projects": [
     {
       "slug": "uwasic",
@@ -14,7 +14,12 @@
       "summary": "The functional-unit control module for Waterloo’s ray-tracing ASIC: SystemVerilog that decodes 11 micro-ops and dispatches them to the ALU, multiplier, and CORDIC units.",
       "tags": ["SystemVerilog", "RTL design", "Valid/ready handshakes", "SystemVerilog interfaces", "ASIC"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/spi-pwm-peripheral/gds-layout.webp",
+        "alt": "Top-down view of a chip layout: rows of standard cells crossed by vertical power straps, with the routed logic concentrated in the upper half.",
+        "caption": "GDS layout from my UWASIC onboarding project, the SPI-controlled PWM peripheral.",
+        "position": "50% 20%"
+      },
       "highlights": [],
       "overview": [
         "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team, which is building a ray-tracing ASIC. I wrote the chip’s functional-unit control module in SystemVerilog. It sits between the micro-op channel and the three arithmetic units: the ALU, the multiplier, and the CORDIC unit.",
@@ -42,7 +47,11 @@
       "summary": "A single-cell Li-ion battery monitor and relay load switch board, designed in Altium with an STC3100 gas gauge and an STM32.",
       "tags": ["Altium Designer", "Schematic capture", "PCB layout", "STM32", "I2C", "Kelvin sensing"],
       "links": [],
-      "cover": null,
+      "cover": {
+        "src": "/assets/projects/uwaft/bms-board-render.webp",
+        "alt": "3D render of the UWAFT BMS v1.0 board: a black two-layer PCB with the STM32 microcontroller at top left, a 2×4 debug header in the middle, the STC3100 gas gauge at right, the relay at the bottom, and the LOAD and BATT connectors along the bottom edge.",
+        "caption": "3D render of the v1.0 board."
+      },
       "highlights": [],
       "overview": [
         "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. For my electrical onboarding project, I designed a battery monitor and relay board in Altium Designer. It monitors a single Li-ion cell and can connect or disconnect a load.",

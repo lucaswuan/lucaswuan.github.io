@@ -197,3 +197,22 @@
 
 .project-card:hover .project-art,.project-card:focus-visible .project-art{border-color:var(--accent-border)}
 .inner-page .footer-email:hover{color:var(--accent)}
+
+/* Row under the homepage previews: how many projects aren't shown, their names, and a way to the full list. */
+.more-projects{margin-top:64px;padding-top:32px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:24px 40px}
+.more-projects-text{min-width:0}
+.more-projects-text>p{font:italic 30px Georgia,serif;color:var(--accent);margin:0 0 12px}
+.more-projects-list{display:flex;flex-wrap:wrap;list-style:none;margin:0;padding:0;font:12px/1.9 var(--mono);color:#6f7c8c}
+.more-projects-list li+li::before{content:'\00b7';margin:0 10px}
+.more-projects-list a{color:#9ba7b6;transition:color .2s}
+.more-projects-list a:hover{color:var(--accent);text-decoration:underline;text-underline-offset:5px}
+.more-projects .outline-link{flex-shrink:0}
+@media(max-width:650px){
+  .more-projects{margin-top:48px;padding-top:28px;flex-direction:column;align-items:flex-start;gap:22px}
+  .more-projects-text>p{font-size:27px}
+  .more-projects-list{font-size:11px}
+}
+/* Interior pages set their own phone nav spacing above; match the homepage's on the narrowest phones so the
+   centred links keep clear of the name. */
+@media(max-width:420px){.inner-page .site-header nav{gap:14px}}
+@media(max-width:350px){.inner-page .site-header nav{gap:12px}}

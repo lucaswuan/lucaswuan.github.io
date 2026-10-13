@@ -23,7 +23,9 @@ WEBP_QUALITY = 82
 
 def make_sizes(path):
     source = Path(path)
-    image = Image.open(source).convert('RGB')
+    image = Image.open(source)
+    # Keep transparency (e.g. a board render's rounded corners); WebP and AVIF both store it.
+    image = image.convert('RGBA' if image.has_transparency_data else 'RGB')
     largest = min(image.width, WIDTHS[-1])
     widths = sorted({w for w in WIDTHS if w < largest} | {largest})
     # Remove copies from an earlier run so a smaller replacement photo leaves no stale sizes behind.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { gallery, artwork, card, validate, SIZES } from './build-projects.mjs';
+import { gallery, artwork, card, homeCards, moreProjects, validate, SIZES } from './build-projects.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
@@ -91,13 +91,29 @@ test('every generated page and homepage has working local navigation and assets'
   }
 });
 
-test('home has three real project links, with one featured first; index contains every project',async()=>{
+test('home shows the featured previews in order, wide first only when the count is odd; index contains every project',async()=>{
   const home=await readFile(path.join(root,'index.html'),'utf8');
   const index=await readFile(path.join(root,'projects/index.html'),'utf8');
   const cards=[...home.matchAll(/<a class="project-card([^"]*)" href="([^"]+)"/g)];
-  assert.equal(cards.length,3);
-  assert.ok(cards[0][1].includes('wide-project'));
-  assert.ok(cards.slice(1).every(card=>!card[1].includes('wide-project')));
+  assert.equal(cards.length,data.featured.length);
   assert.deepEqual(cards.map(card=>card[2]),data.featured.map(slug=>`/projects/${slug}/`));
+  assert.equal(cards.filter(card=>card[1].includes('wide-project')).length,data.featured.length%2);
+  const pick=n=>data.projects.slice(0,n);
+  for (const n of [1,2,3,4,5]) {
+    const html=homeCards(pick(n));
+    assert.equal((html.match(/wide-project/g) ?? []).length,n%2,`${n} previews`);
+    if (n%2) assert.ok(html.startsWith('<a class="project-card wide-project'));
+  }
   for (const p of data.projects) assert.ok(index.includes(`aria-label="Explore ${p.title}"`));
+});
+
+test('the row under the previews counts and names every project not shown, and the buttons give the total',async()=>{
+  const home=await readFile(path.join(root,'index.html'),'utf8');
+  const hidden=data.projects.filter(p=>!data.featured.includes(p.slug));
+  const row=home.slice(home.indexOf('<!-- more-projects:start -->'),home.indexOf('<!-- more-projects:end -->'));
+  assert.ok(row.includes(`<p>${hidden.length} more projects</p>`));
+  assert.deepEqual([...row.matchAll(/<li><a href="([^"]+)">/g)].map(m=>m[1]),hidden.map(p=>`/projects/${p.slug}/`));
+  assert.equal((home.match(new RegExp(`View all ${data.projects.length} projects`,'g')) ?? []).length,2);
+  assert.equal(moreProjects(data.projects,data.projects),'');
+  assert.ok(moreProjects(data.projects,data.projects.slice(1)).includes('<p>1 more project</p>'));
 });
