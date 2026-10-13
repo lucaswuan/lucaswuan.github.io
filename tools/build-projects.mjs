@@ -111,7 +111,7 @@ export async function validate(data, assetRoot=root) {
     }
     if (isVideo(project.cover?.src)) throw new Error(`${project.slug}: the cover must be an image; put videos in a gallery.`);
   }
-  if (!Array.isArray(data.featured) || data.featured.length!==3 || new Set(data.featured).size!==3 || data.featured.some(slug=>!seen.has(slug))) throw new Error('Choose exactly three distinct existing projects for the homepage.');
+  if (!Array.isArray(data.featured) || !data.featured.length || new Set(data.featured).size!==data.featured.length || data.featured.some(slug=>!seen.has(slug))) throw new Error('Choose one or more distinct existing projects for the homepage.');
 }
 
 export async function build() {
@@ -146,14 +146,38 @@ export async function build() {
   }
   const homeFile=path.join(root,'index.html');
   let home=await readFile(homeFile,'utf8');
-  const start='<!-- featured-projects:start -->',end='<!-- featured-projects:end -->';
-  const startAt=home.indexOf(start),endAt=home.indexOf(end);
-  if (startAt<0 || endAt<startAt) throw new Error('Homepage featured-project markers are missing.');
-  const cards=data.featured.map((slug,i)=>card(data.projects.find(p=>p.slug===slug),i,i===0,i===0?SIZES.wide:SIZES.half)).join('\n');
-  home=home.slice(0,startAt+start.length)+'\n'+cards+'\n'+home.slice(endAt);
+  const between=(name,html)=>{
+    const start=`<!-- ${name}:start -->`,end=`<!-- ${name}:end -->`;
+    const startAt=home.indexOf(start),endAt=home.indexOf(end);
+    if (startAt<0 || endAt<startAt) throw new Error(`Homepage ${name} markers are missing.`);
+    home=home.slice(0,startAt+start.length)+'\n'+html+'\n'+home.slice(endAt);
+  };
+  const featured=data.featured.map(slug=>data.projects.find(p=>p.slug===slug));
+  between('featured-projects',homeCards(featured));
+  between('more-projects',moreProjects(data.projects,featured));
   home=home.replace(/(<span class="nav-count">)\d+(<\/span>)/,(_,before,after)=>before+count+after);
+  home=home.replace(/(<a class="outline-link" href="\/projects\/">)View all(?: \d+)? projects/,(_,before)=>before+viewAll(data.projects.length));
   await writeFile(homeFile,home);
-  console.log(`Built ${data.projects.length} project pages, the project index, and 3 homepage previews.`);
+  console.log(`Built ${data.projects.length} project pages, the project index, and ${featured.length} homepage previews.`);
+}
+
+const viewAll = total => `View all ${total} projects`;
+
+// An odd number of previews starts with one wide card so the two-column grid has no gap; an even number is all half-width.
+export function homeCards(featured) {
+  return featured.map((project,i)=>{
+    const wide=featured.length%2===1 && i===0;
+    return card(project,i,wide,wide?SIZES.wide:SIZES.half);
+  }).join('\n');
+}
+
+// The row under the previews names the projects that aren't shown, so visitors know what the full list adds.
+export function moreProjects(projects, featured) {
+  const shown=new Set(featured.map(p=>p.slug));
+  const rest=projects.filter(p=>!shown.has(p.slug));
+  if (!rest.length) return '';
+  const names=rest.map(p=>`<li><a href="${url(p)}">${escape(p.title)}</a></li>`).join('');
+  return `<div class="more-projects reveal"><div class="more-projects-text"><p>${rest.length} more ${rest.length===1 ? 'project' : 'projects'}</p><ul class="more-projects-list" aria-label="Projects not shown above">${names}</ul></div><a class="outline-link" href="/projects/">${viewAll(projects.length)} <span aria-hidden="true">↗</span></a></div>`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

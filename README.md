@@ -20,7 +20,7 @@ Open http://127.0.0.1:8000/. The project index is at `/projects/`.
 
 The generator updates the homepage previews, `projects/index.html`, and `projects/<slug>/index.html`. Change the reusable page structure in `templates/project.html` or `templates/projects.html`, not in generated pages. Project text is present in the HTML and works without JavaScript.
 
-The `featured` list selects and orders exactly three homepage previews. The first is wide. The order of entries in `projects` controls the project index and the “Next project” links.
+The `featured` list selects and orders the homepage previews (currently four). Previews sit two per row; with an odd number, the first is full-width. Below them, the generator writes a row that counts and names every project not previewed, with a “View all N projects” link; the button beside the Projects heading shows the same total. The order of entries in `projects` controls the project index and the “Next project” links.
 
 ## Add your images
 
@@ -91,7 +91,7 @@ To check galleries, content validation, and local links after editing, run `node
 
 ## File map
 
-- `index.html`: homepage. Content between the featured-project markers is generated. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
+- `index.html`: homepage. Content between the featured-projects and more-projects markers is generated, as are the project counts. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
 - `content/projects.json`: editable project content and image lists.
 - `templates/`: shared page layouts.
 - `tools/build-projects.mjs`: dependency-free static page generator.
@@ -103,4 +103,4 @@ To check galleries, content validation, and local links after editing, run `node
 - `app.js`: homepage planet animation and scroll effects.
 - `planet-renderer.js`: WebGL planet renderer.
 
-Project drafts were adapted from the supplied resumes. UWASIC's functional-unit control RTL and its SPI/PWM onboarding project are separate pages (`uwasic` and `spi-pwm-peripheral`). Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.
+Project drafts were adapted from the supplied resumes. UWASIC's functional-unit control RTL and its SPI/PWM onboarding project are separate pages (`uwasic` and `spi-pwm-peripheral`). Until there's an image of the functional-unit control work, the `uwasic` cover reuses the SPI peripheral's GDS layout. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.
