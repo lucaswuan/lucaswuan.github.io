@@ -6,32 +6,86 @@
       "title": "UWASIC",
       "category": "Digital design",
       "year": "2026–Present",
-      "role": "RTL Design Member",
-      "status": "Ongoing",
+      "role": "RTL Design Member, Ray-Tracing ASIC",
+      "status": "RTL written; in verification",
       "art": "chip",
       "artTitle": "From logic\nto silicon.",
-      "artLabel": "RTL / VERIFICATION / ASIC",
-      "summary": "Designing functional-unit RTL for Waterloo’s ray-tracing ASIC, building on a completed SPI/PWM onboarding project.",
-      "tags": ["Verilog", "SPI", "CDC", "Python / cocotb", "Tiny Tapeout"],
-      "links": [{"label": "Onboarding code", "url": "https://github.com/lucaswuan/digital-onboarding"}],
+      "artLabel": "DECODE / DISPATCH / WRITEBACK",
+      "summary": "The functional-unit control module for Waterloo’s ray-tracing ASIC: SystemVerilog that decodes 11 micro-ops and dispatches them to the ALU, multiplier, and CORDIC units.",
+      "tags": ["SystemVerilog", "RTL design", "Valid/ready handshakes", "SystemVerilog interfaces", "ASIC"],
+      "links": [],
+      "cover": null,
+      "highlights": [],
+      "overview": [
+        "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team, which is building a ray-tracing ASIC. I wrote the chip’s functional-unit control module in SystemVerilog. It sits between the micro-op channel and the three arithmetic units: the ALU, the multiplier, and the CORDIC unit.",
+        "For each micro-op, the module decides which unit should run it, collects its operands, hands the work over when that unit is ready, and writes the result back to the register file when the unit finishes. Before this, I completed UWASIC’s digital-design onboarding project, an SPI-controlled PWM peripheral."
+      ],
+      "sections": [
+        {"title": "Decoding 11 micro-ops", "body": ["Each micro-op is decoded into a target unit and, for units that run more than one operation, a 3-bit opcode for that unit."], "bullets": ["ALU: add, subtract, equal, not equal, less than, and greater than or equal.", "Multiplier: multiply.", "CORDIC: divide, square root, cosine, and magnitude."]},
+        {"title": "Operands", "body": ["Operands normally come from the register file’s two read ports, addressed by the micro-op’s two source registers. Scalar macro-ops carry their operands on the micro-op channel instead, so a direct flag switches a mux between the register file and the channel. The operands, opcode, and format field go to all three units, but only the selected unit sees a valid request."]},
+        {"title": "Valid/ready handshakes", "body": ["Each unit connects through the same SystemVerilog interface, with a valid/ready handshake on the request side and a done signal on the response side. The module passes the selected unit’s ready signal back up the micro-op channel, so a micro-op is accepted only in a cycle where it is valid and that unit is ready. In that cycle, the module also records the micro-op’s destination register for that unit, so the result is written to the right place when it arrives."]},
+        {"title": "Writing results back", "body": ["When a unit finishes, the module writes its result to the destination register it recorded and signals on the micro-op channel that the operation is done. The register file has one write port, so writeback uses a fixed priority: the ALU first, then the multiplier, then the CORDIC unit."]}
+      ],
+      "images": [],
+      "outcome": ["The functional-unit control module is written, connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow."]
+    },
+    {
+      "slug": "uwaft",
+      "title": "UWAFT",
+      "category": "PCB design",
+      "year": "2026–Present",
+      "role": "Electrical Subteam Member",
+      "status": "v1.0 design complete",
+      "art": "board",
+      "artTitle": "Power,\nmeasured.",
+      "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
+      "summary": "A single-cell Li-ion battery monitor and relay load switch board, designed in Altium with an STC3100 gas gauge and an STM32.",
+      "tags": ["Altium Designer", "Schematic capture", "PCB layout", "STM32", "I2C", "Kelvin sensing"],
+      "links": [],
+      "cover": null,
+      "highlights": [],
+      "overview": [
+        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. For my electrical onboarding project, I designed a battery monitor and relay board in Altium Designer. It monitors a single Li-ion cell and can connect or disconnect a load.",
+        "An STC3100 gas gauge measures the battery’s voltage and current, sensing the current through a 30\u00a0mΩ shunt and counting the charge that flows in and out. An STM32F030 microcontroller reads the gauge over I2C and switches a relay to turn the load on or off."
+      ],
+      "sections": [
+        {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
+        {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it passes DRC with zero violations."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.2–1.5\u00a0mm traces; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
+        {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. The shunt is Kelvin-sensed: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]}
+      ],
+      "images": [],
+      "outcome": ["Version 1.0 of the board is laid out and passes DRC with zero violations. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path."]
+    },
+    {
+      "slug": "spi-pwm-peripheral",
+      "title": "SPI-Controlled PWM Peripheral",
+      "category": "Digital design",
+      "year": "2026",
+      "role": "RTL design & verification",
+      "status": "Completed",
+      "art": "chip",
+      "artTitle": "Registers\nto silicon.",
+      "artLabel": "SPI / PWM / CDC / GDS",
+      "summary": "A Verilog SPI Mode 0 peripheral with five registers and sixteen outputs that drives a 3\u00a0kHz PWM, tested with cocotb and taken to GDS through Tiny Tapeout.",
+      "tags": ["Verilog", "SPI", "CDC", "Python / cocotb", "Icarus Verilog", "Tiny Tapeout", "GitHub Actions"],
+      "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/digital-onboarding"}],
       "cover": {
-        "src": "/assets/projects/uwasic/gds-layout.webp",
+        "src": "/assets/projects/spi-pwm-peripheral/gds-layout.webp",
         "alt": "Top-down view of the chip layout: rows of standard cells crossed by vertical power straps, with the routed SPI and PWM logic concentrated in the upper half.",
-        "caption": "GDS layout of my SPI/PWM onboarding design, shown in a 3D layout viewer.",
+        "caption": "GDS layout of the peripheral, shown in a 3D layout viewer.",
         "position": "50% 20%"
       },
       "highlights": [],
       "overview": [
-        "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team. My current work is functional-unit RTL for a ray-tracing ASIC, collaborating with the verification team toward passing functional tests and a lint-clean RTL-to-GDS flow.",
-        "Before that work, I completed a digital-design onboarding project: a Verilog SPI Mode 0 peripheral with register-controlled outputs and PWM. That project connected RTL implementation, automated verification, and physical-layout generation."
+        "This was my digital-design onboarding project for UWASIC, Waterloo’s chip design team: a Verilog SPI Mode 0 peripheral that drives PWM outputs. It took one design from RTL, through automated simulation, to a generated chip layout."
       ],
       "sections": [
-        {"title": "The peripheral", "body": ["The onboarding peripheral has five registers and sixteen outputs. I implemented SPI Mode 0 communication and two-stage clock-domain crossing to move signals between clock domains."], "bullets": ["Verilog RTL for the SPI peripheral and output controls.", "Register interface for configuring peripheral behavior.", "Two-stage CDC for signals crossing clock domains."]},
-        {"title": "Verification & tooling", "body": ["I wrote Python/cocotb tests for 3 kHz PWM, checking 0%, 50%, and 100% duty cycles as well as output-enable behavior. I configured Tiny Tapeout and GitHub Actions to run simulation tests and generate GDS layout files."]},
-        {"title": "Current work", "body": ["I’m now applying that foundation to functional-unit RTL for UWASIC’s ray-tracing ASIC. This is ongoing team work; the completed peripheral and its verification flow are the onboarding portion of the project."]}
+        {"title": "The peripheral", "body": ["The peripheral has five registers and sixteen outputs, configured over SPI Mode 0. Two-stage clock-domain crossing (CDC) moves signals safely between clock domains."], "bullets": ["Verilog RTL for the SPI interface and output controls.", "A register interface for configuring the outputs and the PWM.", "Two-stage CDC for signals crossing clock domains."]},
+        {"title": "Verification", "body": ["I wrote Python/cocotb tests, simulated with Icarus Verilog, that check the 3\u00a0kHz PWM at 0%, 50%, and 100% duty cycle, along with the output-enable behavior."]},
+        {"title": "From RTL to GDS", "body": ["I configured Tiny Tapeout and GitHub Actions to run the simulation tests and generate the GDS layout files automatically."]}
       ],
       "images": [],
-      "outcome": ["Completed the SPI/PWM onboarding project with automated simulation tests and GDS generation. The next stage is continuing functional-unit design and verification with the UWASIC team."]
+      "outcome": ["The peripheral is complete, with automated simulation tests and GDS generation. It gave me the foundation for the functional-unit control RTL I later wrote for UWASIC’s ray-tracing ASIC."]
     },
     {
       "slug": "signed",
@@ -49,23 +103,23 @@
       "cover": {
         "src": "/assets/projects/signed/team-win.webp",
         "alt": "The five-person SignEd team standing in front of a projected slide that reads “1st Place Winner, Beginner Tier, $650, SignEd”, most of them making the ASL “I love you” sign.",
-        "caption": "Our team after SignEd won first place in the Beginner Track at Hack the Bias."
+        "caption": "Our team after SignEd won first place in the Beginner Tier at Hack the Bias."
       },
       "highlights": [],
-      "overview": ["SignEd is an ASL learning website built for Hack the Bias. As the team’s sole programmer, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
+      "overview": ["SignEd is an ASL learning website we built at Hack the Bias, a hackathon with 101 participants, where it won first place in the Beginner Tier. As the sole programmer on our five-person team, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
       "sections": [
-        {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize ASL poses."]},
+        {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize all 24 static letters of the ASL alphabet. J and Z are left out because they are signed with motion."]},
         {"title": "Connecting recognition to learning", "body": ["Live recognition feedback is connected to guided lessons. A learner unlocks progression after holding the correct sign for three seconds, connecting the recognition result to a clear practice goal."]},
         {"title": "My contribution", "bullets": ["Implemented the Python/Flask application and the browser interface.", "Built the hand-landmark normalization and pose-classification pipeline.", "Connected live feedback to lesson progression."]}
       ],
       "images": [],
-      "outcome": ["SignEd won the Beginner Track at Hack the Bias. The project brought together computer vision, a web interface, and guided practice in one ASL learning experience."]
+      "outcome": ["SignEd won first place in the Beginner Tier at Hack the Bias. The project brought together computer vision, a web interface, and guided practice in one ASL learning experience."]
     },
     {
       "slug": "vex-robotics",
       "title": "VEX Robotics",
       "category": "Robotics",
-      "year": "2020–2023",
+      "year": "2022–2024",
       "role": "Built the intake, flywheel & catapult; programmed autonomous",
       "status": "Competition project",
       "art": "robot",
@@ -84,7 +138,7 @@
         {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
         {"value": "2023", "label": "World Championship · Dallas"}
       ],
-      "overview": ["I competed in VEX robotics on team 2088D. Over the 2022–23 season we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I built the intake, the flywheel, and the catapult, and I programmed the autonomous routines."],
+      "overview": ["I competed in VEX robotics on team 2088D from 2022 to 2024. In the 2022–23 season, we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I built the intake, the flywheel, and the catapult, and I programmed the autonomous routines."],
       "sections": [
         {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I built both, then tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
         {"title": "Autonomous routines", "body": ["I programmed the robot’s autonomous routines: the code that drives it on its own at the start of each match and in programming skills runs."]},
