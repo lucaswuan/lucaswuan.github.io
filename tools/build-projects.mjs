@@ -171,13 +171,11 @@ export function homeCards(featured) {
   }).join('\n');
 }
 
-// The row under the previews names the projects that aren't shown, so visitors know what the full list adds.
+// A full-width button under the previews, shown only when some projects aren't previewed.
 export function moreProjects(projects, featured) {
   const shown=new Set(featured.map(p=>p.slug));
-  const rest=projects.filter(p=>!shown.has(p.slug));
-  if (!rest.length) return '';
-  const names=rest.map(p=>`<li><a href="${url(p)}">${escape(p.title)}</a></li>`).join('');
-  return `<div class="more-projects reveal"><div class="more-projects-text"><p>${rest.length} more ${rest.length===1 ? 'project' : 'projects'}</p><ul class="more-projects-list" aria-label="Projects not shown above">${names}</ul></div><a class="outline-link" href="/projects/">${viewAll(projects.length)} <span aria-hidden="true">↗</span></a></div>`;
+  if (projects.every(p=>shown.has(p.slug))) return '';
+  return `<a class="more-projects reveal" href="/projects/">View more projects <span aria-hidden="true">↗</span></a>`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

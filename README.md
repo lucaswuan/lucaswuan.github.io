@@ -103,4 +103,4 @@ To check galleries, content validation, and local links after editing, run `node
 - `app.js`: homepage planet animation and scroll effects.
 - `planet-renderer.js`: WebGL planet renderer.
 
-Project drafts were adapted from the supplied resumes. UWASIC's functional-unit control RTL and its SPI/PWM onboarding project are separate pages (`uwasic` and `spi-pwm-peripheral`). Until there's an image of the functional-unit control work, the `uwasic` cover reuses the SPI peripheral's GDS layout. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.
+Project drafts were adapted from the supplied resumes. The `uwasic` page covers both the functional-unit control RTL and the SPI/PWM onboarding peripheral (its own section). Until there's an image of the functional-unit control work, its cover is the peripheral's GDS layout, which stays in `assets/projects/spi-pwm-peripheral/`. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.
