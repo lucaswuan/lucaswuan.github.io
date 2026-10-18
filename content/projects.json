@@ -41,7 +41,7 @@
       "category": "PCB design",
       "year": "2026–Present",
       "role": "Electrical Subteam Member",
-      "status": "v1.0 design complete",
+      "status": "v1.0 being fabricated",
       "art": "board",
       "artTitle": "Power,\nmeasured.",
       "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
@@ -55,16 +55,16 @@
       },
       "highlights": [],
       "overview": [
-        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. For my electrical onboarding project, I designed a battery monitor and relay board in Altium Designer. It monitors a single Li-ion cell and can connect or disconnect a load.",
+        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. I designed a battery monitor and relay switch board in Altium Designer, from schematic to layout. It monitors a single Li-ion cell and can connect or disconnect a load.",
         "An STC3100 gas gauge measures the battery’s voltage and current, sensing the current through a 30\u00a0mΩ shunt and counting the charge that flows in and out. An STM32F030 microcontroller reads the gauge over I2C and switches a relay to turn the load on or off."
       ],
       "sections": [
         {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
-        {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it passes DRC with zero violations."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.2–1.5\u00a0mm traces; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
+        {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it passes DRC with zero violations."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.5\u00a0mm traces over solid ground on both layers; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
         {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. The shunt is Kelvin-sensed: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]}
       ],
       "images": [],
-      "outcome": ["Version 1.0 of the board is laid out and passes DRC with zero violations. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path."]
+      "outcome": ["Version 1.0 of the board passes DRC with zero violations and is now being fabricated. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "I’m now adapting the design for the team’s soldering tutorials, moving it to the team-standard STM32L011 and a 2\u00a0A relay."]
     },
     {
       "slug": "signed",
@@ -99,7 +99,7 @@
       "title": "VEX Robotics",
       "category": "Robotics",
       "year": "2022–2024",
-      "role": "Built the intake, flywheel & catapult; programmed autonomous",
+      "role": "Designed & built the intake and flywheel; built the catapult; programmed autonomous",
       "status": "Competition project",
       "art": "robot",
       "artTitle": "Built for\nthe field.",
@@ -117,9 +117,9 @@
         {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
         {"value": "2023", "label": "World Championship · Dallas"}
       ],
-      "overview": ["I competed in VEX robotics on team 2088D from 2022 to 2024. In the 2022–23 season, we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I built the intake, the flywheel, and the catapult, and I programmed the autonomous routines."],
+      "overview": ["I competed in VEX robotics on team 2088D from 2022 to 2024. In the 2022–23 season, we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I designed and built the disc intake and the flywheel launcher, built the catapult, and programmed the autonomous routines."],
       "sections": [
-        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I built both, then tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
+        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I designed and built both, then iteratively tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
         {"title": "Autonomous routines", "body": ["I programmed the robot’s autonomous routines: the code that drives it on its own at the start of each match and in programming skills runs."]},
         {"title": "Design 2: the catapult rebuild", "body": ["Even after tuning, the flywheel wasn’t as reliable as we wanted. After qualifying for Worlds, we rebuilt the robot around a catapult, which launches a whole stack of discs in one motion. I built the catapult."], "images": [
           {"src": "/assets/projects/vex-robotics/catapult-rebuild.webp", "alt": "The rebuilt robot on a workbench, nearly finished: an aluminum frame on omni wheels with a geared catapult arm held back by rubber bands, and a practice field behind it.", "caption": "The catapult rebuild, nearly finished."},
