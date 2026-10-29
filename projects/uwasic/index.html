@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&text=.%2C%3A%3B-%3D%2B*%23%25%40&display=block">
-  <link rel="stylesheet" href="/styles.css?v=65b37068d5">
+  <link rel="stylesheet" href="/styles.css?v=d9cecb67a1">
   <link rel="stylesheet" href="/projects.css?v=e5284aee69">
   <script src="/sky-renderer.js?v=5b2c25b810" defer></script>
-  <script src="/galaxy.js?v=ae190db2a6" defer></script>
+  <script src="/galaxy.js?v=51bbb26c5d" defer></script>
   <script src="/site.js?v=d46df26e85" defer></script>
 </head>
 <body class="inner-page">
@@ -48,14 +48,14 @@
       <nav class="case-nav" aria-label="On this page"><p class="eyebrow">In this project</p><a href="#overview">01 / Overview</a><a href="#work">02 / The work</a><a href="#outcome">03 / Outcome</a></nav>
       <div class="case-content">
         <section id="overview" class="case-section"><p class="eyebrow">01 / Context</p><h2>Overview</h2><p>I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team, which is building a ray-tracing ASIC. I wrote the chip’s <mark data-tone="0">functional-unit control module</mark> in SystemVerilog. It sits between the micro-op channel and the three arithmetic units: the ALU, the multiplier, and the CORDIC unit.</p>
-<p>For each micro-op, the module decides which unit should run it, collects its operands, hands the work over when that unit is ready, and writes the result back to the register file when the unit finishes. Before this, I completed UWASIC’s digital-design onboarding project, an SPI-controlled PWM peripheral that I took <mark class="before-punctuation" data-tone="1">from RTL to a generated chip layout</mark>.</p></section>
+<p>For each micro-op, the module decides which unit should run it, collects its operands, hands the work over when that unit is ready, and writes the result back to the register file when the unit finishes. Before this, I completed UWASIC’s digital-design onboarding project, an SPI-controlled PWM peripheral that I took <mark data-tone="1">from RTL to a generated chip layout.</mark></p></section>
         <section id="work" class="case-section"><p class="eyebrow">02 / Contribution</p><h2>The work</h2><div class="work-section"><h3>Decoding 11 micro-ops</h3><p>Each micro-op is decoded into a target unit and, for units that run more than one operation, a 3-bit opcode for that unit.</p><ul><li>ALU: add, subtract, equal, not equal, less than, and greater than or equal.</li><li>Multiplier: multiply.</li><li>CORDIC: divide, square root, cosine, and magnitude.</li></ul></div>
 <div class="work-section"><h3>Operands</h3><p>Operands normally come from the register file’s two read ports, addressed by the micro-op’s two source registers. Scalar macro-ops carry their operands on the micro-op channel instead, so a direct flag switches a mux between the register file and the channel. The operands, opcode, and format field go to all three units, but only the selected unit sees a valid request.</p></div>
 <div class="work-section"><h3>Valid/ready handshakes</h3><p>Each unit connects through the same SystemVerilog interface, with a valid/ready handshake on the request side and a done signal on the response side. The module passes the selected unit’s ready signal back up the micro-op channel, so a micro-op is accepted only in a cycle where it is valid and that unit is ready. In that cycle, the module also records the micro-op’s destination register for that unit, so the result is written to the right place when it arrives.</p></div>
 <div class="work-section"><h3>Writing results back</h3><p>When a unit finishes, the module writes its result to the destination register it recorded and signals on the micro-op channel that the operation is done. The register file has one write port, so writeback uses a fixed priority: the ALU first, then the multiplier, then the CORDIC unit.</p></div>
 <div class="work-section"><h3>Onboarding: an SPI-controlled PWM peripheral</h3><p>My UWASIC onboarding project was a Verilog SPI Mode 0 peripheral with five registers and sixteen outputs that drives a 3 kHz PWM. It took one design from RTL, through automated simulation, to a generated chip layout.</p><ul><li>Verilog RTL for the SPI interface, a register interface for configuring the outputs and the PWM, and two-stage clock-domain crossing (CDC) for signals moving between clock domains.</li><li>Python/cocotb tests, simulated with Icarus Verilog, that check the PWM at 0%, 50%, and 100% duty cycle, along with the output-enable behavior.</li><li>Tiny Tapeout and GitHub Actions set up to run the tests and generate the GDS layout files automatically.</li></ul></div></section>
 
-        <section id="outcome" class="case-section"><p class="eyebrow">03 / Reflection</p><h2>Outcome</h2><p><mark class="before-punctuation" data-tone="2">The functional-unit control module is written</mark>, connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow.</p>
+        <section id="outcome" class="case-section"><p class="eyebrow">03 / Reflection</p><h2>Outcome</h2><p><mark data-tone="2">The functional-unit control module is written,</mark> connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow.</p>
 <p>The onboarding peripheral is complete, with automated simulation tests and GDS generation, and it gave me the foundation for the functional-unit control RTL.</p></section>
       </div>
     </div>

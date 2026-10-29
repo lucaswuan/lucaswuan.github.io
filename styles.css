@@ -105,7 +105,6 @@ p.intro { margin: 0 0 35px; font-size: 19px; line-height: 1.5; color: var(--pape
 /* The three section labels (01 Projects, 02 About me, 03 Contact) share one style. */
 .section-heading .eyebrow, .about-copy > p.eyebrow, .contact-text .eyebrow { max-width: none; margin: 0 0 20px; font: 600 14px/1.35 var(--sans); letter-spacing: -.005em; color: var(--label-ink); }
 mark { padding: .05em .25em; background: var(--phrase); color: var(--phrase-ink); }
-mark.before-punctuation { padding-right: 0; }
 mark[data-tone="1"] { background: #2c2747; color: #e6e0ff; }
 mark[data-tone="2"] { background: #38331c; color: #fff4cc; }
 mark[data-tone="3"] { background: #3d262a; color: #fadbe0; }

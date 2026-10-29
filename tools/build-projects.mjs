@@ -97,15 +97,17 @@ export const stamp = (html, versions) =>
   html.replace(/\b([\w-]+\.(?:css|js))\?v=\w+/g, (match, name) => name in versions ? `${name}?v=${versions[name]}` : match);
 
 // Key phrases cycle through six highlight tints in page order, so neighbouring ones never match (mark[data-tone] in styles.css).
-// A highlight directly before punctuation gets .before-punctuation, which drops its right padding so the
-// punctuation isn't pushed away from the word.
+// Punctuation straight after a highlight joins it, so every highlight ends the same way: a phrase that ends a sentence
+// or clause is highlighted with its full stop, comma, colon, semicolon, question or exclamation mark, ellipsis, or
+// closing bracket or quote. An apostrophe that starts a possessive (UWASIC’s) stays outside. See README, Highlights.
 export function toneMarks(html) {
   let i = 0;
-  return html.replace(/<mark\b([^>]*)>([\s\S]*?)<\/mark>(?=([.,;:!?)’]?))/g, (_, attrs, text, punctuation) => {
-    attrs = attrs.replace(/\s+data-tone="\d*"/g, '').replace(/\s*\bbefore-punctuation\b/g, '').replace(/\sclass=""/, '');
-    if (punctuation) attrs = /\sclass="/.test(attrs) ? attrs.replace(/\sclass="([^"]*)"/, ' class="$1 before-punctuation"') : `${attrs} class="before-punctuation"`;
-    return `<mark${attrs} data-tone="${i++ % 6}">${text}</mark>`;
-  });
+  return html
+    .replace(/<\/mark>([.,;:!?…)\]”’]+)(?![\p{L}\p{N}])/gu, '$1</mark>')
+    .replace(/<mark\b([^>]*)>([\s\S]*?)<\/mark>/g, (_, attrs, text) => {
+      attrs = attrs.replace(/\s+data-tone="\d*"/g, '').replace(/\s*\bbefore-punctuation\b/g, '').replace(/\sclass=""/, '');
+      return `<mark${attrs} data-tone="${i++ % 6}">${text}</mark>`;
+    });
 }
 
 // The image link previews show: the project's own 1200×630 crop (tools/make-preview-images.py), or the homepage's.
