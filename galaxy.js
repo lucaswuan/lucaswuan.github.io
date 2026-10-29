@@ -21,30 +21,42 @@
   // White starlight, blue stars, and red nebula-like accents around a warm core.
   // Color stays attached to each star as it moves through the character grid.
   const starColors=['#f3eadb','#81baff','#e6bf87','#b4a4df','#ed8793','#f8f9ff'];
-  // Cache the colored glyphs once, keeping the animation on the same text grid.
-  const glyphSheet=document.createElement('canvas');
+  // Every glyph in every colour and shade, cached once per screen density on the same text grid.
+  // Each one sits in a 10×12px tile, drawn at the screen's real pixel density so it is copied 1:1 and stays sharp.
+  // Callers can pass their own characters (the planets add lines for Saturn's ring).
   const glyphChars=['.',':','+','*','#','■'];
-  glyphSheet.width=720;glyphSheet.height=starColors.length*12;
-  const glyphCtx=glyphSheet.getContext('2d');
-  glyphCtx.font='8px monospace';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';
-  starColors.forEach((color,row)=>{
-    glyphChars.forEach((character,col)=>{
-      for(let shade=0;shade<12;shade++){
-        glyphCtx.fillStyle=color;glyphCtx.globalAlpha=(shade+1)/12;
-        glyphCtx.fillText(character,(col*12+shade)*10+5,row*12+6);
-      }
+  // The brightest stars' square is drawn smaller, so it reads as a point of light rather than a solid block.
+  const glyphSizes={'■':.6};
+  const GLYPH_FONT='ui-monospace,"SF Mono",Menlo,Consolas,monospace',GLYPH_SIZE=10;
+  function glyphSheet(colors,scale,chars=glyphChars){
+    const tileW=Math.ceil(10*scale),tileH=Math.ceil(12*scale),canvas=document.createElement('canvas');
+    canvas.width=tileW*chars.length*12;canvas.height=tileH*colors.length;
+    const ink=canvas.getContext('2d');
+    ink.textAlign='center';ink.textBaseline='middle';
+    colors.forEach((color,row)=>{
+      chars.forEach((character,col)=>{
+        ink.font=`${GLYPH_SIZE*(glyphSizes[character]??1)*scale}px ${GLYPH_FONT}`;
+        for(let shade=0;shade<12;shade++){
+          ink.fillStyle=color;ink.globalAlpha=(shade+1)/12;
+          ink.fillText(character,(col*12+shade+.5)*tileW,(row+.5)*tileH);
+        }
+      });
     });
-  });
+    return {canvas,tileW,tileH,scale};
+  }
 
-  let starPoints=[],columns=0,lines=0,cellAlpha,cellGlyph,cellTone,previousStars;
+  let starPoints=[],columns=0,lines=0,cellAlpha,cellGlyph,cellTone,previousStars,sheet=null;
   // The star canvas is sized to the tallest viewport (toolbar hidden), so starH stays put while the toolbar moves.
-  let starW=0,starH=0,starDpr=0;
+  let starW=0,starH=0,starDpr=0,deviceW=0,deviceH=0;
   function galaxyCurve(u,t){return starH*(.92-u*.93+.09*Math.sin(u*Math.PI*1.8+t*.000017));}
   function stars(){
-    const dpr=Math.min(devicePixelRatio,1.5),h=starCanvas.clientHeight||innerHeight;
-    if(innerWidth===starW&&h===starH&&dpr===starDpr)return;
+    const dpr=devicePixelRatio||1,h=starCanvas.clientHeight||innerHeight;
+    // The exact device-pixel size (from the observer below) avoids a sub-pixel resample at 125% or 175% scaling.
+    const width=deviceW||Math.round(innerWidth*dpr),height=deviceH||Math.round(h*dpr);
+    if(innerWidth===starW&&h===starH&&dpr===starDpr&&starCanvas.width===width&&starCanvas.height===height)return;
     starW=innerWidth;starH=h;starDpr=dpr;
-    starCanvas.width=innerWidth*dpr;starCanvas.height=starH*dpr;sctx.setTransform(dpr,0,0,dpr,0,0);
+    if(!sheet||sheet.scale!==dpr)sheet=glyphSheet(starColors,dpr);
+    starCanvas.width=width;starCanvas.height=height;
     columns=Math.ceil(innerWidth/CELL_WIDTH)+1;lines=Math.ceil(starH/CELL_HEIGHT)+1;
     cellAlpha=new Float32Array(columns*lines);cellGlyph=new Uint8Array(columns*lines);cellTone=new Uint8Array(columns*lines);previousStars=new Uint16Array(columns*lines);
     let seed=23;const rand=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
@@ -62,7 +74,6 @@
   function drawStars(t){
     cellAlpha.fill(0);
     // The galaxy is made entirely of text: no painted haze, gradients, or glow.
-    sctx.font='8px monospace';sctx.textAlign='center';sctx.textBaseline='middle';
     for(const p of starPoints){
       const flowSpeed=SHARED_STAR_FLOW?(p.spread?.000010*(1+.08*Math.sin(p.v*1.5)):.0000035):.000006*p.speed;
       const u=((p.u+.2+t*flowSpeed)%1.4)-.2,x=u*innerWidth;
@@ -88,20 +99,28 @@
       const index=line*columns+column;
       if(alpha>cellAlpha[index]){cellAlpha[index]=alpha;cellGlyph[index]=p.character;cellTone[index]=row;}
     }
+    // Drawn in device pixels: cells and glyphs land on whole pixels, so nothing is resampled.
+    const s=starDpr,{canvas:glyphs,tileW,tileH}=sheet;
     for(let line=0;line<lines;line++){for(let column=0;column<columns;column++){
       const index=line*columns+column,opacity=Math.round(cellAlpha[index]*31);
       const code=opacity?((cellGlyph[index]+1)|(cellTone[index]<<3)|(opacity<<6)):0;
       if(code===previousStars[index])continue;
       const x=column*CELL_WIDTH,y=line*CELL_HEIGHT;
-      sctx.clearRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
-      if(code){sctx.globalAlpha=opacity/31;sctx.drawImage(glyphSheet,(cellGlyph[index]*12+11)*10,cellTone[index]*12,10,12,x-5,y-6,10,12);}
+      const left=Math.round((x-CELL_WIDTH/2)*s),top=Math.round((y-CELL_HEIGHT/2)*s);
+      sctx.clearRect(left,top,Math.round((x+CELL_WIDTH/2)*s)-left,Math.round((y+CELL_HEIGHT/2)*s)-top);
+      if(code){sctx.globalAlpha=opacity/31;sctx.drawImage(glyphs,(cellGlyph[index]*12+11)*tileW,cellTone[index]*tileH,tileW,tileH,Math.round(x*s-tileW/2),Math.round(y*s-tileH/2),tileW,tileH);}
       previousStars[index]=code;
     }}
     sctx.globalAlpha=1;
   }
   // iOS browsers can run this before styles.css applies, while the canvas is still its default 150px tall.
   // Measure again once the page (and its stylesheets) has loaded so the stars aren't stretched until a resize.
-  stars();addEventListener('resize',stars);addEventListener('load',stars);
+  // Only then watch the canvas's exact device-pixel size: before styles apply, its size follows its own pixels.
+  stars();addEventListener('resize',stars);
+  addEventListener('load',()=>{
+    stars();
+    try{new ResizeObserver(([entry])=>{const box=entry.devicePixelContentBoxSize?.[0];if(box){deviceW=box.inlineSize;deviceH=box.blockSize;stars();}}).observe(starCanvas,{box:'device-pixel-content-box'});}catch{}
+  });
   window.portfolioGalaxy={canvas:starCanvas,glyphSheet,media,get paused(){return paused;}};
   let lastTime=0,frame=0;
   function animate(t){

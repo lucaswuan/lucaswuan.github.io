@@ -2,6 +2,37 @@
   "featured": ["uwaft", "uwasic", "signed", "vex-robotics"],
   "projects": [
     {
+      "slug": "uwaft",
+      "title": "UWAFT",
+      "category": "PCB design",
+      "year": "2026–Present",
+      "role": "Electrical Subteam Member",
+      "status": "v1.0 being fabricated",
+      "art": "board",
+      "artTitle": "Power,\nmeasured.",
+      "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
+      "summary": "A single-cell Li-ion battery monitor and relay load switch board, designed in Altium with an STC3100 gas gauge and an STM32.",
+      "tags": ["Altium Designer", "Schematic capture", "PCB layout", "STM32", "I2C", "Kelvin sensing"],
+      "links": [],
+      "cover": {
+        "src": "/assets/projects/uwaft/bms-board-render.webp",
+        "alt": "3D render of the UWAFT BMS v1.0 board: a black two-layer PCB with the STM32 microcontroller at top left, a 2×4 debug header in the middle, the STC3100 gas gauge at right, the relay at the bottom, and the LOAD and BATT connectors along the bottom edge.",
+        "caption": "3D render of the v1.0 board."
+      },
+      "highlights": [],
+      "overview": [
+        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. I designed a ==battery monitor and relay switch board== in Altium Designer, from schematic to layout. It monitors a single Li-ion cell and can connect or disconnect a load.",
+        "An STC3100 gas gauge measures the battery’s voltage and current, sensing the current through a 30\u00a0mΩ shunt and counting the charge that flows in and out. An STM32F030 microcontroller reads the gauge over I2C and switches a relay to turn the load on or off."
+      ],
+      "sections": [
+        {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
+        {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it ==passes DRC with zero violations==."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.5\u00a0mm traces over solid ground on both layers; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
+        {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. ==The shunt is Kelvin-sensed==: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]}
+      ],
+      "images": [],
+      "outcome": ["Version 1.0 of the board passes DRC with zero violations and is ==now being fabricated==. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "I’m now adapting the design for the team’s soldering tutorials, moving it to the team-standard STM32L011 and a 2\u00a0A relay."]
+    },
+    {
       "slug": "uwasic",
       "title": "UWASIC",
       "category": "Digital design",
@@ -22,8 +53,8 @@
       },
       "highlights": [],
       "overview": [
-        "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team, which is building a ray-tracing ASIC. I wrote the chip’s functional-unit control module in SystemVerilog. It sits between the micro-op channel and the three arithmetic units: the ALU, the multiplier, and the CORDIC unit.",
-        "For each micro-op, the module decides which unit should run it, collects its operands, hands the work over when that unit is ready, and writes the result back to the register file when the unit finishes. Before this, I completed UWASIC’s digital-design onboarding project, an SPI-controlled PWM peripheral that I took from RTL to a generated chip layout."
+        "I’m an RTL design member of UWASIC, the University of Waterloo’s chip design team, which is building a ray-tracing ASIC. I wrote the chip’s ==functional-unit control module== in SystemVerilog. It sits between the micro-op channel and the three arithmetic units: the ALU, the multiplier, and the CORDIC unit.",
+        "For each micro-op, the module decides which unit should run it, collects its operands, hands the work over when that unit is ready, and writes the result back to the register file when the unit finishes. Before this, I completed UWASIC’s digital-design onboarding project, an SPI-controlled PWM peripheral that I took ==from RTL to a generated chip layout==."
       ],
       "sections": [
         {"title": "Decoding 11 micro-ops", "body": ["Each micro-op is decoded into a target unit and, for units that run more than one operation, a 3-bit opcode for that unit."], "bullets": ["ALU: add, subtract, equal, not equal, less than, and greater than or equal.", "Multiplier: multiply.", "CORDIC: divide, square root, cosine, and magnitude."]},
@@ -33,38 +64,7 @@
         {"title": "Onboarding: an SPI-controlled PWM peripheral", "body": ["My UWASIC onboarding project was a Verilog SPI Mode 0 peripheral with five registers and sixteen outputs that drives a 3\u00a0kHz PWM. It took one design from RTL, through automated simulation, to a generated chip layout."], "bullets": ["Verilog RTL for the SPI interface, a register interface for configuring the outputs and the PWM, and two-stage clock-domain crossing (CDC) for signals moving between clock domains.", "Python/cocotb tests, simulated with Icarus Verilog, that check the PWM at 0%, 50%, and 100% duty cycle, along with the output-enable behavior.", "Tiny Tapeout and GitHub Actions set up to run the tests and generate the GDS layout files automatically."]}
       ],
       "images": [],
-      "outcome": ["The functional-unit control module is written, connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow.", "The onboarding peripheral is complete, with automated simulation tests and GDS generation, and it gave me the foundation for the functional-unit control RTL."]
-    },
-    {
-      "slug": "uwaft",
-      "title": "UWAFT",
-      "category": "PCB design",
-      "year": "2026–Present",
-      "role": "Electrical Subteam Member",
-      "status": "v1.0 being fabricated",
-      "art": "board",
-      "artTitle": "Power,\nmeasured.",
-      "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
-      "summary": "A single-cell Li-ion battery monitor and relay load switch board, designed in Altium with an STC3100 gas gauge and an STM32.",
-      "tags": ["Altium Designer", "Schematic capture", "PCB layout", "STM32", "I2C", "Kelvin sensing"],
-      "links": [],
-      "cover": {
-        "src": "/assets/projects/uwaft/bms-board-render.webp",
-        "alt": "3D render of the UWAFT BMS v1.0 board: a black two-layer PCB with the STM32 microcontroller at top left, a 2×4 debug header in the middle, the STC3100 gas gauge at right, the relay at the bottom, and the LOAD and BATT connectors along the bottom edge.",
-        "caption": "3D render of the v1.0 board."
-      },
-      "highlights": [],
-      "overview": [
-        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. I designed a battery monitor and relay switch board in Altium Designer, from schematic to layout. It monitors a single Li-ion cell and can connect or disconnect a load.",
-        "An STC3100 gas gauge measures the battery’s voltage and current, sensing the current through a 30\u00a0mΩ shunt and counting the charge that flows in and out. An STM32F030 microcontroller reads the gauge over I2C and switches a relay to turn the load on or off."
-      ],
-      "sections": [
-        {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
-        {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it passes DRC with zero violations."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.5\u00a0mm traces over solid ground on both layers; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
-        {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. The shunt is Kelvin-sensed: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]}
-      ],
-      "images": [],
-      "outcome": ["Version 1.0 of the board passes DRC with zero violations and is now being fabricated. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "I’m now adapting the design for the team’s soldering tutorials, moving it to the team-standard STM32L011 and a 2\u00a0A relay."]
+      "outcome": ["==The functional-unit control module is written==, connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow.", "The onboarding peripheral is complete, with automated simulation tests and GDS generation, and it gave me the foundation for the functional-unit control RTL."]
     },
     {
       "slug": "signed",
@@ -85,10 +85,10 @@
         "caption": "Our team after SignEd won first place in the Beginner Tier at Hack the Bias."
       },
       "highlights": [],
-      "overview": ["SignEd is an ASL learning website we built at Hack the Bias, a hackathon with 101 participants, where it won first place in the Beginner Tier. As the sole programmer on our five-person team, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
+      "overview": ["SignEd is an ASL learning website we built at Hack the Bias, a hackathon with 101 participants, where it ==won first place in the Beginner Tier==. As the sole programmer on our five-person team, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience."],
       "sections": [
-        {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize all 24 static letters of the ASL alphabet. J and Z are left out because they are signed with motion."]},
-        {"title": "Connecting recognition to learning", "body": ["Live recognition feedback is connected to guided lessons. A learner unlocks progression after holding the correct sign for three seconds, connecting the recognition result to a clear practice goal."]},
+        {"title": "Recognizing a sign", "body": ["MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize ==all 24 static letters of the ASL alphabet==. J and Z are left out because they are signed with motion."]},
+        {"title": "Connecting recognition to learning", "body": ["Live recognition feedback is connected to guided lessons. A learner unlocks progression after ==holding the correct sign for three seconds==, connecting the recognition result to a clear practice goal."]},
         {"title": "My contribution", "bullets": ["Implemented the Python/Flask application and the browser interface.", "Built the hand-landmark normalization and pose-classification pipeline.", "Connected live feedback to lesson progression."]}
       ],
       "images": [],
@@ -117,17 +117,17 @@
         {"value": "2nd", "label": "Alberta Provincial Robot Skills · Team"},
         {"value": "2023", "label": "World Championship · Dallas"}
       ],
-      "overview": ["I competed in VEX robotics on team 2088D from 2022 to 2024. In the 2022–23 season, we built two versions of our robot: a flywheel design that qualified us for the World Championship, and a catapult rebuild. I designed and built the disc intake and the flywheel launcher, built the catapult, and programmed the autonomous routines."],
+      "overview": ["I competed in VEX robotics on team 2088D from 2022 to 2024. In the 2022–23 season, we built two versions of our robot: a flywheel design that ==qualified us for the World Championship==, and a catapult rebuild. I designed and built the disc intake and the flywheel launcher, built the catapult, and programmed the autonomous routines."],
       "sections": [
-        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I designed and built both, then iteratively tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that placed second in Alberta Provincial Robot Skills and qualified us for Worlds."]},
+        {"title": "Design 1: the flywheel robot", "body": ["Our first robot collected discs with an intake and launched them with a spinning flywheel. I designed and built both, then iteratively tuned the flywheel speed and the intake spacing to make shots more consistent and reduce jams. This is the robot that ==placed second in Alberta Provincial Robot Skills== and qualified us for Worlds."]},
         {"title": "Autonomous routines", "body": ["I programmed the robot’s autonomous routines: the code that drives it on its own at the start of each match and in programming skills runs."]},
-        {"title": "Design 2: the catapult rebuild", "body": ["Even after tuning, the flywheel wasn’t as reliable as we wanted. After qualifying for Worlds, we rebuilt the robot around a catapult, which launches a whole stack of discs in one motion. I built the catapult."], "images": [
+        {"title": "Design 2: the catapult rebuild", "body": ["Even after tuning, the flywheel wasn’t as reliable as we wanted. After qualifying for Worlds, we rebuilt the robot around a catapult, which ==launches a whole stack of discs in one motion==. I built the catapult."], "images": [
           {"src": "/assets/projects/vex-robotics/catapult-rebuild.webp", "alt": "The rebuilt robot on a workbench, nearly finished: an aluminum frame on omni wheels with a geared catapult arm held back by rubber bands, and a practice field behind it.", "caption": "The catapult rebuild, nearly finished."},
           {"src": "/assets/projects/vex-robotics/catapult-launch.mp4", "poster": "/assets/projects/vex-robotics/catapult-launch-poster.webp", "alt": "Video of the catapult launching a stack of three discs into the goal.", "caption": "The catapult launching three discs into the goal."}
         ]}
       ],
       "images": [],
-      "outcome": ["The flywheel robot placed second in Alberta Provincial Robot Skills and qualified our team for the VEX Robotics World Championship, where we competed in Dallas in 2023. Its reliability problems led to the catapult rebuild."]
+      "outcome": ["The flywheel robot placed second in Alberta Provincial Robot Skills and qualified our team for the VEX Robotics World Championship, where we ==competed in Dallas in 2023==. Its reliability problems led to the catapult rebuild."]
     },
     {
       "slug": "cpp-ray-tracer",
@@ -148,7 +148,7 @@
         "caption": "The final render: diffuse lighting averaged over many random samples per pixel."
       },
       "highlights": [],
-      "overview": ["I built a path tracer from scratch in C++, following the approach in Ray Tracing in One Weekend. It sends rays from the camera through each pixel into the scene and works out what colour each one should be.", "I built it up in four stages, each adding one idea and checked with a render before moving on: first finding what a ray hits, then the surface’s orientation, then a sky, and finally how light bounces."],
+      "overview": ["I built a ==path tracer from scratch in C++==, following the approach in Ray Tracing in One Weekend. It sends rays from the camera through each pixel into the scene and works out what colour each one should be.", "I built it up in four stages, each adding one idea and checked with a render before moving on: first finding what a ray hits, then the surface’s orientation, then a sky, and finally how light bounces."],
       "sections": [
         {"title": "Stage 1: rays and a sphere", "body": ["Each ray is a parametric line, P(t) = O + t·d. Substituting it into the sphere’s equation gives a quadratic in t: the discriminant says whether the ray misses, grazes, or hits the sphere, and the smallest positive root is the point the camera sees.", "For the first render, rays that hit the sphere were coloured red and rays that missed were black."], "images": [
           {"src": "/assets/projects/cpp-ray-tracer/01-hit-test.webp", "alt": "A flat red circle on a black background.", "caption": "Stage 1: the hit test. Red where a ray hits the sphere, black where it misses."}
@@ -159,12 +159,12 @@
         {"title": "Stage 3: a sky", "body": ["Next, I replaced the black background with a sky. Each ray that misses takes its colour from a linear blend between white and blue, based on how far up it points."], "images": [
           {"src": "/assets/projects/cpp-ray-tracer/03-sky-gradient.webp", "alt": "The normal-coloured sphere against a sky that fades from light blue at the top to near-white at the bottom.", "caption": "Stage 3: a gradient sky behind the sphere."}
         ]},
-        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is Monte Carlo path tracing.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders."], "images": [
+        {"title": "Stage 4: diffuse light and random sampling", "body": ["Finally, I made the surfaces matte. When a ray hits one, it bounces off in a random direction and picks up colour from wherever it goes next. To choose the direction, I pick random points in a cube and keep the first one that falls inside a unit sphere. This is ==Monte Carlo path tracing==.", "With one random sample per pixel, the image was very noisy. Averaging many samples per pixel smooths out both the noise and the jagged edges, because the average converges to the true lighting as the number of samples grows. The cost is time: more samples meant much longer renders."], "images": [
           {"src": "/assets/projects/cpp-ray-tracer/04-diffuse-final.webp", "alt": "A matte grey sphere resting on curved grey ground under a blue sky, with soft shading and a fine grain of sampling noise.", "caption": "Stage 4: matte surfaces lit by random bounces, averaged over many samples per pixel."}
         ]}
       ],
       "images": [],
-      "outcome": ["The finished ray tracer turns vectors, quadratic equations, and random sampling into soft, realistic shading. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes."]
+      "outcome": ["The finished ray tracer turns vectors, quadratic equations, and random sampling into ==soft, realistic shading==. It is limited to matte spheres, with no specular reflections, transparency, or other shapes yet. Natural next steps are ray–plane intersections and triangle meshes, which would allow more complex scenes."]
     },
     {
       "slug": "calgary-ace",
@@ -188,10 +188,10 @@
         {"value": "400+", "label": "Volunteer hours contributed"},
         {"value": "$5,335", "label": "Donated to the Alberta Children’s Hospital Foundation"}
       ],
-      "overview": ["I co-founded Calgary Ace Learning Center (CALC), a nonprofit where IB and AP students tutor younger students. All of the proceeds from tutoring go to the Alberta Children’s Hospital Foundation.", "I tutor, help run the organization, led our fundraising, and built our website."],
+      "overview": ["I co-founded Calgary Ace Learning Center (CALC), a nonprofit where IB and AP students tutor younger students. ==All of the proceeds== from tutoring go to the Alberta Children’s Hospital Foundation.", "I tutor, help run the organization, led our fundraising, and built our website."],
       "sections": [
-        {"title": "Teaching & volunteering", "body": ["I have contributed more than 400 volunteer hours to tutoring and organizing. Teaching is the core of what we do: students who have been through demanding courses help younger students build the same skills."]},
-        {"title": "Giving it all to children’s healthcare", "body": ["Every dollar from tutoring goes to the Alberta Children’s Hospital Foundation. On December 4, 2025, we presented the foundation with a cheque for $5,335, and we signed our names on a heart that is still on the wall there."], "images": [
+        {"title": "Teaching & volunteering", "body": ["I have contributed ==more than 400 volunteer hours== to tutoring and organizing. Teaching is the core of what we do: students who have been through demanding courses help younger students build the same skills."]},
+        {"title": "Giving it all to children’s healthcare", "body": ["Every dollar from tutoring goes to the Alberta Children’s Hospital Foundation. On December 4, 2025, we presented the foundation with ==a cheque for $5,335==, and we signed our names on a heart that is still on the wall there."], "images": [
           {"src": "/assets/projects/calgary-ace/signed-heart.webp", "alt": "A red paper heart on a painted green wall, signed “Calgary Ace Learning” with six names, including Lucas Wu, and a smiley face.", "caption": "The heart we signed, still on the wall."}
         ]},
         {"title": "Building the website", "body": ["I built CALC’s website in WordPress. It introduces our services and our team, shares updates on a bulletin page, and lets families book tutoring sessions."], "images": [

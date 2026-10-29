@@ -11,23 +11,14 @@
   let landPixels = null;
   let rotation = 0;
   let frame = 0;
-  const {canvas:starCanvas,glyphSheet:sourceGlyphSheet,media}=window.portfolioGalaxy;
+  const {canvas:starCanvas,glyphSheet,media}=window.portfolioGalaxy;
   // Each planet has its own palette, independent of the Milky Way's star colors.
   const earthColors=['#87e5a2','#e1eff7','#369cff','#9bd2f0']; // land, clouds, ocean, rim
   const planetColors=['#d8b77e','#ecdbb8','#f1d6cc','#ee9c92',...earthColors];
-  // Rows 0–1: Saturn gold/cream; 2–3: Jupiter pale cream/coral; 4–7: Earth.
-  const glyphSheet=document.createElement('canvas');
-  glyphSheet.width=sourceGlyphSheet.width;glyphSheet.height=planetColors.length*12;
-  const planetGlyphCtx=glyphSheet.getContext('2d');
-  planetColors.forEach((color,row)=>{
-    const strip=document.createElement('canvas');
-    strip.width=glyphSheet.width;strip.height=12;
-    const ink=strip.getContext('2d');
-    ink.drawImage(sourceGlyphSheet,0,0,strip.width,12,0,0,strip.width,12);
-    ink.globalCompositeOperation='source-in';
-    ink.fillStyle=color;ink.fillRect(0,0,strip.width,12);
-    planetGlyphCtx.drawImage(strip,0,row*12);
-  });
+  // Rows 0–1: Saturn gold/cream; 2–3: Jupiter pale cream/coral; 4–7: Earth. Rebuilt if the screen density changes.
+  // Glyphs 5 and 6 (- and =) draw Saturn's ring, so it reads as a flat band apart from the planet.
+  const planetGlyphs=['.',':','+','*','#','-','='];
+  let sheet=null,dpr=1;
   const journey = document.querySelector('.journey');
   const stage = document.querySelector('.space-stage');
   const scene = document.querySelector('.planet-scene');
@@ -49,14 +40,20 @@
   let otherWorlds=[];
   let sceneColumns=0,sceneLines=0,nextScene,previousScene;
   const renderTimings=[],profiling=new URLSearchParams(location.search).has('profile');
-  function sizeEarth(){const dpr=Math.min(devicePixelRatio,1.5);earth.width=innerWidth*dpr;earth.height=viewportHeight*dpr;if(ctx)ctx.setTransform(dpr,0,0,dpr,0,0);sceneColumns=Math.ceil(innerWidth/CELL_WIDTH)+1;sceneLines=Math.ceil(viewportHeight/CELL_HEIGHT)+1;nextScene=new Uint16Array(sceneColumns*sceneLines);previousScene=new Uint16Array(sceneColumns*sceneLines);}
+  // The canvas matches the screen's real pixel density (and, once known, its exact device-pixel size), so glyphs stay sharp.
+  let deviceW=0,deviceH=0;
+  function sizeEarth(){dpr=devicePixelRatio||1;earth.width=deviceW||Math.round(innerWidth*dpr);earth.height=deviceH||Math.round(viewportHeight*dpr);if(!sheet||sheet.scale!==dpr){sheet=glyphSheet(planetColors,dpr,planetGlyphs);if(gpu)gpu.uploadGlyphs(sheet);}sceneColumns=Math.ceil(innerWidth/CELL_WIDTH)+1;sceneLines=Math.ceil(viewportHeight/CELL_HEIGHT)+1;nextScene=new Uint16Array(sceneColumns*sceneLines);previousScene=new Uint16Array(sceneColumns*sceneLines);}
   sizeEarth();addEventListener('resize',sizeEarth);
   // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself.
   // Start after load: iOS can run this before styles.css applies, when the stage is only as tall as its content,
   // this canvas included, so each resize would make the stage taller and trigger another one.
   const resizeStage=()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}};
-  addEventListener('load',()=>{resizeStage();if('ResizeObserver' in window)new ResizeObserver(resizeStage).observe(stage);});
-  if(gl){try{gpu=window.createPlanetRenderer(gl,glyphSheet);}catch(error){console.warn('Using the compatible text renderer.',error.message);const replacement=earth.cloneNode(true);earth.replaceWith(replacement);earth=replacement;gl=null;ctx=earth.getContext('2d',{alpha:true});sizeEarth();}}
+  addEventListener('load',()=>{
+    resizeStage();
+    if('ResizeObserver' in window)new ResizeObserver(resizeStage).observe(stage);
+    try{new ResizeObserver(([entry])=>{const box=entry.devicePixelContentBoxSize?.[0];if(box&&(box.inlineSize!==earth.width||box.blockSize!==earth.height)){deviceW=box.inlineSize;deviceH=box.blockSize;sizeEarth();drawEarth();}}).observe(earth,{box:'device-pixel-content-box'});}catch{}
+  });
+  if(gl){try{gpu=window.createPlanetRenderer(gl,sheet);}catch(error){console.warn('Using the compatible text renderer.',error.message);const replacement=earth.cloneNode(true);earth.replaceWith(replacement);earth=replacement;gl=null;ctx=earth.getContext('2d',{alpha:true});sizeEarth();}}
   function drawEarth() {
     if(gpu){gpu.render(otherWorlds,earthState,rotation,spaceTime,1-smooth(.05,.6,progress),1-smooth(90,300,earthState.r));return;}
     const started=profiling?performance.now():0;
@@ -65,16 +62,19 @@
     otherWorlds.forEach(world=>{world.opacity=farOpacity;if(world.kind==='saturn')drawRings(world,false);drawBody(world);if(world.kind==='saturn')drawRings(world,true);});
     drawBody({...earthState,kind:'earth',spin:rotation});
     ctx.fillStyle='#000';
-    // Only paint terminal cells whose glyph, brightness, or occupancy changed.
+    // Only paint terminal cells whose glyph, brightness, or occupancy changed, on whole device pixels.
+    const {canvas:glyphs,tileW,tileH}=sheet;
     for(let index=0;index<nextScene.length;index++){
       const code=nextScene[index];if(code===previousScene[index])continue;
       const x=(index%sceneColumns)*CELL_WIDTH,y=Math.floor(index/sceneColumns)*CELL_HEIGHT;
-      ctx.clearRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
+      const left=Math.round((x-CELL_WIDTH/2)*dpr),top=Math.round((y-CELL_HEIGHT/2)*dpr);
+      const width=Math.round((x+CELL_WIDTH/2)*dpr)-left,height=Math.round((y+CELL_HEIGHT/2)*dpr)-top;
+      ctx.clearRect(left,top,width,height);
       if(code){
         const character=(code&7)-1,row=(code>>3)&7,shade=(code>>6)&15;
         ctx.globalAlpha=((code>>10)&31)/31;
-        ctx.fillRect(x-CELL_WIDTH/2,y-CELL_HEIGHT/2,CELL_WIDTH,CELL_HEIGHT);
-        ctx.drawImage(glyphSheet,(character*12+shade)*10,row*12,10,12,x-5,y-6,10,12);
+        ctx.fillRect(left,top,width,height);
+        ctx.drawImage(glyphs,(character*12+shade)*tileW,row*tileH,tileW,tileH,Math.round(x*dpr-tileW/2),Math.round(y*dpr-tileH/2),tileW,tileH);
       }
       previousScene[index]=code;
     }
@@ -87,7 +87,8 @@
     nextScene[line*sceneColumns+column]=(character+1)|(row<<3)|(shade<<6)|(Math.round(opacity*31)<<10);
   }
   function drawRings(world,front){
-    const angle=-.28+Math.sin(spaceTime*.00009)*.07;
+    // A shallow tilt keeps the ring from stepping across the character grid like a staircase.
+    const angle=-.12+Math.sin(spaceTime*.00009)*.03;
     const ca=Math.cos(angle),sa=Math.sin(angle);
     const rx=world.r*2.65,ry=world.r*.71;
     const minX=Math.floor((world.x-rx)/CELL_WIDTH)*CELL_WIDTH,maxX=world.x+rx;
@@ -97,10 +98,11 @@
       if((localY>0)!==front)continue;
       const band=Math.sqrt((localX/rx)**2+(localY/ry)**2);
       if(band<.69||band>1)continue;
+      // Line glyphs (= in the bright core, - outside) in pale cream, fainter than the planet so it stands out in front.
       const core=1-Math.abs(band-.84)/.16;
-      const character=core>.6?3:2;
-      const shade=Math.min(11,Math.floor(7+core*3));
-      writeSceneCell(x,y,character,core>.6?1:0,shade,world.opacity);
+      const character=core>.6?6:5;
+      const shade=Math.min(11,Math.floor(3+core*3));
+      writeSceneCell(x,y,character,1,shade,world.opacity);
     }}
   }
   function drawBody(world){
