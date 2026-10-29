@@ -20,11 +20,23 @@ Open http://127.0.0.1:8000/. The project index is at `/projects/`.
 
 Run the generator after changing any CSS or JS file too: it links each one as `name?v=<hash of its contents>`, so visitors' browsers fetch the new version instead of a cached copy. Never edit `?v=` by hand.
 
-To highlight a key phrase in a project's `overview`, section `body` or `bullets`, or `outcome`, wrap it in double equals signs: `"I wrote the ==functional-unit control module== in SystemVerilog."` It's shown on a dark tinted block; the tints (peach, lavender, butter, rose, sage, sky) rotate in page order (labels stay light blue). Use about one per paragraph. On the homepage, wrap the phrase in `<mark>…</mark>` directly. The generator gives every highlight its tint (`data-tone`), and drops the right padding of one followed by punctuation, so rebuild after adding one.
+To highlight a key phrase, follow the rules under [Highlights](#highlights).
 
 The generator updates the homepage previews, `projects/index.html`, and `projects/<slug>/index.html`. Change the reusable page structure in `templates/project.html` or `templates/projects.html`, not in generated pages. The header and footer of every page, the homepage included, come from `templates/header.html` and `templates/footer.html`. Project text is present in the HTML and works without JavaScript.
 
 The `featured` list selects and orders the homepage previews (currently four). Previews sit two per row; with an odd number, the first is full-width. Below them, the generator writes a row that counts and names every project not previewed, with a “View all N projects” link; the button beside the Projects heading shows the same total. The order of entries in `projects` controls the project index and the “Next project” links.
+
+## Highlights
+
+A highlight marks the phrase a reader should take away from a paragraph. Every page follows the same rules:
+
+1. **What.** A key phrase: a result, an achievement, or the heart of what you did, such as "won first place in the Beginner Tier". Usually 2 to 9 words; a short closing line can be highlighted whole ("I did finally hit Gold!").
+2. **How many.** At most one per paragraph or list item. Not every paragraph needs one.
+3. **Where.** Body text only: paragraphs and list items. Never headings, labels, buttons, captions, link text, or a project's `summary`.
+4. **Punctuation.** Punctuation right after the phrase goes inside the highlight: a full stop, comma, colon, semicolon, question or exclamation mark, ellipsis, or closing bracket or quote. `==won first place==.` and `==won first place.==` both show "won first place." highlighted; the generator moves it in for you. A possessive (’s) and dashes stay outside.
+5. **Edges.** Start and end on a word (or its punctuation), never a space.
+6. **Colour.** Don't pick one. The generator tints highlights in page order (peach, lavender, butter, rose, sage, sky), so neighbouring ones never match. The light-blue labels, such as "01 — Projects", are not highlights.
+7. **How.** In `content/projects.json` (a project's `overview`, section `body` or `bullets`, or `outcome`), wrap the phrase in double equals signs: `"I wrote the ==functional-unit control module== in SystemVerilog."` On the homepage, wrap it in `<mark>…</mark>`. Then run `node tools/build-projects.mjs`.
 
 ## Add your images
 
@@ -105,8 +117,8 @@ To check galleries, content validation, local links, `?v=` stamps, favicons and 
 - `projects.css`: project previews, page layouts, galleries, and responsive styles.
 - `styles.css`: site styling and homepage layout, one readable rule per selector, media queries at the end. Its `:root` holds the shared look: SF Pro on Apple devices with Inter elsewhere (linked in each page's `<head>`), sage headline accent words and links (`--sage`), black cards and buttons with a thin white `--edge`, one corner `--radius`, light-blue label highlights (`--label`, on `.eyebrow`), and dark key-phrase tints (`--phrase` and `mark[data-tone]`).
 - `site.js`: shared reveal effects, the About photo drift, the side navigation, and the footer year.
-- `galaxy.js`: shared Milky Way background and motion preference on every page.
-- `app.js`: homepage planet animation and scroll effects.
-- `planet-renderer.js`: WebGL planet renderer.
+- `galaxy.js`: the shared ASCII sky (the Milky Way, and the planets app.js places) and the motion preference on every page. Stars and planets share one canvas and one text grid, one character per cell.
+- `sky-renderer.js`: draws that sky on the GPU (WebGL2); without it, galaxy.js draws on a 2D canvas.
+- `app.js`: homepage planets (Saturn, Jupiter, Earth) and scroll effects.
 
 Project drafts were adapted from the supplied resumes. The `uwasic` page covers both the functional-unit control RTL and the SPI/PWM onboarding peripheral (its own section). Until there's an image of the functional-unit control work, its cover is the peripheral's GDS layout, which stays in `assets/projects/spi-pwm-peripheral/`. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.

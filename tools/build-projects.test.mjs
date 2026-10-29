@@ -125,10 +125,12 @@ test('a full-width "View more projects" button sits under the previews only when
   assert.ok(moreProjects(data.projects,data.projects.slice(1)).includes('View more projects'));
 });
 
-test('highlights get rotating tones, and a highlight before punctuation drops its right padding',()=>{
+test('highlights get rotating tones, and punctuation right after a highlight joins it',()=>{
   const html=toneMarks('<p>a <mark>one</mark>. b <mark class="nowrap">two</mark> c <mark data-tone="5">three</mark>!</p>');
-  assert.equal(html,'<p>a <mark class="before-punctuation" data-tone="0">one</mark>. b <mark class="nowrap" data-tone="1">two</mark> c <mark class="before-punctuation" data-tone="2">three</mark>!</p>');
+  assert.equal(html,'<p>a <mark data-tone="0">one.</mark> b <mark class="nowrap" data-tone="1">two</mark> c <mark data-tone="2">three!</mark></p>');
   assert.equal(toneMarks(html),html,'running it again changes nothing');
+  assert.equal(toneMarks('<mark class="before-punctuation">UWASIC</mark>’s team, <mark>fast</mark>, <mark>“done”</mark>.)'),
+    '<mark data-tone="0">UWASIC</mark>’s team, <mark data-tone="1">fast,</mark> <mark data-tone="2">“done”.)</mark>','a possessive stays outside; old classes go');
 });
 
 test('?v= stamps follow file contents, and every page links the current version of each file',async()=>{

@@ -22,9 +22,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap">
-  <link rel="stylesheet" href="/styles.css?v=1616b2643c">
-  <link rel="stylesheet" href="/projects.css?v=e5284aee69">
-  <script src="/galaxy.js?v=dc476d14e8" defer></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&text=.%2C%3A%3B-%3D%2B*%23%25%40v&display=block">
+  <link rel="stylesheet" href="/styles.css?v=02b826d59f">
+  <link rel="stylesheet" href="/projects.css?v=c8998135ab">
+  <script src="/sky-renderer.js?v=699a65a926" defer></script>
+  <script src="/galaxy.js?v=c113f215e6" defer></script>
   <script src="/site.js?v=d46df26e85" defer></script>
 </head>
 <body class="inner-page">
@@ -45,9 +47,9 @@
     <div class="case-layout">
       <nav class="case-nav" aria-label="On this page"><p class="eyebrow">In this project</p><a href="#overview">01 / Overview</a><a href="#work">02 / The work</a><a href="#outcome">03 / Outcome</a></nav>
       <div class="case-content">
-        <section id="overview" class="case-section"><p class="eyebrow">01 / Context</p><h2>Overview</h2><p>SignEd is an ASL learning website we built at Hack the Bias, a hackathon with 101 participants, where it <mark class="before-punctuation" data-tone="0">won first place in the Beginner Tier</mark>. As the sole programmer on our five-person team, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience.</p></section>
-        <section id="work" class="case-section"><p class="eyebrow">02 / Contribution</p><h2>The work</h2><div class="work-section"><h3>Recognizing a sign</h3><p>MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize <mark class="before-punctuation" data-tone="1">all 24 static letters of the ASL alphabet</mark>. J and Z are left out because they are signed with motion.</p></div>
-<div class="work-section"><h3>Connecting recognition to learning</h3><p>Live recognition feedback is connected to guided lessons. A learner unlocks progression after <mark class="before-punctuation" data-tone="2">holding the correct sign for three seconds</mark>, connecting the recognition result to a clear practice goal.</p></div>
+        <section id="overview" class="case-section"><p class="eyebrow">01 / Context</p><h2>Overview</h2><p>SignEd is an ASL learning website we built at Hack the Bias, a hackathon with 101 participants, where it <mark data-tone="0">won first place in the Beginner Tier.</mark> As the sole programmer on our five-person team, I developed the application using Python, Flask, JavaScript, and HTML/CSS, connecting computer vision to an interactive learning experience.</p></section>
+        <section id="work" class="case-section"><p class="eyebrow">02 / Contribution</p><h2>The work</h2><div class="work-section"><h3>Recognizing a sign</h3><p>MediaPipe and OpenCV provide the hand-tracking pipeline. I normalized 21 three-dimensional hand landmarks by wrist position and hand size, then used distance-weighted K-nearest neighbors to recognize <mark data-tone="1">all 24 static letters of the ASL alphabet.</mark> J and Z are left out because they are signed with motion.</p></div>
+<div class="work-section"><h3>Connecting recognition to learning</h3><p>Live recognition feedback is connected to guided lessons. A learner unlocks progression after <mark data-tone="2">holding the correct sign for three seconds,</mark> connecting the recognition result to a clear practice goal.</p></div>
 <div class="work-section"><h3>My contribution</h3><ul><li>Implemented the Python/Flask application and the browser interface.</li><li>Built the hand-landmark normalization and pose-classification pipeline.</li><li>Connected live feedback to lesson progression.</li></ul></div></section>
 
         <section id="outcome" class="case-section"><p class="eyebrow">03 / Reflection</p><h2>Outcome</h2><p>SignEd won first place in the Beginner Tier at Hack the Bias. The project brought together computer vision, a web interface, and guided practice in one ASL learning experience.</p></section>

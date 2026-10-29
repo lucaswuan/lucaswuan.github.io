@@ -1,160 +1,143 @@
 (() => {
   'use strict';
-  const CELL_WIDTH=6, CELL_HEIGHT=9;
-  let earth = document.querySelector('#earth');
-  let gl=earth.getContext('webgl2',{alpha:true,antialias:false,depth:false,stencil:false,powerPreference:'high-performance'});
-  let ctx=gl?null:earth.getContext('2d', {alpha:true});
-  let gpu=null;
-  const map = document.createElement('canvas');
-  map.width = 1024; map.height = 512;
-  const mapCtx = map.getContext('2d', {willReadFrequently:true});
-  let landPixels = null;
-  let rotation = 0;
-  let frame = 0;
-  const {canvas:starCanvas,glyphSheet,media}=window.portfolioGalaxy;
-  // Each planet has its own palette, independent of the Milky Way's star colors.
-  const earthColors=['#87e5a2','#e1eff7','#369cff','#9bd2f0']; // land, clouds, ocean, rim
-  const planetColors=['#d8b77e','#ecdbb8','#f1d6cc','#ee9c92',...earthColors];
-  // Rows 0–1: Saturn gold/cream; 2–3: Jupiter pale cream/coral; 4–7: Earth. Rebuilt if the screen density changes.
-  // Glyphs 5 and 6 (- and =) draw Saturn's ring, so it reads as a flat band apart from the planet.
-  const planetGlyphs=['.',':','+','*','#','-','='];
-  let sheet=null,dpr=1;
-  const journey = document.querySelector('.journey');
-  const stage = document.querySelector('.space-stage');
-  const scene = document.querySelector('.planet-scene');
-  const hero = document.querySelector('.hero-content');
-  const bottom = document.querySelector('.hero-bottom');
-  const arrival = document.querySelector('.arrival');
-  let spaceTime = 0;
-  let progress = 0, lastTime = 0, pointerX = 0, pointerY = 0;
-  let trackLength = 1, viewportHeight = innerHeight;
-  const clamp = n => Math.max(0,Math.min(1,n));
-  const smooth = (a,b,x) => {const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
+  // Places Saturn, Jupiter, and Earth in the shared ASCII sky (galaxy.js draws them, one character per cell, on the
+  // GPU through sky-renderer.js) and moves the opening text as the page scrolls.
+  const galaxy=window.portfolioGalaxy;
+  if(!galaxy)return;
+  const {cell:[CELL_WIDTH,CELL_HEIGHT],media,planetRow:PLANET,empty:EMPTY}=galaxy;
+  // Colour rows, counted from galaxy.js's PLANET_COLORS: Saturn's golden zones and cream equator; its outer B, A,
+  // and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean; Saturn's belts, pole,
+  // and inner B ring.
+  const SATURN=0,SATURN_CREAM=1,RING_B=2,RING_A=3,RING_C=4,ZONE=5,BELT=6,SPOT=7,LAND=8,CLOUD=9,OCEAN=10;
+  const SATURN_BELT=11,SATURN_POLE=12,RING_B_INNER=13;
+  const map=document.createElement('canvas');
+  map.width=1024;map.height=512;
+  const mapCtx=map.getContext('2d',{willReadFrequently:true});
+  let landPixels=null,rotation=0,frame=0;
+  const journey=document.querySelector('.journey');
+  const stage=document.querySelector('.space-stage');
+  const hero=document.querySelector('.hero-content');
+  const bottom=document.querySelector('.hero-bottom');
+  const arrival=document.querySelector('.arrival');
+  let spaceTime=0,progress=0,lastTime=0,pointerX=0,pointerY=0,trackLength=1,viewportHeight=innerHeight,shown=false;
+  const clamp=n=>Math.max(0,Math.min(1,n));
+  const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
   // Use the stage's real height, not innerHeight: on phones it tracks the browser toolbar sliding in and out.
   function measure(){viewportHeight=stage.clientHeight||innerHeight;trackLength=Math.max(1,journey.offsetHeight-viewportHeight);}
   media.addEventListener('change',measure);
   measure();
   addEventListener('resize',measure);
+  // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself (from load on:
+  // iOS can run this before styles.css applies, when the stage is only as tall as its content).
+  addEventListener('load',()=>{measure();if('ResizeObserver' in window)new ResizeObserver(measure).observe(stage);});
   addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){pointerX=(e.clientX/innerWidth-.5)*8;pointerY=(e.clientY/innerHeight-.5)*8;}},{passive:true});
-  let earthState={x:innerWidth*.74,y:innerHeight*.52,r:innerWidth*.1056};
-  let otherWorlds=[];
-  let sceneColumns=0,sceneLines=0,nextScene,previousScene;
-  const renderTimings=[],profiling=new URLSearchParams(location.search).has('profile');
-  // The canvas matches the screen's real pixel density (and, once known, its exact device-pixel size), so glyphs stay sharp.
-  let deviceW=0,deviceH=0;
-  function sizeEarth(){dpr=devicePixelRatio||1;earth.width=deviceW||Math.round(innerWidth*dpr);earth.height=deviceH||Math.round(viewportHeight*dpr);if(!sheet||sheet.scale!==dpr){sheet=glyphSheet(planetColors,dpr,planetGlyphs);if(gpu)gpu.uploadGlyphs(sheet);}sceneColumns=Math.ceil(innerWidth/CELL_WIDTH)+1;sceneLines=Math.ceil(viewportHeight/CELL_HEIGHT)+1;nextScene=new Uint16Array(sceneColumns*sceneLines);previousScene=new Uint16Array(sceneColumns*sceneLines);}
-  sizeEarth();addEventListener('resize',sizeEarth);
-  // Mobile toolbars can resize the stage without a window resize event, so watch the stage itself.
-  // Start after load: iOS can run this before styles.css applies, when the stage is only as tall as its content,
-  // this canvas included, so each resize would make the stage taller and trigger another one.
-  const resizeStage=()=>{if(stage.clientHeight!==viewportHeight){measure();sizeEarth();}};
-  addEventListener('load',()=>{
-    resizeStage();
-    if('ResizeObserver' in window)new ResizeObserver(resizeStage).observe(stage);
-    try{new ResizeObserver(([entry])=>{const box=entry.devicePixelContentBoxSize?.[0];if(box&&(box.inlineSize!==earth.width||box.blockSize!==earth.height)){deviceW=box.inlineSize;deviceH=box.blockSize;sizeEarth();drawEarth();}}).observe(earth,{box:'device-pixel-content-box'});}catch{}
-  });
-  if(gl){try{gpu=window.createPlanetRenderer(gl,sheet);}catch(error){console.warn('Using the compatible text renderer.',error.message);const replacement=earth.cloneNode(true);earth.replaceWith(replacement);earth=replacement;gl=null;ctx=earth.getContext('2d',{alpha:true});sizeEarth();}}
-  function drawEarth() {
-    if(gpu){gpu.render(otherWorlds,earthState,rotation,spaceTime,1-smooth(.05,.6,progress),1-smooth(90,300,earthState.r));return;}
-    const started=profiling?performance.now():0;
-    nextScene.fill(0);
-    const farOpacity=1-smooth(.05,.6,progress);
-    otherWorlds.forEach(world=>{world.opacity=farOpacity;if(world.kind==='saturn')drawRings(world,false);drawBody(world);if(world.kind==='saturn')drawRings(world,true);});
-    drawBody({...earthState,kind:'earth',spin:rotation});
-    ctx.fillStyle='#000';
-    // Only paint terminal cells whose glyph, brightness, or occupancy changed, on whole device pixels.
-    const {canvas:glyphs,tileW,tileH}=sheet;
-    for(let index=0;index<nextScene.length;index++){
-      const code=nextScene[index];if(code===previousScene[index])continue;
-      const x=(index%sceneColumns)*CELL_WIDTH,y=Math.floor(index/sceneColumns)*CELL_HEIGHT;
-      const left=Math.round((x-CELL_WIDTH/2)*dpr),top=Math.round((y-CELL_HEIGHT/2)*dpr);
-      const width=Math.round((x+CELL_WIDTH/2)*dpr)-left,height=Math.round((y+CELL_HEIGHT/2)*dpr)-top;
-      ctx.clearRect(left,top,width,height);
-      if(code){
-        const character=(code&7)-1,row=(code>>3)&7,shade=(code>>6)&15;
-        ctx.globalAlpha=((code>>10)&31)/31;
-        ctx.fillRect(left,top,width,height);
-        ctx.drawImage(glyphs,(character*12+shade)*tileW,row*tileH,tileW,tileH,Math.round(x*dpr-tileW/2),Math.round(y*dpr-tileH/2),tileW,tileH);
-      }
-      previousScene[index]=code;
+
+  // For the 2D canvas (no WebGL2), the planets' cells are worked out here exactly as sky-renderer.js does on the GPU.
+  // Planets use the smoother half of the ramp, from 0 (.) to 1 (#): . : - = + * #
+  const shade=v=>{const i=Math.round(clamp(v)*6);return i===0?0:i===1?2:i+2;};
+  // Saturn's body skips the line characters (- =), which belong to its rings: . : + * #
+  const saturnShade=v=>{const i=Math.round(clamp(v)*4);return i===0?0:i===1?2:i+4;};
+  const sunlight=(nx,ny,z)=>{const l=-nx*.55-ny*.42+z*.72;return smooth(-.03,.16,l)*(.25+.75*Math.max(0,l));};
+  // A fading planet gives its cells back to the stars one by one, in this order.
+  const threshold=(c,l)=>{const h=Math.sin(c*12.9898+l*78.233)*43758.5453;return h-Math.floor(h);};
+  // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
+  // Cassini division, and the grey-tan A ring.
+  // Returns [character, colour row, opacity, in front of the planet], with character -1 for the dark division.
+  function ring(dx,dy,r){
+    const a=-.12+Math.sin(spaceTime*.00009)*.03,lx=dx*Math.cos(a)+dy*Math.sin(a),ly=-dx*Math.sin(a)+dy*Math.cos(a);
+    const rx=r*2.3,band=Math.hypot(lx/rx,ly/(rx*.36)),front=ly>0;
+    if(band<.55||band>1)return null;
+    if(band<.67)return [0,RING_C,.55,front];
+    if(band<.76)return [5,RING_B_INNER,.85,front];
+    if(band<.86)return [5,RING_B,.95,front];
+    if(band<=.895)return [-1,0,0,front];
+    return [4,RING_A,.72,front];
+  }
+  // A planet's character at (dx, dy) from its centre, shaded by sunlight: bands on Saturn and Jupiter (with the
+  // Great Red Spot), land, ocean, and clouds on Earth. Returns [character, colour row, opacity], or null outside.
+  function body(kind,dx,dy,world,clouds){
+    const nx=dx/world.r,ny=dy/world.r,d=nx*nx+ny*ny;
+    if(d>1)return null;
+    const z=Math.sqrt(1-d),px=nx*.987227283+ny*.159318207,py=-nx*.159318207+ny*.987227283;
+    const lat=Math.asin(clamp(-py*.5+.5)*2-1),lon=Math.atan2(px,z)+world.spin+.4,light=sunlight(nx,ny,z);
+    if(kind==='earth'){
+      const u=((lon/(Math.PI*2)+.5)%1+1)%1,v=.5-lat/Math.PI;
+      const land=landPixels&&landPixels[(Math.floor(v*511)*1024+Math.floor(u*1023))*4+3]>60;
+      const cloud=Math.sin(lon*12+lat*9+Math.sin(lat*7))*Math.sin(lat*18-lon*5)>.66;
+      const noise=Math.sin(nx*129.89+ny*78.233)*43758.5453;
+      if(light<.01)return [0,land?LAND:OCEAN,.14];
+      if(land)return [shade(.33+.67*light),LAND,.55+.45*light];
+      if(cloud&&clouds>0&&noise-Math.floor(noise)<clouds)return [shade(.17+.33*light),CLOUD,.35+.55*light+.08*clouds];
+      // Ocean blue runs from : in shadow to * in full sun.
+      return [shade(.22+.55*light),OCEAN,.45+.5*light];
     }
-    ctx.globalAlpha=1;
-    if(profiling){renderTimings.push(performance.now()-started);if(renderTimings.length===120){const sorted=[...renderTimings].sort((a,b)=>a-b);console.info('Scene render: mean '+(renderTimings.reduce((a,b)=>a+b,0)/120).toFixed(1)+' ms; p95 '+sorted[114].toFixed(1)+' ms');renderTimings.length=0;}}
+    let value,row;
+    if(kind==='jupiter'){
+      const bands=Math.sin(lat*7.8+Math.sin(lon*2+lat*5)*.6),spotLon=((lon-1.1+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+      const spot=(spotLon/.34)**2+((lat+.38)/.16)**2<1;
+      value=light*(spot?1:.55+.45*(bands*.5+.5));row=spot?SPOT:bands>-.15?ZONE:BELT;
+    }else{
+      // Saturn: a bright cream equator, golden zones and orange-tan belts, and a blue-grey pole.
+      const bands=Math.sin(lat*9+Math.sin(lon*2)*.3),polar=Math.abs(lat);
+      value=light*(.62+.38*(bands*.5+.5));row=polar>.85?SATURN_POLE:polar<.2?SATURN_CREAM:bands>.25?SATURN:SATURN_BELT;
+      return light<.01?[0,row,.14]:[saturnShade(value),row,.38+.55*value];
+    }
+    return light<.01?[0,row,.12]:[shade(value),row,.25+.6*value];
   }
-  function writeSceneCell(x,y,character,row,shade,opacity=1){
-    const column=Math.round(x/CELL_WIDTH),line=Math.round(y/CELL_HEIGHT);
-    if(column<0||column>=sceneColumns||line<0||line>=sceneLines||opacity<.02)return;
-    nextScene[line*sceneColumns+column]=(character+1)|(row<<3)|(shade<<6)|(Math.round(opacity*31)<<10);
-  }
-  function drawRings(world,front){
-    // A shallow tilt keeps the ring from stepping across the character grid like a staircase.
-    const angle=-.12+Math.sin(spaceTime*.00009)*.03;
-    const ca=Math.cos(angle),sa=Math.sin(angle);
-    const rx=world.r*2.65,ry=world.r*.71;
-    const minX=Math.floor((world.x-rx)/CELL_WIDTH)*CELL_WIDTH,maxX=world.x+rx;
-    const minY=Math.floor((world.y-rx)/CELL_HEIGHT)*CELL_HEIGHT,maxY=world.y+rx;
-    for(let y=minY;y<maxY;y+=CELL_HEIGHT){for(let x=minX;x<maxX;x+=CELL_WIDTH){
-      const dx=x-world.x,dy=y-world.y,localX=dx*ca+dy*sa,localY=-dx*sa+dy*ca;
-      if((localY>0)!==front)continue;
-      const band=Math.sqrt((localX/rx)**2+(localY/ry)**2);
-      if(band<.69||band>1)continue;
-      // Line glyphs (= in the bright core, - outside) in pale cream, fainter than the planet so it stands out in front.
-      const core=1-Math.abs(band-.84)/.16;
-      const character=core>.6?6:5;
-      const shade=Math.min(11,Math.floor(3+core*3));
-      writeSceneCell(x,y,character,1,shade,world.opacity);
-    }}
-  }
-  function drawBody(world){
-    const {x:cx,y:cy,r:radius}=world;
-    // Keep distant cloud detail, then dissolve it into the ocean as Earth fills the view.
-    const cloudStrength=1-smooth(90,300,radius);
-    const minY=Math.max(0,Math.ceil((cy-radius)/CELL_HEIGHT)*CELL_HEIGHT),maxY=Math.min(viewportHeight,cy+radius);
-    const minX=Math.max(0,Math.ceil((cx-radius)/CELL_WIDTH)*CELL_WIDTH),maxX=Math.min(innerWidth,cx+radius);
-    // The screen-space text grid never scales, even when the camera approaches Earth.
-    for(let y=minY;y<maxY;y+=CELL_HEIGHT){for(let x=minX;x<maxX;x+=CELL_WIDTH){
-      const nx=(x-cx)/radius,ny=(y-cy)/radius,d=nx*nx+ny*ny;if(d>1)continue;
-      const z=Math.sqrt(1-d),tilt=-.16,px=nx*Math.cos(tilt)-ny*Math.sin(tilt),py=nx*Math.sin(tilt)+ny*Math.cos(tilt);
-      const p={x,y,lat:Math.asin(-py),lon:Math.atan2(px,z),light:Math.max(.08,-nx*.45-ny*.35+z*.8),z,noise:(Math.sin(nx*129.89+ny*78.233)*43758.5453)%1};
-      const lon = p.lon+world.spin+.4;
-      const u = ((lon/(Math.PI*2)+.5)%1+1)%1;
-      const v = .5-p.lat/Math.PI;
-      const land = world.kind==='earth' && landPixels && landPixels[(Math.floor(v*511)*1024+Math.floor(u*1023))*4+3]>60;
-      const cloud = Math.sin(lon*12+p.lat*9+Math.sin(p.lat*7))*Math.sin(p.lat*18-lon*5)>.66;
-      const brightness = Math.min(1,p.light);
-      let character, alpha, row;
-      if(world.kind!=='earth'){
-        const bands=.5+.5*Math.sin(p.lat*(world.kind==='jupiter'?17:23)+Math.sin(lon*3+p.lat*6)*.75);
-        const texture=.54+.46*bands;
-        const value=brightness*texture;
-        character=value>.65?4:value>.42?3:value>.22?2:1;
-        alpha=.22+.65*value;row=world.kind==='jupiter'?(bands>.48?2:3):(bands>.45?1:0);
+  let planetCells=null;
+  function cellsFor(state){
+    const {columns,lines}=galaxy.grid();
+    if(!planetCells||planetCells.length!==columns*lines)planetCells=new Uint16Array(columns*lines);
+    planetCells.fill(0);
+    [['saturn',state.far],['jupiter',state.far],['earth',state.near]].forEach(([kind,fade])=>{
+      const world=state[kind],reach=kind==='saturn'?world.r*2.3:world.r;
+      if(fade<=0)return;
+      const c0=Math.max(0,Math.floor((world.x-reach)/CELL_WIDTH)),c1=Math.min(columns-1,Math.ceil((world.x+reach)/CELL_WIDTH));
+      const l0=Math.max(0,Math.floor((world.y-reach)/CELL_HEIGHT)),l1=Math.min(lines-1,Math.ceil((world.y+reach)/CELL_HEIGHT));
+      for(let l=l0;l<=l1;l++)for(let c=c0;c<=c1;c++){
+        if(fade<=threshold(c,l))continue;
+        const dx=c*CELL_WIDTH-world.x,dy=l*CELL_HEIGHT-world.y;
+        const rings=kind==='saturn'?ring(dx,dy,world.r):null,disc=body(kind,dx,dy,world,state.clouds);
+        // The ring's near half passes in front of the planet; its far half shows only beside it.
+        const part=rings?.[3]?rings:disc||rings;
+        if(part)planetCells[l*columns+c]=part[0]<0?EMPTY:(part[0]+1)|((PLANET+part[1])<<5)|(Math.round(clamp(part[2]*fade*.94)*31)<<10);
       }
-      else if(land){character=brightness>.6?4:brightness>.32?3:2;alpha=.43+.57*brightness;row=4;}
-      else if(cloud&&cloudStrength>0&&p.noise-Math.floor(p.noise)<cloudStrength){character=p.noise>.3?2:1;alpha=.17+.42*brightness+.08*cloudStrength;row=5;}
-      // Broader + glyphs carry the ocean blue; shaded water stays lighter with :.
-      else{character=brightness>.25?2:1;alpha=.24+.5*brightness;row=6;}
-      if(p.z<.1){character=0;alpha=.5;row=world.kind==='earth'?7:world.kind==='jupiter'?2:1;}
-      const shade=Math.max(0,Math.min(11,Math.round(alpha*12)-1));
-      writeSceneCell(p.x,p.y,character,row,shade,world.opacity);
-    }}
+    });
+    return {cells:planetCells};
   }
+
   fetch('assets/land.geojson').then(r=>{if(!r.ok)throw new Error('Map unavailable');return r.json();}).then(data=>{
     mapCtx.fillStyle='#fff';
-    const ringPath = ring=>{ring.forEach(([lon,lat],i)=>{const x=(lon+180)/360*map.width,y=(90-lat)/180*map.height;i?mapCtx.lineTo(x,y):mapCtx.moveTo(x,y);});mapCtx.closePath();};
+    const ringPath=ring=>{ring.forEach(([lon,lat],i)=>{const x=(lon+180)/360*map.width,y=(90-lat)/180*map.height;i?mapCtx.lineTo(x,y):mapCtx.moveTo(x,y);});mapCtx.closePath();};
     data.features.forEach(f=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;polys.forEach(poly=>{mapCtx.beginPath();poly.forEach(ringPath);mapCtx.fill('evenodd');});});
-    landPixels=mapCtx.getImageData(0,0,1024,512).data;if(gpu)gpu.uploadLand(landPixels);drawEarth();
-  }).catch(()=>drawEarth());
-  const frameTimings=[];
-  function animate(t){
-    const paused=window.portfolioGalaxy.paused;
-    const elapsed=t-lastTime||16;
-    if(profiling&&elapsed<250){frameTimings.push(elapsed);if(frameTimings.length===120){const sorted=[...frameTimings].sort((a,b)=>a-b);console.info('Animation: '+(120000/frameTimings.reduce((a,b)=>a+b,0)).toFixed(1)+' fps; p95 interval '+sorted[114].toFixed(1)+' ms; '+(gpu?'GPU':'compatible')+' grid');frameTimings.length=0;}}
+    landPixels=mapCtx.getImageData(0,0,1024,512).data;galaxy.setLand(landPixels);
+  }).catch(()=>{});
+
+  const frameTimings=[],profiling=new URLSearchParams(location.search).has('profile');
+  galaxy.onFrame(t=>{
+    const paused=galaxy.paused,elapsed=t-lastTime||16;
+    if(profiling&&elapsed<250){frameTimings.push(elapsed);if(frameTimings.length===120){const sorted=[...frameTimings].sort((a,b)=>a-b);console.info('Animation: '+(120000/frameTimings.reduce((a,b)=>a+b,0)).toFixed(1)+' fps; p95 interval '+sorted[114].toFixed(1)+' ms; '+(galaxy.gpu?'GPU':'compatible')+' grid');frameTimings.length=0;}}
     const dt=Math.min(elapsed,64);lastTime=t;
     if(!paused&&!document.hidden)spaceTime+=dt;
     const target=media.matches?0:clamp(scrollY/trackLength);
     progress=paused?target:progress+(target-progress)*(1-Math.exp(-dt/85));
     if(Math.abs(progress-target)<.00005)progress=target;
+    const heroOpacity=1-smooth(.015,.28,progress);
+    hero.style.opacity=String(heroOpacity);
+    hero.style.transform=`translate3d(0,${paused?0:-progress*100}px,0)`;
+    hero.inert=heroOpacity<.05;
+    bottom.style.opacity=String(1-smooth(.01,.18,progress));
+    arrival.style.opacity=paused?'0':String(smooth(.28,.43,progress)*(1-smooth(.59,.77,progress)));
+    arrival.style.transform=`translate3d(0,${(1-smooth(.28,.6,progress))*20}px,0)`;
+    galaxy.setStarFade(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
+    const active=progress<.98&&scrollY<journey.offsetHeight;
+    if(!paused&&!document.hidden&&t-frame>33){
+      if(active)rotation+=.000022*Math.min(t-frame,100);
+      frame=t;
+    }
+    if(!active){if(shown){galaxy.setPlanets(null);shown=false;}return;}
+    // The planets live in the opening stage, so they scroll with it when it isn't pinned (as with reduced motion).
+    const top=stage.getBoundingClientRect().top;
     const focus=smooth(.03,.8,progress),zoom=1+Math.pow(focus,2)*32;
     const mobile=innerWidth<=650;
     const baseX=innerWidth*(mobile?.69:innerWidth<=1000?.76:.74);
@@ -164,27 +147,15 @@
     const moveX=(innerWidth*.5-baseX)*focus+(driftX+(paused?0:pointerX))*(1-focus);
     const moveY=(viewportHeight*.48-baseY)*focus+(driftY+(paused?0:pointerY))*(1-focus);
     const diameter=mobile?117:Math.max(143,Math.min(innerWidth*.1365,208));
-    earthState={x:baseX+moveX,y:baseY+moveY,r:diameter*.44*(paused?1:zoom)};
-    otherWorlds=[
-      {kind:'saturn',x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00016)*innerWidth*.055-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00018)*30+focus*100,r:mobile?20:29,spin:spaceTime*.00012},
-      {kind:'jupiter',x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.00017+1)*innerWidth*.04+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00014)*28-focus*130,r:mobile?26:40,spin:spaceTime*.00015}
-    ];
-    scene.style.opacity=String(1-smooth(.65,.98,progress));
-    const heroOpacity=1-smooth(.015,.28,progress);
-    hero.style.opacity=String(heroOpacity);
-    hero.style.transform=`translate3d(0,${paused?0:-progress*100}px,0)`;
-    hero.inert=heroOpacity<.05;
-    bottom.style.opacity=String(1-smooth(.01,.18,progress));
-    arrival.style.opacity=paused?'0':String(smooth(.28,.43,progress)*(1-smooth(.59,.77,progress)));
-    arrival.style.transform=`translate3d(0,${(1-smooth(.28,.6,progress))*20}px,0)`;
-    starCanvas.style.opacity=String(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
-    if(!paused&&!document.hidden&&t-frame>33){
-      if(progress<.98&&scrollY<journey.offsetHeight){rotation+=.000022*Math.min(t-frame,100);}
-      frame=t;
-    }
-    if(progress<.98&&scrollY<journey.offsetHeight)drawEarth();
-    requestAnimationFrame(animate);
-  }
-
-  drawEarth();requestAnimationFrame(animate);
+    const earth={x:baseX+moveX,y:baseY+moveY+top,r:diameter*.44*(paused?1:zoom),spin:rotation};
+    // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.
+    const state={
+      saturn:{x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00008)*innerWidth*.05-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00009)*24+focus*100+top,r:mobile?24:36,spin:spaceTime*.00012},
+      jupiter:{x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.000085+1)*innerWidth*.035+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00007)*22-focus*130+top,r:mobile?28:44,spin:spaceTime*.00015},
+      earth,time:spaceTime,near:1-smooth(.65,.98,progress),clouds:1-smooth(90,300,earth.r)
+    };
+    state.far=(1-smooth(.05,.6,progress))*state.near;
+    galaxy.setPlanets(galaxy.gpu?state:cellsFor(state));
+    shown=true;
+  });
 })();
