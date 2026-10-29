@@ -32,7 +32,7 @@
   <canvas id="stars" aria-hidden="true"></canvas>
   {{header}}
   <main id="main" class="project-page section-shell">
-    <div class="page-bar"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">home</a><span aria-hidden="true">/</span><a href="/projects/">projects</a><span aria-hidden="true">/</span><span aria-current="page">{{slug}}</span></nav><a class="outline-link page-back" href="/projects/"><span aria-hidden="true">←</span> Back to projects</a></div>
+    <div class="page-bar"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">home</a><span aria-hidden="true">/</span><a href="/projects/">projects</a><span aria-hidden="true">/</span><span aria-current="page">{{slug}}</span></nav><a class="outline-link page-back" href="/projects/"><span class="chevron back" aria-hidden="true"></span> Back to projects</a></div>
     <header class="project-heading">
       <h1>{{title}}</h1>
       <p class="project-summary">{{description}}</p>
@@ -51,7 +51,7 @@
         <section id="outcome" class="case-section"><p class="eyebrow">{{outcomeNumber}} / Reflection</p><h2>Outcome</h2>{{outcome}}</section>
       </div>
     </div>
-    <div class="project-pagination"><a class="outline-link" href="/projects/"><span aria-hidden="true">←</span> All projects</a><a class="outline-link next-project" href="{{nextUrl}}">Next: {{nextTitle}} <span aria-hidden="true">→</span></a></div>
+    <div class="project-pagination"><a class="outline-link" href="/projects/"><span class="chevron back" aria-hidden="true"></span> All projects</a><a class="outline-link next-project" href="{{nextUrl}}">Next: {{nextTitle}} <span class="chevron" aria-hidden="true"></span></a></div>
   </main>
   {{footer}}
 </body>

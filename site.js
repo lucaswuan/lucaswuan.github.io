@@ -98,17 +98,13 @@
     };
     requestAnimationFrame(step);
 
-    // Photos clipped by the wall never count as on screen for lazy loading, so load them all once the
-    // section gets close instead of as they come into view.
+    // Photos clipped by the wall never count as on screen for lazy loading, so load them all as soon as the
+    // rest of the page has loaded. Waiting until the section was close let a quick jump to About show a photo
+    // that hadn't arrived yet, which looks like a black photo.
     const loadAll = () => wall.querySelectorAll('img').forEach(img => { img.loading = 'eager'; });
+    if (document.readyState === 'complete') loadAll(); else addEventListener('load', loadAll, { once: true });
     if ('IntersectionObserver' in window) {
-      const near = new IntersectionObserver(entries => {
-        if (entries.some(entry => entry.isIntersecting)) { loadAll(); near.disconnect(); }
-      }, { rootMargin: '800px 0px' });
-      near.observe(wall);
       new IntersectionObserver(entries => { onScreen = entries[0].isIntersecting; }).observe(wall);
-    } else {
-      loadAll();
     }
   }
 
