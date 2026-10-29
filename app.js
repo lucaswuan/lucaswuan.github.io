@@ -5,9 +5,11 @@
   const galaxy=window.portfolioGalaxy;
   if(!galaxy)return;
   const {cell:[CELL_WIDTH,CELL_HEIGHT],media,planetRow:PLANET,empty:EMPTY}=galaxy;
-  // Colour rows, counted from galaxy.js's PLANET_COLORS: Saturn gold and cream; its B, A, and C rings; Jupiter's
-  // zones, belts, and Great Red Spot; Earth's land, clouds, and ocean.
+  // Colour rows, counted from galaxy.js's PLANET_COLORS: Saturn's golden zones and cream equator; its outer B, A,
+  // and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean; Saturn's belts, pole,
+  // and inner B ring.
   const SATURN=0,SATURN_CREAM=1,RING_B=2,RING_A=3,RING_C=4,ZONE=5,BELT=6,SPOT=7,LAND=8,CLOUD=9,OCEAN=10;
+  const SATURN_BELT=11,SATURN_POLE=12,RING_B_INNER=13;
   const map=document.createElement('canvas');
   map.width=1024;map.height=512;
   const mapCtx=map.getContext('2d',{willReadFrequently:true});
@@ -33,19 +35,23 @@
   // For the 2D canvas (no WebGL2), the planets' cells are worked out here exactly as sky-renderer.js does on the GPU.
   // Planets use the smoother half of the ramp, from 0 (.) to 1 (#): . : - = + * #
   const shade=v=>{const i=Math.round(clamp(v)*6);return i===0?0:i===1?2:i+2;};
+  // Saturn's body skips the line characters (- =), which belong to its rings: . : + * #
+  const saturnShade=v=>{const i=Math.round(clamp(v)*4);return i===0?0:i===1?2:i+4;};
   const sunlight=(nx,ny,z)=>{const l=-nx*.55-ny*.42+z*.72;return smooth(-.03,.16,l)*(.25+.75*Math.max(0,l));};
   // A fading planet gives its cells back to the stars one by one, in this order.
   const threshold=(c,l)=>{const h=Math.sin(c*12.9898+l*78.233)*43758.5453;return h-Math.floor(h);};
-  // Saturn's rings, tilted a little: the faint C ring, the bright B ring, the dark Cassini division, the A ring.
+  // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
+  // Cassini division, and the grey-tan A ring.
   // Returns [character, colour row, opacity, in front of the planet], with character -1 for the dark division.
   function ring(dx,dy,r){
     const a=-.12+Math.sin(spaceTime*.00009)*.03,lx=dx*Math.cos(a)+dy*Math.sin(a),ly=-dx*Math.sin(a)+dy*Math.cos(a);
     const rx=r*2.3,band=Math.hypot(lx/rx,ly/(rx*.36)),front=ly>0;
     if(band<.55||band>1)return null;
-    if(band<.67)return [0,RING_C,.5,front];
-    if(band<.86)return [5,RING_B,.82,front];
+    if(band<.67)return [0,RING_C,.55,front];
+    if(band<.76)return [5,RING_B_INNER,.85,front];
+    if(band<.86)return [5,RING_B,.95,front];
     if(band<=.895)return [-1,0,0,front];
-    return [4,RING_A,.66,front];
+    return [4,RING_A,.72,front];
   }
   // A planet's character at (dx, dy) from its centre, shaded by sunlight: bands on Saturn and Jupiter (with the
   // Great Red Spot), land, ocean, and clouds on Earth. Returns [character, colour row, opacity], or null outside.
@@ -71,8 +77,10 @@
       const spot=(spotLon/.34)**2+((lat+.38)/.16)**2<1;
       value=light*(spot?1:.55+.45*(bands*.5+.5));row=spot?SPOT:bands>-.15?ZONE:BELT;
     }else{
-      const bands=Math.sin(lat*9+Math.sin(lon*2)*.3);
-      value=light*(.62+.38*(bands*.5+.5));row=bands>.2?SATURN_CREAM:SATURN;
+      // Saturn: a bright cream equator, golden zones and orange-tan belts, and a blue-grey pole.
+      const bands=Math.sin(lat*9+Math.sin(lon*2)*.3),polar=Math.abs(lat);
+      value=light*(.62+.38*(bands*.5+.5));row=polar>.85?SATURN_POLE:polar<.2?SATURN_CREAM:bands>.25?SATURN:SATURN_BELT;
+      return light<.01?[0,row,.14]:[saturnShade(value),row,.38+.55*value];
     }
     return light<.01?[0,row,.12]:[shade(value),row,.25+.6*value];
   }

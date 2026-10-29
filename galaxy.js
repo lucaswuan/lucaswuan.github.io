@@ -29,10 +29,11 @@
   // colour as it flows.
   const STAR_COLORS=['#f4f6ff','#c4d8ff','#86b6ff','#fff0d6','#e58f6c','#ffd99a','#ff6b5e','#ff8fb4','#ffb070','#b86e55'];
   const WHITE=0,BLUE_WHITE=1,BLUE=2,CREAM=3,RUST=4,GOLD=5,RED=6,PINK=7,ORANGE=8,DUST=9;
-  // The planets' colours follow (app.js and sky-renderer.js count from PLANET_ROW): Saturn gold and cream; its B, A,
-  // and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean (bright, so Earth
-  // stands out from the white and blue stars, with a slightly muted ocean blue).
-  const PLANET_COLORS=['#e3c88f','#f0e2bf','#efe0bd','#cdb48a','#9d8f76','#f2e3c6','#c98a63','#e3654a','#79f79c','#ffffff','#528fd6'];
+  // The planets' colours follow (app.js and sky-renderer.js count from PLANET_ROW): Saturn's golden zones and cream
+  // equator; its outer B, A, and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean
+  // (bright, so Earth stands out from the white and blue stars, with a slightly muted ocean blue); then Saturn's
+  // orange-tan belts, blue-grey pole, and warmer inner B ring.
+  const PLANET_COLORS=['#ebc77d','#f8ebcb','#f6ecd4','#c4b394','#8c7b66','#f2e3c6','#c98a63','#e3654a','#79f79c','#ffffff','#528fd6','#d4945a','#9db3cc','#e8c992'];
   const PLANET_ROW=STAR_COLORS.length,COLORS=[...STAR_COLORS,...PLANET_COLORS];
   // The same monospace font on every device: the pages load JetBrains Mono with just these characters.
   // Until it arrives (or if it can't), the system's monospace stands in.

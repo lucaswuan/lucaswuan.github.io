@@ -31,18 +31,22 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   }
   // Planets use the smoother half of the ramp, from 0 (.) to 1 (#): . : - = + * #
   int shade(float v){int i=int(floor(clamp(v,0.0,1.0)*6.0+.5));return i==0?0:i==1?2:i+2;}
+  // Saturn's body skips the line characters (- =), which belong to its rings: . : + * #
+  int saturnShade(float v){int i=int(floor(clamp(v,0.0,1.0)*4.0+.5));return i==0?0:i==1?2:i+4;}
   // Sunlight from the upper left and a little in front: 0 on the night side, up to 1 in full sun.
   float sunlight(vec2 n,float z){float l=-n.x*.55-n.y*.42+z*.72;return smoothstep(-.03,.16,l)*(.25+.75*max(0.0,l));}
-  // Saturn's rings, tilted a little: the faint C ring, the bright B ring, the dark Cassini division, the A ring.
+  // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
+  // Cassini division, and the grey-tan A ring.
   bool ring(vec2 d,float r,out int ch,out int row,out float alpha,out bool front){
     float a=-.12+sin(time*.00009)*.03;
     vec2 local=vec2(d.x*cos(a)+d.y*sin(a),-d.x*sin(a)+d.y*cos(a));
     float rx=r*2.3,band=length(local/vec2(rx,rx*.36));
     front=local.y>0.0;ch=-1;row=PLANET;alpha=0.0;
     if(band<.55||band>1.0)return false;
-    if(band<.67){ch=0;row=PLANET+4;alpha=.5;}
-    else if(band<.86){ch=5;row=PLANET+2;alpha=.82;}
-    else if(band>.895){ch=4;row=PLANET+3;alpha=.66;}
+    if(band<.67){ch=0;row=PLANET+4;alpha=.55;}
+    else if(band<.76){ch=5;row=PLANET+13;alpha=.85;}
+    else if(band<.86){ch=5;row=PLANET+2;alpha=.95;}
+    else if(band>.895){ch=4;row=PLANET+3;alpha=.72;}
     return true;
   }
   // A planet's character at offset d from its centre, shaded by sunlight: bands on Saturn and Jupiter (with the
@@ -71,9 +75,12 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       value=light*(spot?1.0:.55+.45*(bands*.5+.5));
       row=PLANET+(spot?7:bands>-.15?5:6);
     }else{
-      float bands=sin(lat*9.0+sin(lon*2.0)*.3);
+      // Saturn: a bright cream equator, golden zones and orange-tan belts, and a blue-grey pole.
+      float bands=sin(lat*9.0+sin(lon*2.0)*.3),polar=abs(lat);
       value=light*(.62+.38*(bands*.5+.5));
-      row=PLANET+(bands>.2?1:0);
+      row=PLANET+(polar>.85?12:polar<.2?1:bands>.25?0:11);
+      if(light<.01){ch=0;alpha=.14;}else{ch=saturnShade(value);alpha=.38+.55*value;}
+      return true;
     }
     if(light<.01){ch=0;alpha=.12;}else{ch=shade(value);alpha=.25+.6*value;}
     return true;
