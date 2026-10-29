@@ -233,13 +233,12 @@
   // Works out every cell's star (or none) for time t: its character, colour, and brightness.
   function updateStars(t){
     const started=profiling?performance.now():0;
-    // Scrolling lifts the whole sky a little, about 3.5% of the scroll, so it barely moves with the page.
-    const W=innerWidth,H=starH,flow=t*.00001,lift=parallax*.035,dim=W<650?.8:1;
+    const W=innerWidth,H=starH,flow=t*.00001,dim=W<650?.8:1;
     // Per column: where the band runs, how wide it is, how close to the core, and which part of the band has
     // flowed there.
     for(let c=0;c<columns;c++){
       const u=c*CELL_WIDTH/W;
-      colCentre[c]=galaxyCurve(u,t)+Math.sin(u*5.5-t*.000065)*H*.026-lift;
+      colCentre[c]=galaxyCurve(u,t)+Math.sin(u*5.5-t*.000065)*H*.026;
       colWidth[c]=H*(.255+.035*Math.sin(u*3+t*.000022))*(1+.25*coreAlong(u));
       colIndex[c]=fieldIndex(u-flow,-V_MAX);
       colCore[c]=coreAlong(u);
@@ -294,7 +293,7 @@
     }
     // Stars across the rest of the sky drift more slowly than the band, so the sky has some depth.
     for(let o=0;o<sky.length;o+=FIELDS){
-      const u=((sky[o+S]+.2+t*.0000035)%1.4)-.2,c=Math.round(u*perCell),l=Math.round(((sky[o+V]*H-lift)%H+H)%H/CELL_HEIGHT);
+      const u=((sky[o+S]+.2+t*.0000035)%1.4)-.2,c=Math.round(u*perCell),l=Math.round(sky[o+V]*H/CELL_HEIGHT);
       if(c<0||c>=columns||l<0||l>=lines)continue;
       const index=l*columns+c,brightness=sky[o+BRIGHT],shine=brightness>.55?brightness*(1+.35*Math.sin(t*sky[o+RATE]+sky[o+PHASE])):brightness;
       add(index,shine*quiet[index]*dim,shine,sky[o+COLOUR],sky[o+SPOT]);
@@ -344,8 +343,8 @@
   // cell that shows nothing, like the gap in Saturn's rings).
   const EMPTY=1<<15;
   let planets=null,starFade=1,dirty=true,starsChanged=false,revealed=false;
-  // How far the page has scrolled (frozen while motion is off), and the shooting star in flight.
-  let parallax=0,meteor=null;
+  // The shooting star in flight.
+  let meteor=null;
   function render(){
     dirty=false;
     // The sky fades in the first time it is drawn (the transition is in styles.css).
@@ -420,20 +419,17 @@
     return {x:innerWidth*(.15+Math.random()*.7),y:starH*(.05+Math.random()*.4),dx:Math.cos(angle)*direction,dy:Math.sin(angle),
       speed:.7+Math.random()*.3,length:90+Math.random()*60,life:650+Math.random()*300,born:performance.now()};
   }
-  let lastTime=0,frame=0,drawnParallax=0;
+  let lastTime=0,frame=0;
   function animate(t){
     const elapsed=t-lastTime||16;lastTime=t;
     // Motion off clears a shooting star that was in flight.
     if(paused&&meteor){meteor=null;if(ready&&starsMade)updateStars(spaceTime);}
     if(!paused&&!document.hidden){
       spaceTime+=Math.min(elapsed,64)*GALAXY_SPEED;
-      parallax=scrollY;
       if(!nextMeteor)nextMeteor=t+10000+Math.random()*15000;
       else if(!meteor&&t>nextMeteor&&ready&&starsMade){meteor=launchMeteor();nextMeteor=t+20000+Math.random()*20000;}
-      // The sky moves about a cell a second, so 15 updates a second are plenty; scrolling asks for 30, and a
-      // shooting star for every frame.
-      const due=meteor?0:parallax!==drawnParallax?33:66;
-      if(ready&&starsMade&&t-frame>due){updateStars(spaceTime);frame=t;drawnParallax=parallax;}
+      // The sky moves about a cell a second, so 15 updates a second are plenty; a shooting star asks for every frame.
+      if(ready&&starsMade&&t-frame>(meteor?0:66)){updateStars(spaceTime);frame=t;}
     }
     frameHooks.forEach(hook=>hook(t));
     if(dirty&&ready&&starsMade)render();
