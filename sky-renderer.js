@@ -59,9 +59,9 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       bool cloud=sin(lon*12.0+lat*9.0+sin(lat*7.0))*sin(lat*18.0-lon*5.0)>.66;
       float noise=fract(sin(n.x*129.89+n.y*78.233)*43758.5453);
       if(light<.01){ch=0;alpha=.14;row=PLANET+(isLand?8:10);}
-      else if(isLand){ch=shade(.33+.67*light);alpha=.4+.55*light;row=PLANET+8;}
-      else if(cloud&&cloudStrength>0.0&&noise<cloudStrength){ch=shade(.17+.33*light);alpha=.2+.45*light+.08*cloudStrength;row=PLANET+9;}
-      else{ch=shade(.17+.5*light);alpha=.24+.5*light;row=PLANET+10;}
+      else if(isLand){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}
+      else if(cloud&&cloudStrength>0.0&&noise<cloudStrength){ch=shade(.17+.33*light);alpha=.35+.55*light+.08*cloudStrength;row=PLANET+9;}
+      else{ch=shade(.22+.55*light);alpha=.45+.5*light;row=PLANET+10;}
       return true;
     }
     float value;

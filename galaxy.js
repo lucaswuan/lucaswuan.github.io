@@ -30,8 +30,9 @@
   const STAR_COLORS=['#f4f6ff','#c4d8ff','#86b6ff','#fff0d6','#e58f6c','#ffd99a','#ff6b5e','#ff8fb4','#ffb070','#b86e55'];
   const WHITE=0,BLUE_WHITE=1,BLUE=2,CREAM=3,RUST=4,GOLD=5,RED=6,PINK=7,ORANGE=8,DUST=9;
   // The planets' colours follow (app.js and sky-renderer.js count from PLANET_ROW): Saturn gold and cream; its B, A,
-  // and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean.
-  const PLANET_COLORS=['#e3c88f','#f0e2bf','#efe0bd','#cdb48a','#9d8f76','#f2e3c6','#c98a63','#e3654a','#87e5a2','#e1eff7','#369cff'];
+  // and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean (vivid, so Earth stands
+  // out from the white and blue stars).
+  const PLANET_COLORS=['#e3c88f','#f0e2bf','#efe0bd','#cdb48a','#9d8f76','#f2e3c6','#c98a63','#e3654a','#79f79c','#ffffff','#3a95ff'];
   const PLANET_ROW=STAR_COLORS.length,COLORS=[...STAR_COLORS,...PLANET_COLORS];
   // The same monospace font on every device: the pages load JetBrains Mono with just these characters.
   // Until it arrives (or if it can't), the system's monospace stands in.
@@ -138,7 +139,7 @@
     // Thousands of stars, most of them faint: together they make the band's milky glow, as in a photo.
     // Band stars are scattered across the band's clouds and mostly kept out of its dust (a few foreground stars
     // still show through); a few are orange or red.
-    const wanted=Math.round(total*2),nebulaStars=Math.round(total*.03),specks=Math.round(total*.18);
+    const wanted=Math.round(total*1.05),nebulaStars=Math.round(total*.026),specks=Math.round(total*.13);
     const nextBand=new Float32Array((wanted+nebulaStars*NEBULAE.length+specks)*FIELDS);
     let made=0;
     const add=(s,v,brightness,rank,colour)=>{
@@ -172,7 +173,7 @@
       add(s,v,.14+.12*rand(),rand(),DUST);count++;
     }
     // The rest of the sky: many faint stars, a few brighter, in every star colour.
-    const nextSky=new Float32Array(Math.round(total*.065)*FIELDS);
+    const nextSky=new Float32Array(Math.round(total*.035)*FIELDS);
     for(let o=0;o<nextSky.length;o+=FIELDS){
       const pick=rand();
       nextSky[o+S]=rand()*1.4-.2;nextSky[o+V]=rand();nextSky[o+BRIGHT]=.14+.6*rand()**5;nextSky[o+PHASE]=rand()*7;nextSky[o+RATE]=.003+rand()*.006;
@@ -252,7 +253,7 @@
         const v=(l*CELL_HEIGHT-colCentre[c])/colWidth[c],core=colCore[c]*coreAcross(v);
         if(core<.1||v<=-V_MAX||v>=V_MAX)continue;
         const index=l*columns+c;
-        addHaze(index,core*core*(1-dust[colIndex[c]+Math.round((v/V_MAX+1)*.5*(V_STEPS-1))])*.5*quiet[index]*dim,WHITE);
+        addHaze(index,core*core*(1-dust[colIndex[c]+Math.round((v/V_MAX+1)*.5*(V_STEPS-1))])*.3*quiet[index]*dim,WHITE);
       }
     }
     // Where each star has flowed to: its place along the band plus the flow so far, wrapped into one loop.
@@ -267,7 +268,7 @@
         const du=(c*CELL_WIDTH/W-u0)/along;
         for(let l=0;l<lines;l++){
           const dv=((l*CELL_HEIGHT-colCentre[c])/colWidth[c]-v0)/across,g=Math.exp(-(du*du+dv*dv)*.6);
-          if(g>.05){const index=l*columns+c;addHaze(index,g*.75*quiet[index]*dim,PINK);}
+          if(g>.16){const index=l*columns+c;addHaze(index,g*.7*quiet[index]*dim,PINK);}
         }
       }
     }
@@ -280,7 +281,7 @@
       if(l<0||l>=lines)continue;
       // More stars show, brighter and warmer, as they pass through the core; fewer behind the opening text.
       const index=l*columns+c,core=colCore[c]>.01?colCore[c]*coreAcross(v):0,q=quiet[index];
-      if(band[o+RANK]>(.55+.5*core)*(.45+.55*q))continue;
+      if(band[o+RANK]>(.5+.5*core)*(.45+.55*q))continue;
       // Bright stars twinkle: their light rises and falls, so their character steps up and down (+ to *).
       const brightness=band[o+BRIGHT],shine=brightness>.7?brightness*(1+.35*Math.sin(t*band[o+RATE]+band[o+PHASE])):brightness;
       const light=shine*(1+1.6*core)*q*dim,colour=band[o+COLOUR];
@@ -301,7 +302,7 @@
     // it reads as a glowing cloud rather than more stars.
     for(let index=0;index<glow.length;index++){
       const light=glow[index],o=index*4;
-      if(light<=.12){cells[o]=0;starCodes[index]=0;continue;}
+      if(light<=.14){cells[o]=0;starCodes[index]=0;continue;}
       const bar=.1*Math.max(0,crowd[index]-1),star=peak[index];
       const nebula=hazeTone[index]===PINK,colour=star&&haze[index]<light*(nebula?.35:.55)?tone[index]:hazeTone[index];
       const character=star>=1.3+bar?STAR:star>=.86+bar?PLUS:colour===PINK&&nebula&&haze[index]>.4?COLON:DOTS+spot[index];

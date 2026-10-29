@@ -60,10 +60,10 @@
       const cloud=Math.sin(lon*12+lat*9+Math.sin(lat*7))*Math.sin(lat*18-lon*5)>.66;
       const noise=Math.sin(nx*129.89+ny*78.233)*43758.5453;
       if(light<.01)return [0,land?LAND:OCEAN,.14];
-      if(land)return [shade(.33+.67*light),LAND,.4+.55*light];
-      if(cloud&&clouds>0&&noise-Math.floor(noise)<clouds)return [shade(.17+.33*light),CLOUD,.2+.45*light+.08*clouds];
-      // Ocean blue runs from : in shadow to + in full sun.
-      return [shade(.17+.5*light),OCEAN,.24+.5*light];
+      if(land)return [shade(.33+.67*light),LAND,.55+.45*light];
+      if(cloud&&clouds>0&&noise-Math.floor(noise)<clouds)return [shade(.17+.33*light),CLOUD,.35+.55*light+.08*clouds];
+      // Ocean blue runs from : in shadow to * in full sun.
+      return [shade(.22+.55*light),OCEAN,.45+.5*light];
     }
     let value,row;
     if(kind==='jupiter'){
