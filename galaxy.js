@@ -127,7 +127,7 @@
   // Band stars keep their place along and across the band (S, V); sky stars keep a screen position (S = x, V = y).
   const FIELDS=9,S=0,V=1,BRIGHT=2,RANK=3,WARM=4,PHASE=5,RATE=6,COLOUR=7,SPOT=8;
   let band=new Float32Array(0),sky=new Float32Array(0),columns=0,lines=0,sheet=null;
-  let glow,peak,tone,haze,hazeTone,spot,crowd,quiet,torch,cells,starCodes,previous;
+  let glow,peak,tone,haze,hazeTone,spot,crowd,quiet,cells,starCodes,previous;
   let colCentre,colWidth,colIndex,colCore,resumeLine=0;
   // The star canvas is sized to the tallest viewport (toolbar hidden), so starH stays put while the toolbar moves.
   let starW=0,starH=0,starDpr=0,deviceW=0,deviceH=0;
@@ -217,7 +217,7 @@
     if(nextColumns!==columns||nextLines!==lines){
       columns=nextColumns;lines=nextLines;resumeLine=0;
       glow=new Float32Array(total);peak=new Float32Array(total);tone=new Uint8Array(total);haze=new Float32Array(total);hazeTone=new Uint8Array(total);
-      spot=new Uint8Array(total);crowd=new Uint8Array(total);quiet=new Float32Array(total);torch=new Float32Array(total);cells=new Uint8Array(total*4);
+      spot=new Uint8Array(total);crowd=new Uint8Array(total);quiet=new Float32Array(total);cells=new Uint8Array(total*4);
       starCodes=new Uint16Array(total);previous=new Uint16Array(total);
       colCentre=new Float32Array(columns);colWidth=new Float32Array(columns);colIndex=new Int32Array(columns);colCore=new Float32Array(columns);
       build(makeStars(total));
@@ -233,14 +233,13 @@
   // Works out every cell's star (or none) for time t: its character, colour, and brightness.
   function updateStars(t){
     const started=profiling?performance.now():0;
-    // Scrolling carries the band's stars further along it, so they rise at about an eighth of the scroll while the
-    // band itself stays across the screen.
-    const W=innerWidth,H=starH,flow=t*.00001+parallax*.12/(.93*H),dim=W<650?.8:1;
+    // Scrolling lifts the whole sky a little, about 3.5% of the scroll, so it barely moves with the page.
+    const W=innerWidth,H=starH,flow=t*.00001,lift=parallax*.035,dim=W<650?.8:1;
     // Per column: where the band runs, how wide it is, how close to the core, and which part of the band has
     // flowed there.
     for(let c=0;c<columns;c++){
       const u=c*CELL_WIDTH/W;
-      colCentre[c]=galaxyCurve(u,t)+Math.sin(u*5.5-t*.000065)*H*.026;
+      colCentre[c]=galaxyCurve(u,t)+Math.sin(u*5.5-t*.000065)*H*.026-lift;
       colWidth[c]=H*(.255+.035*Math.sin(u*3+t*.000022))*(1+.25*coreAlong(u));
       colIndex[c]=fieldIndex(u-flow,-V_MAX);
       colCore[c]=coreAlong(u);
@@ -293,23 +292,12 @@
       // Faint stars stay white or blue-grey: a faint warm colour turns brown.
       add(index,light,shine,light<.35&&(colour===RUST||colour===ORANGE||colour===RED)?WHITE:core>.35&&colour<=BLUE_WHITE&&light>=.35?(band[o+WARM]>.6?GOLD:CREAM):colour,band[o+SPOT]);
     }
-    // Stars across the rest of the sky drift (and rise with the scroll) more slowly than the band, so the sky has
-    // some depth.
+    // Stars across the rest of the sky drift more slowly than the band, so the sky has some depth.
     for(let o=0;o<sky.length;o+=FIELDS){
-      const u=((sky[o+S]+.2+t*.0000035)%1.4)-.2,c=Math.round(u*perCell),l=Math.round(((sky[o+V]*H-parallax*.05)%H+H)%H/CELL_HEIGHT);
+      const u=((sky[o+S]+.2+t*.0000035)%1.4)-.2,c=Math.round(u*perCell),l=Math.round(((sky[o+V]*H-lift)%H+H)%H/CELL_HEIGHT);
       if(c<0||c>=columns||l<0||l>=lines)continue;
       const index=l*columns+c,brightness=sky[o+BRIGHT],shine=brightness>.55?brightness*(1+.35*Math.sin(t*sky[o+RATE]+sky[o+PHASE])):brightness;
       add(index,shine*quiet[index]*dim,shine,sky[o+COLOUR],sky[o+SPOT]);
-    }
-    // Stars near the mouse light up, like a faint flashlight: brighter around it, and a step up (. to +) close in.
-    torch.fill(0);
-    if(pointer&&!paused){
-      const R=90,c0=Math.max(0,Math.floor((pointer.x-R)/CELL_WIDTH)),c1=Math.min(columns-1,Math.ceil((pointer.x+R)/CELL_WIDTH));
-      const l0=Math.max(0,Math.floor((pointer.y-R)/CELL_HEIGHT)),l1=Math.min(lines-1,Math.ceil((pointer.y+R)/CELL_HEIGHT));
-      for(let l=l0;l<=l1;l++)for(let c=c0;c<=c1;c++){
-        const d=Math.hypot(c*CELL_WIDTH-pointer.x,l*CELL_HEIGHT-pointer.y),index=l*columns+c;
-        if(d<R&&peak[index]){const g=(1-d/R)**2;torch[index]=g;glow[index]*=1+1.2*g;}
-      }
     }
     // A cell's brightest star picks its character (. for most, + and * for the brightest few), and all the light
     // in the cell sets how bright it is, so crowded parts of the band glow instead of filling up with crosses.
@@ -321,8 +309,7 @@
       if(light<=.14){cells[o]=0;starCodes[index]=0;continue;}
       const bar=.1*Math.max(0,crowd[index]-1),star=peak[index];
       const nebula=hazeTone[index]===PINK,colour=star&&haze[index]<light*(nebula?.35:.55)?tone[index]:hazeTone[index];
-      const dot=torch[index]>.3?PLUS:DOTS+(star?spot[index]:scatter(index));
-      const character=star>=1.3+bar?STAR:star>=.86+bar?PLUS:colour===PINK&&nebula&&haze[index]>.4?COLON:dot;
+      const character=star>=1.3+bar?STAR:star>=.86+bar?PLUS:colour===PINK&&nebula&&haze[index]>.4?COLON:DOTS+(star?spot[index]:scatter(index));
       const alpha=Math.min(.95,.16+.55*light);
       cells[o]=character+1;cells[o+1]=colour;cells[o+2]=Math.round(alpha*255);
       starCodes[index]=(character+1)|(colour<<5)|(Math.round(alpha*31)<<10);
@@ -357,8 +344,8 @@
   // cell that shows nothing, like the gap in Saturn's rings).
   const EMPTY=1<<15;
   let planets=null,starFade=1,dirty=true,starsChanged=false,revealed=false;
-  // How far the page has scrolled (frozen while motion is off), where the mouse is, and the shooting star in flight.
-  let parallax=0,pointer=null,pointerMoved=false,meteor=null;
+  // How far the page has scrolled (frozen while motion is off), and the shooting star in flight.
+  let parallax=0,meteor=null;
   function render(){
     dirty=false;
     // The sky fades in the first time it is drawn (the transition is in styles.css).
@@ -425,8 +412,6 @@
     setStarFade(value){if(gpu){if(value!==starFade){starFade=value;dirty=true;}}else{starFade=value;if(revealed)starCanvas.style.opacity=String(value);}},
     setLand(pixels){if(gpu){gpu.uploadLand(pixels);dirty=true;}}
   };
-  addEventListener('pointermove',event=>{if(event.pointerType==='mouse'){pointer={x:event.clientX,y:event.clientY};pointerMoved=true;}},{passive:true});
-  document.documentElement.addEventListener('pointerleave',()=>{pointer=null;pointerMoved=true;});
   // A shooting star every 20 to 40 seconds: a short streak that crosses part of the sky at a shallow slant in under
   // a second.
   let nextMeteor=0;
@@ -445,10 +430,10 @@
       parallax=scrollY;
       if(!nextMeteor)nextMeteor=t+10000+Math.random()*15000;
       else if(!meteor&&t>nextMeteor&&ready&&starsMade){meteor=launchMeteor();nextMeteor=t+20000+Math.random()*20000;}
-      // The sky moves about a cell a second, so 15 updates a second are plenty; scrolling or a moving mouse asks
-      // for 30, and a shooting star for every frame.
-      const due=meteor?0:parallax!==drawnParallax||pointerMoved?33:66;
-      if(ready&&starsMade&&t-frame>due){updateStars(spaceTime);frame=t;drawnParallax=parallax;pointerMoved=false;}
+      // The sky moves about a cell a second, so 15 updates a second are plenty; scrolling asks for 30, and a
+      // shooting star for every frame.
+      const due=meteor?0:parallax!==drawnParallax?33:66;
+      if(ready&&starsMade&&t-frame>due){updateStars(spaceTime);frame=t;drawnParallax=parallax;}
     }
     frameHooks.forEach(hook=>hook(t));
     if(dirty&&ready&&starsMade)render();
