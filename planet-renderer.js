@@ -1,11 +1,13 @@
 // GPU projection into a fixed terminal grid, with separate Saturn, Jupiter, and Earth palettes.
-window.createPlanetRenderer = function(gl, atlas) {
+// The glyph sheet is drawn at the screen's pixel density; glyphs land on whole device pixels and are sampled 1:1.
+window.createPlanetRenderer = function(gl, sheet) {
   const vertex = `#version 300 es
   void main(){ vec2 p=vec2((gl_VertexID==1)?3.0:-1.0,(gl_VertexID==2)?3.0:-1.0);gl_Position=vec4(p,0,1);}`;
   const fragment = `#version 300 es
   precision highp float;
   uniform vec2 bufferSize;
   uniform float pixelRatio;
+  uniform vec2 tile;
   uniform vec4 worlds[3];
   uniform float farOpacity;
   uniform float cloudStrength;
@@ -16,12 +18,12 @@ window.createPlanetRenderer = function(gl, atlas) {
   const float PI=3.14159265359;
   vec4 character(int ch,int row,float alpha,vec2 offset,float visibility){
     int shade=int(clamp(floor(alpha*12.0+.5)-1.0,0.0,11.0));
-    vec2 uv=(vec2(float(ch*120+shade*10),float(row*12))+offset)/vec2(textureSize(glyphs,0));
+    vec2 uv=(vec2(float(ch*12+shade),float(row))*tile+offset+.5)/vec2(textureSize(glyphs,0));
     vec4 ink=texture(glyphs,uv);
     return vec4(ink.rgb*ink.a*visibility,visibility);
   }
   bool ring(vec2 cell,vec4 world,out float strength,out bool front){
-    float a=-.28+sin(time*.00009)*.07;
+    float a=-.12+sin(time*.00009)*.03;
     vec2 d=cell-world.xy;
     vec2 local=vec2(d.x*cos(a)+d.y*sin(a),-d.x*sin(a)+d.y*cos(a));
     float band=length(local/vec2(world.z*2.65,world.z*.71));
@@ -30,9 +32,11 @@ window.createPlanetRenderer = function(gl, atlas) {
     return band>=.69&&band<=1.0;
   }
   void main(){
-    vec2 pixel=vec2(gl_FragCoord.x,bufferSize.y-gl_FragCoord.y)/pixelRatio;
+    vec2 device=vec2(gl_FragCoord.x,bufferSize.y-gl_FragCoord.y);
+    vec2 pixel=device/pixelRatio;
     vec2 cell=floor(pixel/vec2(6,9)+.5)*vec2(6,9);
-    vec2 offset=pixel-cell+vec2(5,6);
+    // This pixel's place in its cell's glyph tile, with the tile snapped to whole device pixels.
+    vec2 offset=clamp(floor(device)-floor(cell*pixelRatio-tile*.5+.5),vec2(0),tile-1.0);
     vec4 result=vec4(0);
     for(int k=0;k<3;k++){
       vec4 world=worlds[k];
@@ -41,7 +45,8 @@ window.createPlanetRenderer = function(gl, atlas) {
       bool hasRing=false; bool ringFront=false; float ringStrength=0.0;
       if(k==0){
         hasRing=ring(cell,world,ringStrength,ringFront);
-        if(hasRing&&!ringFront)result=character(ringStrength>.6?3:2,ringStrength>.6?1:0,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
+        // Match the CPU renderer's ring: = and - glyphs in pale cream, fainter than the planet.
+        if(hasRing&&!ringFront)result=character(ringStrength>.6?6:5,1,(4.0+floor(ringStrength*3.0))/12.0,offset,visibility);
       }
       vec2 n=(cell-world.xy)/world.z;
       float d=dot(n,n);
@@ -71,7 +76,7 @@ window.createPlanetRenderer = function(gl, atlas) {
         if(z<.1){ch=0;alpha=.5;row=k==2?7:k==1?2:1;}
         result=character(ch,row,alpha,offset,visibility);
       }
-      if(k==0&&hasRing&&ringFront)result=character(ringStrength>.6?3:2,ringStrength>.6?1:0,(8.0+floor(ringStrength*3.0))/12.0,offset,visibility);
+      if(k==0&&hasRing&&ringFront)result=character(ringStrength>.6?6:5,1,(4.0+floor(ringStrength*3.0))/12.0,offset,visibility);
     }
     outputColor=result;
   }`;
@@ -79,7 +84,9 @@ window.createPlanetRenderer = function(gl, atlas) {
   const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   gl.useProgram(program);
   function texture(unit){const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}
-  texture(0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlas);
+  const glyphTexture=texture(0),tileSize=gl.getUniformLocation(program,'tile');
+  function uploadGlyphs(next){gl.useProgram(program);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,glyphTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,next.canvas);gl.uniform2f(tileSize,next.tileW,next.tileH);}
+  uploadGlyphs(sheet);
   gl.uniform1i(gl.getUniformLocation(program,'glyphs'),0);
   const mapTexture=texture(1);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
   gl.uniform1i(gl.getUniformLocation(program,'land'),1);
@@ -87,6 +94,7 @@ window.createPlanetRenderer = function(gl, atlas) {
   const values=new Float32Array(12);
   gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);
   return {
+    uploadGlyphs,
     uploadLand(pixels){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,mapTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1024,512,0,gl.RGBA,gl.UNSIGNED_BYTE,pixels);},
     render(worlds,earth,rotation,time,farOpacity,cloudStrength){
       for(let k=0;k<3;k++){const w=k===2?earth:worlds[k];values[k*4]=w?.x||0;values[k*4+1]=w?.y||0;values[k*4+2]=w?.r||0;values[k*4+3]=k===2?rotation:w?.spin||0;}

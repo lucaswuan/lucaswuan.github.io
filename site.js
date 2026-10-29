@@ -3,9 +3,7 @@
   'use strict';
   document.querySelectorAll('[data-current-year], #year').forEach(el => {
     el.textContent = String(new Date().getFullYear());
-  });
-
-  // Homepage side navigation. The title under the pointer grows most and its neighbours grow a
+  });  // Homepage side navigation. The title under the pointer grows most and its neighbours grow a
   // little, so moving along the list feels continuous. The section being read is highlighted.
   const sectionNav = document.querySelector('.section-nav');
   if (sectionNav) {

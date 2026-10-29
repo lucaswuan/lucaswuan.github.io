@@ -18,7 +18,11 @@ Open http://127.0.0.1:8000/. The project index is at `/projects/`.
 2. Run `node tools/build-projects.mjs` from this folder.
 3. Refresh the browser. For deployment, include the generated HTML files in your Git commit.
 
-The generator updates the homepage previews, `projects/index.html`, and `projects/<slug>/index.html`. Change the reusable page structure in `templates/project.html` or `templates/projects.html`, not in generated pages. Project text is present in the HTML and works without JavaScript.
+Run the generator after changing any CSS or JS file too: it links each one as `name?v=<hash of its contents>`, so visitors' browsers fetch the new version instead of a cached copy. Never edit `?v=` by hand.
+
+To highlight a key phrase in a project's `overview`, section `body` or `bullets`, or `outcome`, wrap it in double equals signs: `"I wrote the ==functional-unit control module== in SystemVerilog."` It's shown on a dark tinted block; the tints (peach, lavender, butter, rose, sage, sky) rotate in page order (labels stay light blue). Use about one per paragraph. On the homepage, wrap the phrase in `<mark>…</mark>` directly. The generator gives every highlight its tint (`data-tone`), and drops the right padding of one followed by punctuation, so rebuild after adding one.
+
+The generator updates the homepage previews, `projects/index.html`, and `projects/<slug>/index.html`. Change the reusable page structure in `templates/project.html` or `templates/projects.html`, not in generated pages. The header and footer of every page, the homepage included, come from `templates/header.html` and `templates/footer.html`. Project text is present in the HTML and works without JavaScript.
 
 The `featured` list selects and orders the homepage previews (currently four). Previews sit two per row; with an odd number, the first is full-width. Below them, the generator writes a row that counts and names every project not previewed, with a “View all N projects” link; the button beside the Projects heading shows the same total. The order of entries in `projects` controls the project index and the “Next project” links.
 
@@ -85,20 +89,22 @@ Videos play in place, muted, with the browser's controls. Keep them short and co
 
 Copy an object in `content/projects.json`, give it a unique lowercase hyphenated `slug`, and replace its content. Keep `links`, `highlights`, and `images` as empty lists when unused. `cover: null` uses the symbolic illustration. Supported illustration styles are `chip`, `board`, `landmarks`, `robot`, `rays`, and `community`.
 
-Run the generator to create its page and add it to the index. If you rename or remove a project, remove its old generated `projects/<slug>/` folder as well so the old page is not published.
+Run the generator to create its page and add it to the index. If it has a cover, run `python3 tools/make-preview-images.py --skip-home` too, so links to it show its photo. If you rename or remove a project, remove its old generated `projects/<slug>/` folder as well so the old page is not published.
 
-To check galleries, content validation, and local links after editing, run `node --test tools/build-projects.test.mjs`.
+To check galleries, content validation, local links, `?v=` stamps, favicons and link-preview tags, and that no CSS rule is defined twice, run `node --test tools/build-projects.test.mjs`.
 
 ## File map
 
-- `index.html`: homepage. Content between the featured-projects and more-projects markers is generated, as are the project counts. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
+- `index.html`: homepage. Content between the `<!-- …:start -->` and `<!-- …:end -->` markers is generated (header, featured projects, more-projects button, footer), as is the project count on the Projects button. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
 - `content/projects.json`: editable project content and image lists.
-- `templates/`: shared page layouts.
-- `tools/build-projects.mjs`: dependency-free static page generator.
+- `templates/`: shared page layouts, plus `header.html` and `footer.html`, used on every page.
+- `tools/build-projects.mjs`: dependency-free static page generator. Also stamps `?v=` on CSS and JS links and numbers the highlights.
+- `tools/make-favicon.py`: draws the site icon (“LW” in DM Serif Display, black on sage, traced from `tools/fonts/`, which holds the font and its SIL Open Font License) as `assets/favicon.svg`, `favicon.ico`, and `assets/apple-touch-icon.png`. Needs `pip install pillow fonttools`.
+- `tools/make-preview-images.py`: makes the 1200×630 link-preview images: `assets/og-home.jpg` (a screenshot of the hero, taken with headless Chrome while the site runs locally) and `assets/projects/<slug>/og.jpg` (each cover, cropped). Rerun after changing a cover or the hero.
 - `projects/`: generated project index and individual pages.
 - `projects.css`: project previews, page layouts, galleries, and responsive styles.
-- `styles.css`: existing site styling and homepage animation layout.
-- `site.js`: shared reveal effects and footer year.
+- `styles.css`: site styling and homepage layout, one readable rule per selector, media queries at the end. Its `:root` holds the shared look: SF Pro on Apple devices with Inter elsewhere (linked in each page's `<head>`), sage headline accent words and links (`--sage`), black cards and buttons with a thin white `--edge`, one corner `--radius`, light-blue label highlights (`--label`, on `.eyebrow`), and dark key-phrase tints (`--phrase` and `mark[data-tone]`).
+- `site.js`: shared reveal effects, the About photo drift, the side navigation, and the footer year.
 - `galaxy.js`: shared Milky Way background and motion preference on every page.
 - `app.js`: homepage planet animation and scroll effects.
 - `planet-renderer.js`: WebGL planet renderer.

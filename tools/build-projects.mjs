@@ -1,5 +1,6 @@
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
-import { readdirSync } from 'node:fs';
+import { readdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -7,7 +8,9 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[ch]));
 const number = n => String(n).padStart(2, '0');
 const url = project => `/projects/${project.slug}/`;
-const paragraphs = values => (values ?? []).map(value => `<p>${escape(value)}</p>`).join('\n');
+// Write-up text can mark a key phrase as ==phrase==; it is shown highlighted.
+export const rich = value => escape(value).replace(/==(.+?)==/g, '<mark>$1</mark>');
+const paragraphs = values => (values ?? []).map(value => `<p>${rich(value)}</p>`).join('\n');
 
 // How wide a cover is drawn in each place (from projects.css), so the browser can pick the smallest sharp copy.
 export const SIZES = {
@@ -78,7 +81,38 @@ export function gallery(images=[], heading=true) {
   if (!images.length) return '';
   const items=images.map((image,i) => `<figure class="gallery-item${image.wide || (images.length%2 && i===0) ? ' gallery-wide' : ''}">${media(image)}${image.caption ? `<figcaption>${escape(image.caption)}</figcaption>` : ''}</figure>`).join('\n');
   const grid=`<div class="project-gallery">${items}</div>`;
-  return heading ? `<section id="gallery" class="case-section"><p class="eyebrow">03 / IN PICTURES</p><h2>A closer look</h2>${grid}</section>` : grid;
+  return heading ? `<section id="gallery" class="case-section"><p class="eyebrow">03 / In pictures</p><h2>A closer look</h2>${grid}</section>` : grid;
+}
+
+// Every CSS and JS file is linked as name?v=<hash of its contents>, so browsers fetch it again whenever it changes.
+export const ASSETS = ['styles.css', 'projects.css', 'galaxy.js', 'site.js', 'planet-renderer.js', 'app.js'];
+export async function assetVersions(assetRoot=root) {
+  return Object.fromEntries(await Promise.all(ASSETS.map(async name =>
+    [name, createHash('sha256').update(await readFile(path.join(assetRoot, name))).digest('hex').slice(0, 10)])));
+}
+export const stamp = (html, versions) =>
+  html.replace(/\b([\w-]+\.(?:css|js))\?v=\w+/g, (match, name) => name in versions ? `${name}?v=${versions[name]}` : match);
+
+// Key phrases cycle through six highlight tints in page order, so neighbouring ones never match (mark[data-tone] in styles.css).
+// A highlight directly before punctuation gets .before-punctuation, which drops its right padding so the
+// punctuation isn't pushed away from the word.
+export function toneMarks(html) {
+  let i = 0;
+  return html.replace(/<mark\b([^>]*)>([\s\S]*?)<\/mark>(?=([.,;:!?)’]?))/g, (_, attrs, text, punctuation) => {
+    attrs = attrs.replace(/\s+data-tone="\d*"/g, '').replace(/\s*\bbefore-punctuation\b/g, '').replace(/\sclass=""/, '');
+    if (punctuation) attrs = /\sclass="/.test(attrs) ? attrs.replace(/\sclass="([^"]*)"/, ' class="$1 before-punctuation"') : `${attrs} class="before-punctuation"`;
+    return `<mark${attrs} data-tone="${i++ % 6}">${text}</mark>`;
+  });
+}
+
+// The image link previews show: the project's own 1200×630 crop (tools/make-preview-images.py), or the homepage's.
+const HOME_PREVIEW = '/assets/og-home.jpg';
+const HOME_PREVIEW_ALT = 'The homepage of Lucas Wu’s portfolio: “Hello, I’m Lucas Wu!” beside an Earth drawn in ASCII characters.';
+export function previewImage(project, assetRoot=root) {
+  const own = `/assets/projects/${project.slug}/og.jpg`;
+  return project.cover && existsSync(path.join(assetRoot, '.' + own))
+    ? { ogImage: own, ogImageAlt: escape(project.cover.alt) }
+    : { ogImage: HOME_PREVIEW, ogImageAlt: escape(HOME_PREVIEW_ALT) };
 }
 
 function fill(template, values) {
@@ -118,31 +152,38 @@ export async function build() {
   const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
   await validate(data);
   const count=number(data.projects.length);
-  const header=`<header class="site-header"><a class="wordmark" href="/" aria-label="Lucas Wu, home">Lucas Wu</a><nav aria-label="Main navigation"><a href="/#projects">Projects <span class="nav-count">${count}</span></a><a href="/#about">About</a><a href="/#contact">Résumé</a></nav><button class="motion-button" id="motion-toggle" aria-pressed="false" aria-label="Pause animation"><span class="pause-symbol" aria-hidden="true"><svg class="icon-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg><svg class="icon-play" viewBox="0 0 16 16"><path d="M5.5 3.5 12.5 8l-7 4.5z"/></svg></span><span class="motion-text">Motion on</span></button></header>`;
-  const footer=`<footer class="site-footer section-shell"><a class="wordmark" href="/">Lucas Wu</a><a class="footer-email" href="mailto:lucaswu2018@gmail.com">lucaswu2018@gmail.com</a><span class="coordinate">© <span data-current-year>2026</span> LUCAS WU</span><a class="back-top" href="#main">Back to top ↑</a></footer>`;
-  const projectTemplate=await readFile(path.join(root,'templates/project.html'),'utf8');
-  const indexTemplate=await readFile(path.join(root,'templates/projects.html'),'utf8');
-  const shared={header,footer,count};
+  const site='https://'+(await readFile(path.join(root,'CNAME'),'utf8')).trim();
+  const versions=await assetVersions();
+  const finish=html=>stamp(toneMarks(html),versions);
+  const [headerTemplate,footerTemplate,projectTemplate,indexTemplate]=await Promise.all(
+    ['header.html','footer.html','project.html','projects.html'].map(name=>readFile(path.join(root,'templates',name),'utf8')));
+  // One header and footer for every page: the homepage links within itself, project pages link back to it.
+  const chrome=onHome=>({
+    header:fill(headerTemplate,{home:onHome?'#home':'/',base:onHome?'':'/',count}).trim(),
+    footer:fill(footerTemplate,{home:onHome?'#home':'/',top:onHome?'#home':'#main'}).trim()
+  });
+  const shared={...chrome(false),count,site};
   await mkdir(path.join(root,'projects'),{recursive:true});
-  await writeFile(path.join(root,'projects/index.html'),fill(indexTemplate,{...shared,cards:data.projects.map((p,i)=>card(p,i)).join('\n')}));
+  await writeFile(path.join(root,'projects/index.html'),finish(fill(indexTemplate,{...shared,cards:data.projects.map((p,i)=>card(p,i)).join('\n')})));
   for (const [i,project] of data.projects.entries()) {
     const next=data.projects[(i+1)%data.projects.length];
     const links=(project.links ?? []).map(link=>`<a class="outline-link" href="${escape(link.url)}" target="_blank" rel="noopener">${escape(link.label)} <span aria-hidden="true">↗</span></a>`).join('');
     const values={...shared,...Object.fromEntries(['slug','title','role','year','status'].map(key=>[key,escape(project[key])])),
       description:escape(project.summary),
+      ...previewImage(project),
       links:links ? `<div class="project-links">${links}</div>` : '',
       tags:(project.tags ?? []).map(tag=>`<li>${escape(tag)}</li>`).join(''),
       cover:artwork(project,{detail:true,sizes:SIZES.wide})+`<figcaption>${escape(project.cover?.caption ?? (project.cover ? '' : 'Project illustration'))}</figcaption>`,
       highlights:project.highlights?.length ? `<dl class="project-highlights">${project.highlights.map(h=>`<div><dt>${escape(h.label)}</dt><dd>${escape(h.value)}</dd></div>`).join('')}</dl>` : '',
       overview:paragraphs(project.overview),
-      sections:(project.sections ?? []).map(section=>`<div class="work-section"><h3>${escape(section.title)}</h3>${paragraphs(section.body)}${section.bullets?.length ? `<ul>${section.bullets.map(b=>`<li>${escape(b)}</li>`).join('')}</ul>` : ''}${gallery(section.images,false)}</div>`).join('\n'),
+      sections:(project.sections ?? []).map(section=>`<div class="work-section"><h3>${escape(section.title)}</h3>${paragraphs(section.body)}${section.bullets?.length ? `<ul>${section.bullets.map(b=>`<li>${rich(b)}</li>`).join('')}</ul>` : ''}${gallery(section.images,false)}</div>`).join('\n'),
       gallery:gallery(project.images),
       galleryLink:project.images?.length ? '<a href="#gallery">03 / In pictures</a>' : '',
       outcomeNumber:project.images?.length ? '04' : '03',
       outcome:paragraphs(project.outcome),nextUrl:url(next),nextTitle:escape(next.title)
     };
     await mkdir(path.join(root,'projects',project.slug),{recursive:true});
-    await writeFile(path.join(root,'projects',project.slug,'index.html'),fill(projectTemplate,values));
+    await writeFile(path.join(root,'projects',project.slug,'index.html'),finish(fill(projectTemplate,values)));
   }
   const homeFile=path.join(root,'index.html');
   let home=await readFile(homeFile,'utf8');
@@ -153,11 +194,13 @@ export async function build() {
     home=home.slice(0,startAt+start.length)+'\n'+html+'\n'+home.slice(endAt);
   };
   const featured=data.featured.map(slug=>data.projects.find(p=>p.slug===slug));
+  const homeChrome=chrome(true);
+  between('site-header',homeChrome.header);
   between('featured-projects',homeCards(featured));
   between('more-projects',moreProjects(data.projects,featured));
-  home=home.replace(/(<span class="nav-count">)\d+(<\/span>)/,(_,before,after)=>before+count+after);
+  between('site-footer',homeChrome.footer);
   home=home.replace(/(<a class="outline-link" href="\/projects\/">)View all(?: \d+)? projects/,(_,before)=>before+viewAll(data.projects.length));
-  await writeFile(homeFile,home);
+  await writeFile(homeFile,finish(home));
   console.log(`Built ${data.projects.length} project pages, the project index, and ${featured.length} homepage previews.`);
 }
 
