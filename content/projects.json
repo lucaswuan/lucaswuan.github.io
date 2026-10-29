@@ -11,7 +11,7 @@
       "art": "board",
       "artTitle": "Power,\nmeasured.",
       "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
-      "summary": "A single-cell Li-ion battery monitor and relay load switch board, designed in Altium with an STC3100 gas gauge and an STM32.",
+      "summary": "A Li-ion battery monitor and relay switch board, designed in Altium.",
       "tags": ["Altium Designer", "Schematic capture", "PCB layout", "STM32", "I2C", "Kelvin sensing"],
       "links": [],
       "cover": {
@@ -42,7 +42,7 @@
       "art": "chip",
       "artTitle": "From logic\nto silicon.",
       "artLabel": "DECODE / DISPATCH / WRITEBACK",
-      "summary": "The functional-unit control module for Waterloo’s ray-tracing ASIC: SystemVerilog that decodes 11 micro-ops and dispatches them to the ALU, multiplier, and CORDIC units.",
+      "summary": "A SystemVerilog control module for Waterloo’s ray-tracing ASIC.",
       "tags": ["SystemVerilog", "RTL design", "Valid/ready handshakes", "SystemVerilog interfaces", "ASIC", "Verilog", "SPI", "CDC", "Python / cocotb", "Tiny Tapeout"],
       "links": [{"label": "Onboarding project code", "url": "https://github.com/lucaswuan/digital-onboarding"}],
       "cover": {
@@ -76,7 +76,7 @@
       "art": "landmarks",
       "artTitle": "Learn by\nsigning.",
       "artLabel": "21 LANDMARKS / REAL-TIME FEEDBACK",
-      "summary": "An interactive ASL learning website that connects live hand-pose recognition with guided lessons.",
+      "summary": "A website that teaches ASL with live hand-pose recognition.",
       "tags": ["Python", "Flask", "MediaPipe", "OpenCV", "JavaScript", "HTML / CSS"],
       "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/hackTheBias2026"}],
       "cover": {
@@ -104,7 +104,7 @@
       "art": "robot",
       "artTitle": "Built for\nthe field.",
       "artLabel": "INTAKE / FLYWHEEL / CATAPULT",
-      "summary": "A VEX competition robot: a flywheel design that qualified our team for the 2023 World Championship, then a catapult rebuild.",
+      "summary": "A flywheel robot that qualified our team for the 2023 VEX Worlds.",
       "tags": ["VEX V5", "Mechanical design", "Autonomous programming", "Iterative testing"],
       "links": [],
       "cover": {
@@ -139,7 +139,7 @@
       "art": "rays",
       "artTitle": "A study\nin light.",
       "artLabel": "RAYS / SPHERES / MONTE CARLO",
-      "summary": "A C++ path tracer built up in stages, from a first ray–sphere hit test to Monte Carlo diffuse lighting.",
+      "summary": "A C++ path tracer built step by step, up to Monte Carlo lighting.",
       "tags": ["C++", "Vector math", "Path tracing", "Monte Carlo sampling", "Anti-aliasing"],
       "links": [],
       "cover": {
@@ -176,7 +176,7 @@
       "art": "community",
       "artTitle": "Small lessons.\nLasting impact.",
       "artLabel": "TEACHING / VOLUNTEERING / FUNDRAISING",
-      "summary": "A student-run tutoring nonprofit that gives all of its proceeds to children’s healthcare: $5,335 so far for the Alberta Children’s Hospital Foundation.",
+      "summary": "A tutoring nonprofit that has donated $5,335 to children’s healthcare.",
       "tags": ["Tutoring", "Community leadership", "Volunteer organizing", "Fundraising", "WordPress"],
       "links": [],
       "cover": {
