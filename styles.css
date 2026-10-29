@@ -51,9 +51,8 @@ nav { display: flex; gap: 36px; align-items: center; }
 nav a { font-size: 14px; color: #bbc1c0; transition: color .2s; }
 nav a:hover { color: var(--sage); }
 
-/* The ASCII Milky Way (galaxy.js) behind every page, and the planet canvas (app.js) on the homepage. */
+/* The ASCII sky behind every page: the Milky Way (galaxy.js), and on the homepage the planets (app.js), drawn on one canvas. */
 #stars { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; height: 100lvh; pointer-events: none; will-change: opacity; }
-#earth { display: block; position: relative; width: 100vw; height: 100%; opacity: .94; }
 
 /* Header: three columns with equal-width outer columns, so the nav links sit on the page's centre line
    whatever the widths of the name (left) and the Motion button (right). The outer columns never shrink
@@ -83,8 +82,6 @@ nav a:hover { color: var(--sage); }
 /* Hero: a tall scroll track with a sticky stage; app.js zooms into Earth and fades the text as you scroll. */
 .journey { position: relative; height: 265svh; }
 .space-stage { position: sticky; top: 0; height: 100vh; height: 100dvh; min-height: 600px; overflow: hidden; isolation: isolate; pointer-events: none; }
-.planet-scene { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; will-change: transform, opacity; }
-.planet-glow { display: none; }
 .hero-content { position: absolute; top: 28%; left: 9%; z-index: 3; pointer-events: auto; will-change: transform, opacity; }
 h1 { max-width: 800px; margin: 0 0 28px; font-size: clamp(54px, 5.8vw, 94px); font-weight: 700; line-height: 1.04; letter-spacing: -.03em; }
 h1 em { white-space: nowrap; }

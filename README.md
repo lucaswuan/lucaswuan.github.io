@@ -105,8 +105,8 @@ To check galleries, content validation, local links, `?v=` stamps, favicons and 
 - `projects.css`: project previews, page layouts, galleries, and responsive styles.
 - `styles.css`: site styling and homepage layout, one readable rule per selector, media queries at the end. Its `:root` holds the shared look: SF Pro on Apple devices with Inter elsewhere (linked in each page's `<head>`), sage headline accent words and links (`--sage`), black cards and buttons with a thin white `--edge`, one corner `--radius`, light-blue label highlights (`--label`, on `.eyebrow`), and dark key-phrase tints (`--phrase` and `mark[data-tone]`).
 - `site.js`: shared reveal effects, the About photo drift, the side navigation, and the footer year.
-- `galaxy.js`: shared Milky Way background and motion preference on every page.
-- `app.js`: homepage planet animation and scroll effects.
-- `planet-renderer.js`: WebGL planet renderer.
+- `galaxy.js`: the shared ASCII sky (the Milky Way, and the planets app.js places) and the motion preference on every page. Stars and planets share one canvas and one text grid, one character per cell.
+- `sky-renderer.js`: draws that sky on the GPU (WebGL2); without it, galaxy.js draws on a 2D canvas.
+- `app.js`: homepage planets (Saturn, Jupiter, Earth) and scroll effects.
 
 Project drafts were adapted from the supplied resumes. The `uwasic` page covers both the functional-unit control RTL and the SPI/PWM onboarding peripheral (its own section). Until there's an image of the functional-unit control work, its cover is the peripheral's GDS layout, which stays in `assets/projects/spi-pwm-peripheral/`. Illustrations are symbolic, not project screenshots. Replace them with your own images as they become available.

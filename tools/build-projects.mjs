@@ -85,7 +85,7 @@ export function gallery(images=[], heading=true) {
 }
 
 // Every CSS and JS file is linked as name?v=<hash of its contents>, so browsers fetch it again whenever it changes.
-export const ASSETS = ['styles.css', 'projects.css', 'galaxy.js', 'site.js', 'planet-renderer.js', 'app.js'];
+export const ASSETS = ['styles.css', 'projects.css', 'galaxy.js', 'site.js', 'sky-renderer.js', 'app.js'];
 // Line endings are normalised first, so a Windows checkout (CRLF) stamps the same version as the published files.
 export async function assetVersions(assetRoot=root) {
   return Object.fromEntries(await Promise.all(ASSETS.map(async name => {
