@@ -55,7 +55,7 @@
 .inner-page{background:#000}
 .inner-page .site-header{position:relative}
 .inner-page .site-header nav a[aria-current]{color:var(--paper)}
-.inner-page #stars{opacity:.52}
+.inner-page #stars.is-ready{opacity:.52}
 .inner-page main{z-index:1}
 .inner-page .section-shell{width:min(1220px,82%)}
 .inner-page h1{max-width:1050px}
