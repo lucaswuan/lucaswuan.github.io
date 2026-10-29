@@ -63,11 +63,11 @@ export function artwork(project, {detail=false, sizes=SIZES.third}={}) {
     const sources = sizedCopies(project.cover.src).map(s => `<source type="image/${s.type}" srcset="${escape(s.srcset)}" sizes="${sizes}">`).join('');
     return `<span class="project-art photo-art">${sources ? `<picture>${sources}${img}</picture>` : img}</span>`;
   }
-  return `<span class="project-art work-art art-${escape(project.art)}"><span class="art-topline"><span>${escape(project.title)}</span><span aria-hidden="true">${detail ? 'PROJECT NOTES' : 'EXPLORE ↗'}</span></span><span class="work-art-title">${project.artTitle.split('\n').map(escape).join('<br>')}</span>${illustration(project.art)}<span class="art-bottomline">${escape(project.artLabel)}</span></span>`;
+  return `<span class="project-art work-art art-${escape(project.art)}"><span class="art-topline"><span>${escape(project.title)}</span><span aria-hidden="true">${detail ? 'PROJECT NOTES' : 'EXPLORE ›'}</span></span><span class="work-art-title">${project.artTitle.split('\n').map(escape).join('<br>')}</span>${illustration(project.art)}<span class="art-bottomline">${escape(project.artLabel)}</span></span>`;
 }
 
 export function card(project, index, featured=false, sizes=SIZES.third) {
-  return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project,{sizes})}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true">↗</span></span></a>`;
+  return `<a class="project-card${featured ? ' wide-project featured-project' : ''}" href="${url(project)}" aria-label="Explore ${escape(project.title)}">${artwork(project,{sizes})}<span class="project-info"><span class="project-number">${number(index+1)}</span><span class="project-description"><strong>${escape(project.title)}</strong><span>${escape(project.summary)}</span></span><span class="project-type">${escape(project.category)}</span><span class="card-arrow" aria-hidden="true"><span class="chevron"></span></span></span></a>`;
 }
 
 // Gallery items ending in .mp4 or .webm play as videos, muted; an optional "poster" is the still shown before playing.
@@ -221,7 +221,7 @@ export function homeCards(featured) {
 export function moreProjects(projects, featured) {
   const shown=new Set(featured.map(p=>p.slug));
   if (projects.every(p=>shown.has(p.slug))) return '';
-  return `<a class="more-projects reveal" href="/projects/">View more projects <span aria-hidden="true">↗</span></a>`;
+  return `<a class="more-projects reveal" href="/projects/">View more projects <span class="chevron" aria-hidden="true"></span></a>`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
