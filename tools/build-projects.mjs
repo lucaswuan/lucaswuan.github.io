@@ -112,7 +112,7 @@ export function toneMarks(html) {
 
 // The image link previews show: the project's own 1200×630 crop (tools/make-preview-images.py), or the homepage's.
 const HOME_PREVIEW = '/assets/og-home.jpg';
-const HOME_PREVIEW_ALT = 'The homepage of Lucas Wu’s portfolio: “Hello, I’m Lucas Wu!” beside an Earth drawn in ASCII characters.';
+const HOME_PREVIEW_ALT = 'The homepage of Lucas Wu’s portfolio: “Hello, I’m Lucas Wu!” beside an Earth drawn in ASCII characters, with Saturn and Jupiter, against an ASCII Milky Way.';
 export function previewImage(project, assetRoot=root) {
   const own = `/assets/projects/${project.slug}/og.jpg`;
   return project.cover && existsSync(path.join(assetRoot, '.' + own))
