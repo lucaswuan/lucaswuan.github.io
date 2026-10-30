@@ -34,8 +34,9 @@
   // The planets' colours follow (app.js and sky-renderer.js count from PLANET_ROW): Saturn's golden zones and cream
   // equator; its outer B, A, and C rings; Jupiter's zones, belts, and Great Red Spot; Earth's land, clouds, and ocean
   // (bright, so Earth stands out from the white and blue stars, with a slightly muted ocean blue); then Saturn's
-  // orange-tan belts, blue-grey pole, and warmer inner B ring.
-  const PLANET_COLORS=['#ebc77d','#f8ebcb','#f6ecd4','#c4b394','#8c7b66','#f2e3c6','#c98a63','#e3654a','#79f79c','#ffffff','#528fd6','#d4945a','#9db3cc','#e8c992'];
+  // orange-tan belts, blue-grey pole, and warmer inner B ring; then Earth's city lights at night, its twilight band,
+  // and (in green and blue style) the warm grey of cities and bare ground up close.
+  const PLANET_COLORS=['#ebc77d','#f8ebcb','#f6ecd4','#c4b394','#8c7b66','#f2e3c6','#c98a63','#e3654a','#79f79c','#ffffff','#528fd6','#d4945a','#9db3cc','#e8c992','#ffc46b','#ff9a5c','#c9c3b8'];
   const PLANET_ROW=STAR_COLORS.length,COLORS=[...STAR_COLORS,...PLANET_COLORS];
   // The same monospace font on every device: the pages load JetBrains Mono with just these characters.
   // Until it arrives (or if it can't), the system's monospace stands in.
@@ -409,7 +410,9 @@
     setPlanets(next){planets=next;dirty=true;},
     // Dims the stars (not the planets) as the homepage scrolls on.
     setStarFade(value){if(gpu){if(value!==starFade){starFade=value;dirty=true;}}else{starFade=value;if(revealed)starCanvas.style.opacity=String(value);}},
-    setLand(pixels){if(gpu){gpu.uploadLand(pixels);dirty=true;}}
+    setLand(pixels){if(gpu){gpu.uploadLand(pixels);dirty=true;}},
+    // Earth's photos, clouds, and night lights (images; see tools/make-earth-maps.py).
+    setEarthMaps(maps){if(gpu){gpu.uploadEarthMaps(maps);dirty=true;}}
   };
   // A shooting star every 20 to 40 seconds: a short streak that crosses part of the sky at a shallow slant in under
   // a second.

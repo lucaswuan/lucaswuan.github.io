@@ -18,10 +18,21 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   uniform float cloudStrength;
   uniform float time;
   uniform sampler2D land;
+  // Earth: how the globe is turned (from the view to Earth's own frame), its style (0 green and blue, 1 satellite
+  // colours), whether its maps have loaded, how far the clouds have drifted, how far each sharper photo has faded in
+  // (around Alberta, southern Alberta, the Calgary area), and the maps themselves.
+  uniform mat3 earthTurn;
+  uniform int earthStyle;
+  uniform float earthMaps;
+  uniform float cloudShift;
+  uniform vec3 layers;
+  uniform sampler2D surface,region,area,calgary,cloudMap,lightMap;
   out vec4 outputColor;
   const vec2 CELL=vec2(${cellWidth}.0,${cellHeight}.0);
   const int PLANET=${planetRow};
   const float PI=3.14159265359;
+  // Where the sharper photos lie: west, east, south, north in degrees (the same bounds as tools/make-earth-maps.py).
+  const vec4 REGION=vec4(-125.0,-103.0,44.0,58.0),AREA=vec4(-119.6,-108.6,48.28,53.78),CALGARY=vec4(-115.3,-112.9,50.55,51.5);
   // Characters are galaxy.js's ramp (. , : ; - = + * # % @ = 0 to 10); colour rows from PLANET are the planets'.
   vec4 character(int ch,int row,float alpha,vec2 offset){
     vec2 uv=(vec2(float(ch),float(row))*tile+offset+.5)/vec2(textureSize(glyphs,0));
@@ -29,12 +40,39 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     float a=ink.a*clamp(alpha,0.0,1.0);
     return vec4(ink.rgb*a,a);
   }
+  // A character in any colour: the shape from the white row, the colour given.
+  vec4 tinted(int ch,vec3 colour,float alpha,vec2 offset){
+    vec4 ink=texture(glyphs,(vec2(float(ch),float(PLANET+9))*tile+offset+.5)/vec2(textureSize(glyphs,0)));
+    float a=ink.a*clamp(alpha,0.0,1.0);
+    return vec4(clamp(colour,0.0,1.0)*a,a);
+  }
   // Planets use the smoother half of the ramp, from 0 (.) to 1 (#): . : - = + * #
   int shade(float v){int i=int(floor(clamp(v,0.0,1.0)*6.0+.5));return i==0?0:i==1?2:i+2;}
   // Saturn's body skips the line characters (- =), which belong to its rings: . : + * #
   int saturnShade(float v){int i=int(floor(clamp(v,0.0,1.0)*4.0+.5));return i==0?0:i==1?2:i+4;}
+  // Close-up photos use the whole ramp, from 0 (.) to 1 (@): . , : ; - = + * # % @
+  int ramp(float v){return int(floor(clamp(v,0.0,1.0)*10.0+.5));}
   // Sunlight from the upper left and a little in front: 0 on the night side, up to 1 in full sun.
   float sunlight(vec2 n,float z){float l=-n.x*.55-n.y*.42+z*.72;return smoothstep(-.03,.16,l)*(.25+.75*max(0.0,l));}
+  vec2 boxUv(vec2 deg,vec4 box){return vec2((deg.x-box.x)/(box.y-box.x),(box.w-deg.y)/(box.w-box.z));}
+  bool inBox(vec2 uv){return uv.x>0.0&&uv.x<1.0&&uv.y>0.0&&uv.y<1.0;}
+  // A map averaged over the patch of ground one cell covers (span: the map's width in radians; cellAngle: a cell's
+  // width in radians of the globe), so a far-off Earth shows each patch's colour instead of flickering points.
+  vec4 averaged(sampler2D map,vec2 uv,float span,float cellAngle){
+    return textureLod(map,uv,max(0.0,log2(float(textureSize(map,0).x)/span*cellAngle)));
+  }
+  // The photo under a cell: the whole globe, with sharper photos laid over it as the camera comes down to Calgary
+  // (each fades in only once it covers the screen, so its edges never show). base: how much the first one counts.
+  vec3 photo(vec2 uv,vec2 deg,float cellAngle,float base){
+    vec3 colour=averaged(surface,uv,PI*2.0,cellAngle).rgb;
+    vec2 at=boxUv(deg,REGION);
+    if(inBox(at))colour=mix(colour,averaged(region,at,radians(REGION.y-REGION.x),cellAngle).rgb,base);
+    at=boxUv(deg,AREA);
+    if(inBox(at))colour=mix(colour,averaged(area,at,radians(AREA.y-AREA.x),cellAngle).rgb,layers.y);
+    at=boxUv(deg,CALGARY);
+    if(inBox(at))colour=mix(colour,averaged(calgary,at,radians(CALGARY.y-CALGARY.x),cellAngle).rgb,layers.z);
+    return colour;
+  }
   // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
   // Cassini division, and the grey-tan A ring.
   bool ring(vec2 d,float r,out int ch,out int row,out float alpha,out bool front){
@@ -49,26 +87,70 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     else if(band>.895){ch=4;row=PLANET+3;alpha=.72;}
     return true;
   }
-  // A planet's character at offset d from its centre, shaded by sunlight: bands on Saturn and Jupiter (with the
-  // Great Red Spot), land, ocean, and clouds on Earth.
-  bool body(int k,vec2 d,vec4 world,out int ch,out int row,out float alpha){
+  // Earth at a point n of its disc (z towards the viewer). Classic style uses the planet colour rows; satellite
+  // style tints each character with the photo's colour there (tint is -1 when a row is used). Coming down over
+  // Calgary, sharper photos take over and the whole ramp draws them (cell by cell, as their layers fade in).
+  void earth(vec2 n,float z,float radius,float threshold,out int ch,out int row,out float alpha,out vec3 tint){
+    vec3 p=earthTurn*vec3(n.x,-n.y,z);
+    float lat=asin(clamp(p.y,-1.0,1.0)),lon=atan(p.x,p.z);
+    vec2 uv=vec2(fract(lon/(PI*2.0)+.5),.5-lat/PI),deg=degrees(vec2(lon,lat));
+    float lam=-n.x*.55-n.y*.42+z*.72,light=sunlight(n,z),cellAngle=CELL.x/radius;
+    bool water=texture(land,uv).a<=.24,satellite=earthStyle==1&&earthMaps>.5;
+    bool photographed=earthMaps>.5&&(satellite||layers.x>threshold),fine=layers.y>threshold;
+    vec3 base=photographed?photo(uv,deg,cellAngle,satellite?layers.x:1.0):vec3(0);
+    // The photo's colour at full strength (keeping its hue); close in, colourful ground gets richer still.
+    vec3 vivid=base/max(.22,max(base.r,max(base.g,base.b)));
+    vivid=clamp(mix(vec3(dot(vivid,vec3(.299,.587,.114))),vivid,1.0+1.8*(1.0-min(vivid.r,min(vivid.g,vivid.b)))*layers.y),0.0,1.0);
+    tint=vec3(-1);
+    // The night side: city lights where there are any, otherwise faint land and sea.
+    if(light<.01){
+      float glow=earthMaps*averaged(lightMap,uv,PI*2.0,cellAngle).r;
+      if(glow>.1){ch=glow>.45?2:0;alpha=.3+.7*glow;row=PLANET+14;if(satellite)tint=vec3(1.0,.78,.42);}
+      else{ch=0;alpha=.14;row=PLANET+(water?10:8);if(satellite)tint=vivid;}
+      return;
+    }
+    // Clouds drift east a little faster than the ground, and thin out as the camera dives in.
+    float cloud=earthMaps>.5?averaged(cloudMap,vec2(fract(uv.x-cloudShift),uv.y),PI*2.0,cellAngle).r:
+      (sin(lon*12.0+lat*9.0+sin(lat*7.0))*sin(lat*18.0-lon*5.0)>.66&&fract(sin(n.x*129.89+n.y*78.233)*43758.5453)<.6?1.0:0.0);
+    cloud*=cloudStrength;
+    // Sunlight glints off the sea (seen on the whole globe, not up close), and turns orange near the day/night line.
+    float glint=water?pow(max(dot(vec3(n,z),vec3(-.297,-.227,.928)),0.0),90.0)*(1.0-smoothstep(300.0,900.0,radius)):0.0;
+    float dusk=smoothstep(-.05,.02,lam)*(1.0-smoothstep(.02,.16,lam));
+    // Up close the ground is lit evenly and its own brightness sets the character: tone spreads the photos' usual
+    // range over the ramp. Water (dark, with little red) is drawn blue.
+    float bright=dot(base,vec3(.299,.587,.114)),tone=clamp((bright-.15)/.19,0.0,1.0);
+    bool wet=base.r<base.g*.7&&(base.b>base.g*.65||base.r<base.g*.3);
+    light=mix(light,1.0,layers.x);
+    if(cloud>.42){
+      ch=shade(.2+.45*light*cloud);alpha=.35+.55*light;row=PLANET+9;
+      // In satellite colours clouds are the brightest thing on the globe, as in photos.
+      if(satellite){ch=shade((.35+.65*cloud)*light);alpha=.45+.5*light;tint=vec3(.95,.97,1.0);}
+    }else if(satellite){
+      // Brighter ground gets denser characters, though the dark sea stays solid enough to read as a globe; thin
+      // cloud whitens it.
+      if(fine){ch=ramp(.4+.6*tone);alpha=.8+.2*tone;}
+      else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*light+glint*.5);alpha=.4+.55*light+glint*.3;}
+      tint=mix(mix(vivid,vec3(.95,.97,1.0),smoothstep(.18,.42,cloud)*.55),vec3(1.0,.97,.9),glint);
+      if(fine&&wet)tint=mix(tint,vec3(.3,.58,.95),.65);
+    }else if(photographed){
+      // The site's green and blue, with warm grey for the city and bare ground, shaded by the photo.
+      row=PLANET+(wet?10:base.g>base.r*1.02&&base.g>base.b*1.05?8:16);
+      ch=fine?ramp(.4+.6*tone):shade(.4+.6*tone);alpha=.75+.25*tone;
+    }else if(!water){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}
+    else{ch=shade(.22+.55*light+glint*.5);alpha=.45+.5*light+glint*.3;row=PLANET+(glint>.5?9:10);}
+    if(dusk>.3&&cloud<=.42){if(tint.x>=0.0)tint=mix(tint,vec3(1.0,.6,.35),dusk*.6);else row=PLANET+15;}
+  }
+  // A planet's character at offset d from its centre, shaded by sunlight: Earth (above), bands on Saturn and
+  // Jupiter (with the Great Red Spot).
+  bool body(int k,vec2 d,vec4 world,float threshold,out int ch,out int row,out float alpha,out vec3 tint){
     vec2 n=d/world.z;float dd=dot(n,n);
     if(dd>1.0)return false;
-    float z=sqrt(1.0-dd),ct=.987227283,st=-.159318207;
+    float z=sqrt(1.0-dd);
+    tint=vec3(-1);
+    if(k==2){earth(n,z,world.z,threshold,ch,row,alpha,tint);return true;}
+    float ct=.987227283,st=-.159318207;
     vec2 rotated=vec2(n.x*ct-n.y*st,n.x*st+n.y*ct);
-    float lat=asin(clamp(-rotated.y,-1.0,1.0)),lon=atan(rotated.x,z)+world.w+.4,light=sunlight(n,z);
-    if(k==2){
-      vec2 uv=vec2(fract(lon/(PI*2.0)+.5),.5-lat/PI);
-      bool isLand=texture(land,uv).a>.24;
-      bool cloud=sin(lon*12.0+lat*9.0+sin(lat*7.0))*sin(lat*18.0-lon*5.0)>.66;
-      float noise=fract(sin(n.x*129.89+n.y*78.233)*43758.5453);
-      if(light<.01){ch=0;alpha=.14;row=PLANET+(isLand?8:10);}
-      else if(isLand){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}
-      else if(cloud&&cloudStrength>0.0&&noise<cloudStrength){ch=shade(.17+.33*light);alpha=.35+.55*light+.08*cloudStrength;row=PLANET+9;}
-      else{ch=shade(.22+.55*light);alpha=.45+.5*light;row=PLANET+10;}
-      return true;
-    }
-    float value;
+    float lat=asin(clamp(-rotated.y,-1.0,1.0)),lon=atan(rotated.x,z)+world.w+.4,light=sunlight(n,z),value;
     if(k==1){
       float bands=sin(lat*7.8+sin(lon*2.0+lat*5.0)*.6),spotLon=mod(lon-1.1+PI,PI*2.0)-PI;
       bool spot=(spotLon/.34)*(spotLon/.34)+((lat+.38)/.16)*((lat+.38)/.16)<1.0;
@@ -92,20 +174,20 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     vec2 offset=clamp(floor(device)-floor(cell*pixelRatio-tile*.5+.5),vec2(0),tile-1.0);
     // A fading planet gives its cells back to the stars one by one, rather than showing both at once.
     float threshold=fract(sin(dot(index,vec2(12.9898,78.233)))*43758.5453);
-    int ch=-1,row=0;float alpha=0.0;bool covered=false;
+    int ch=-1,row=0;float alpha=0.0;bool covered=false;vec3 tint=vec3(-1);
     for(int k=0;k<3;k++){
       vec4 world=worlds[k];
       float fade=k==2?fades.y:fades.x;
       if(world.z<1.0||fade<=threshold)continue;
       vec2 d=cell-world.xy;
-      int rc,rr,bc,br;float ra,ba;bool front=false;
+      int rc,rr,bc,br;float ra,ba;bool front=false;vec3 bt;
       bool hasRing=k==0&&ring(d,world.z,rc,rr,ra,front);
-      if(hasRing&&!front){covered=true;ch=rc;row=rr;alpha=ra*fade;}
-      if(body(k,d,world,bc,br,ba)){covered=true;ch=bc;row=br;alpha=ba*fade;}
-      if(hasRing&&front){covered=true;ch=rc;row=rr;alpha=ra*fade;}
+      if(hasRing&&!front){covered=true;ch=rc;row=rr;alpha=ra*fade;tint=vec3(-1);}
+      if(body(k,d,world,threshold,bc,br,ba,bt)){covered=true;ch=bc;row=br;alpha=ba*fade;tint=bt;}
+      if(hasRing&&front){covered=true;ch=rc;row=rr;alpha=ra*fade;tint=vec3(-1);}
     }
     vec4 result=vec4(0);
-    if(covered){if(ch>=0)result=character(ch,row,alpha*.94,offset);}
+    if(covered){if(ch>=0)result=tint.x>=0.0?tinted(ch,tint,alpha*.94,offset):character(ch,row,alpha*.94,offset);}
     else{
       ivec2 size=textureSize(stars,0);
       if(index.x<float(size.x)&&index.y<float(size.y)){
@@ -119,14 +201,27 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
   const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   gl.useProgram(program);
-  function texture(unit){const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}
+  // smooth: blend between texels, with smaller copies for averaged() (maps); wrap: repeat around the globe from
+  // west to east.
+  function texture(unit,{smooth=false,wrap=false}={}){
+    const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,smooth?gl.LINEAR_MIPMAP_LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,smooth?gl.LINEAR:gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,wrap?gl.REPEAT:gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
+    if(smooth)gl.generateMipmap(gl.TEXTURE_2D);
+    return t;
+  }
   const uniform=name=>gl.getUniformLocation(program,name);
   const glyphTexture=texture(0),starTexture=texture(1),landTexture=texture(2);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
+  const mapTextures={surface:texture(3,{smooth:true,wrap:true}),region:texture(4,{smooth:true}),area:texture(5,{smooth:true}),
+    calgary:texture(6,{smooth:true}),cloudMap:texture(7,{smooth:true,wrap:true}),lightMap:texture(8,{smooth:true,wrap:true})};
   gl.uniform1i(uniform('glyphs'),0);gl.uniform1i(uniform('stars'),1);gl.uniform1i(uniform('land'),2);
+  Object.keys(mapTextures).forEach((name,i)=>gl.uniform1i(uniform(name),3+i));
   const tileSize=uniform('tile'),buffer=uniform('bufferSize'),ratio=uniform('pixelRatio'),fade=uniform('starFade');
   const positions=uniform('worlds[0]'),planetFades=uniform('fades'),clouds=uniform('cloudStrength'),clock=uniform('time');
-  const values=new Float32Array(12);
+  const turn=uniform('earthTurn'),style=uniform('earthStyle'),loaded=uniform('earthMaps'),drift=uniform('cloudShift');
+  const photos=uniform('layers');
+  const values=new Float32Array(12),still=new Float32Array([1,0,0,0,1,0,0,0,1]);
   let starColumns=0,starLines=0;
   gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);
   return {
@@ -138,7 +233,20 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       else gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,columns,lines,gl.RGBA,gl.UNSIGNED_BYTE,cells);
     },
     uploadLand(pixels){gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,landTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1024,512,0,gl.RGBA,gl.UNSIGNED_BYTE,pixels);},
-    // planets: {saturn, jupiter, earth (each {x, y, r, spin} in CSS px), time, far, near, clouds} or null.
+    // Images from assets/earth (any of surface, region, area, calgary, cloudMap, lightMap; the close-up photos come
+    // later than the rest).
+    uploadEarthMaps(maps){
+      gl.useProgram(program);
+      Object.entries(mapTextures).forEach(([name,t],i)=>{
+        if(!maps[name])return;
+        gl.activeTexture(gl.TEXTURE3+i);gl.bindTexture(gl.TEXTURE_2D,t);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,maps[name]);
+        gl.generateMipmap(gl.TEXTURE_2D);
+      });
+      gl.uniform1f(loaded,1);
+    },
+    // planets: {saturn, jupiter, earth (each {x, y, r, spin} in CSS px), earthTurn (a column-major 3×3 matrix),
+    // satellite, cloudShift, layers ([region, area, calgary], each 0 to 1), time, far, near, clouds} or null.
     render(starFade,planets){
       values.fill(0);
       if(planets)[planets.saturn,planets.jupiter,planets.earth].forEach((w,k)=>{values[k*4]=w.x;values[k*4+1]=w.y;values[k*4+2]=w.r;values[k*4+3]=w.spin;});
@@ -146,6 +254,8 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       gl.uniform2f(buffer,gl.canvas.width,gl.canvas.height);gl.uniform1f(ratio,gl.canvas.width/innerWidth);gl.uniform1f(fade,starFade);
       gl.uniform4fv(positions,values);gl.uniform2f(planetFades,planets?planets.far:0,planets?planets.near:0);
       gl.uniform1f(clouds,planets?planets.clouds:0);gl.uniform1f(clock,planets?planets.time:0);
+      gl.uniformMatrix3fv(turn,false,planets?planets.earthTurn:still);gl.uniform1i(style,planets?.satellite?1:0);
+      gl.uniform1f(drift,planets?planets.cloudShift:0);gl.uniform3fv(photos,planets?planets.layers:[0,0,0]);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
   };

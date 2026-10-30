@@ -162,10 +162,11 @@ export async function build() {
   const finish=html=>stamp(toneMarks(html),versions);
   const [headerTemplate,footerTemplate,projectTemplate,indexTemplate]=await Promise.all(
     ['header.html','footer.html','project.html','projects.html'].map(name=>readFile(path.join(root,'templates',name),'utf8')));
-  // One header and footer for every page: the homepage links within itself, project pages link back to it.
+  // One header and footer for every page: the homepage links within itself, project pages link back to it. Only the
+  // homepage shows Earth, so only it credits the imagery.
   const chrome=onHome=>({
     header:fill(headerTemplate,{home:onHome?'#home':'/',base:onHome?'':'/',count}).trim(),
-    footer:fill(footerTemplate,{home:onHome?'#home':'/',top:onHome?'#home':'#main'}).trim()
+    footer:fill(footerTemplate,{home:onHome?'#home':'/',top:onHome?'#home':'#main',credit:onHome?EARTH_CREDIT:''}).trim()
   });
   const shared={...chrome(false),count,site};
   await mkdir(path.join(root,'projects'),{recursive:true});
@@ -210,6 +211,7 @@ export async function build() {
 }
 
 const viewAll = total => `View all ${total} projects`;
+const EARTH_CREDIT = '<span class="earth-credit">Earth imagery NASA · contains modified Copernicus Sentinel data 2024</span>';
 
 // An odd number of previews starts with one wide card so the two-column grid has no gap; an even number is all half-width.
 export function homeCards(featured) {
