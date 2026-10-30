@@ -211,7 +211,7 @@ export async function build() {
 }
 
 const viewAll = total => `View all ${total} projects`;
-const EARTH_CREDIT = '<span class="earth-credit">Earth imagery NASA · contains modified Copernicus Sentinel data 2024</span>';
+const EARTH_CREDIT = '<span class="earth-credit">Earth imagery NASA · contains modified Copernicus Sentinel data 2024 · street data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></span>';
 
 // An odd number of previews starts with one wide card so the two-column grid has no gap; an even number is all half-width.
 export function homeCards(featured) {

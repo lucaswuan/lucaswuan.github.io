@@ -2,7 +2,7 @@
   'use strict';
   // Places Saturn, Jupiter, and Earth in the shared ASCII sky (galaxy.js draws them, one character per cell, on the
   // GPU through sky-renderer.js) and moves the opening text as the page scrolls. Scrolling turns Earth to Calgary
-  // and dives in until the whole city fills the screen.
+  // and dives in, past the whole city, to its centre, as night falls and the city's lights come on.
   const galaxy=window.portfolioGalaxy;
   if(!galaxy)return;
   const {cell:[CELL_WIDTH,CELL_HEIGHT],media,planetRow:PLANET,empty:EMPTY}=galaxy;
@@ -11,23 +11,21 @@
   // and inner B ring; Earth's city lights, twilight band, and the warm grey of cities and bare ground up close.
   const SATURN=0,SATURN_CREAM=1,RING_B=2,RING_A=3,RING_C=4,ZONE=5,BELT=6,SPOT=7,LAND=8,CLOUD=9,OCEAN=10;
   const SATURN_BELT=11,SATURN_POLE=12,RING_B_INNER=13,LIGHTS=14,TWILIGHT=15,GROUND=16;
-  // Earth in satellite colours, or in the site's green and blue (?earth=classic, and always on the 2D canvas).
-  const satellite=galaxy.gpu&&new URLSearchParams(location.search).get('earth')!=='classic';
+  // Earth is drawn from photos on the GPU, and in the site's green and blue on the 2D canvas.
   const RAD=Math.PI/180;
-  // At rest Earth spins with its axis leaning 23.4° and the view a little north of the equator. The zoom ends over
-  // the middle of Calgary (latitude, longitude), north up, with the whole city (32 by 41 km, plus a margin) filling
-  // the screen.
-  const REST_LAT=12*RAD,TILT=23.44*RAD,CENTRE=[51.0275,-114.088],CITY_SIZE=[36/6371,45/6371];
-  // The sharper photos the dive passes through: around Alberta, southern Alberta, and the Calgary area, each [west,
-  // east, south, north] in degrees as in tools/make-earth-maps.py.
-  const PHOTOS=[[-125,-103,44,58],[-119.6,-108.6,48.28,53.78],[-115.3,-112.9,50.55,51.5]];
+  // At rest Earth spins with its axis leaning 23.4° and the view a little north of the equator. The dive ends over
+  // central Calgary (latitude, longitude), north up, with about 12 km across the shorter side of the screen.
+  const REST_LAT=12*RAD,TILT=23.44*RAD,TARGET=[51.05,-114.07],FINAL_SPAN=12/6371;
+  // The sharper photos the dive passes through: around Alberta, southern Alberta, the Calgary area, and central
+  // Calgary, each [west, east, south, north] in degrees as in tools/make-earth-maps.py.
+  const PHOTOS=[[-125,-103,44,58],[-119.6,-108.6,48.28,53.78],[-115.3,-112.9,50.55,51.5],[-114.33,-113.81,50.915,51.185]];
   const map=document.createElement('canvas');
   map.width=1024;map.height=512;
   const mapCtx=map.getContext('2d',{willReadFrequently:true});
   // mapsAt: when Earth's maps arrived (or stopped being waited for); Earth appears cell by cell from then.
-  // closeAt: when the close-up photos arrived.
+  // closeAt: when the close-up photos (by day and by night) arrived.
   let landPixels=null,cloudPixels=null,lightPixels=null,mapsAt=0,closeAt=0,rotation=0,frame=0;
-  const photoPixels=[null,null,null];
+  const photoPixels=[null,null,null,null];
   const journey=document.querySelector('.journey');
   const stage=document.querySelector('.space-stage');
   const hero=document.querySelector('.hero-content');
@@ -184,10 +182,10 @@
     data.features.forEach(f=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;polys.forEach(poly=>{mapCtx.beginPath();poly.forEach(ringPath);mapCtx.fill('evenodd');});});
     landPixels=mapCtx.getImageData(0,0,1024,512).data;galaxy.setLand(landPixels);
   }).catch(()=>{});
-  // Earth's maps (tools/make-earth-maps.py): clouds, night lights, the photo around Alberta, and for satellite
-  // colours the whole globe; then, once the page has loaded, the close-up photos for the dive. The 2D canvas reads
-  // the ones it uses into memory. Earth waits up to 2.5 seconds for the first set, so it doesn't change style just
-  // after appearing.
+  // Earth's maps (tools/make-earth-maps.py): clouds, night lights, the photo around Alberta, and on the GPU the
+  // whole globe; then, once the page has loaded, the close-up photos for the dive (and on the GPU their night
+  // versions). The 2D canvas reads the ones it uses into memory. Earth waits up to 2.5 seconds for the first set, so
+  // it doesn't change style just after appearing.
   const load=name=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src='assets/earth/'+name;});
   const loadMaps=files=>Promise.all(Object.entries(files).map(([key,name])=>load(name).then(image=>[key,image]))).then(entries=>{
     const maps=Object.fromEntries(entries);
@@ -200,12 +198,14 @@
       return [canvas.width,canvas.height,ink.getImageData(0,0,canvas.width,canvas.height).data];
     };
     if(maps.cloudMap){cloudPixels=read(maps.cloudMap,.5);lightPixels=read(maps.lightMap,.25);}
-    ['region','area','calgary'].forEach((key,i)=>{if(maps[key])photoPixels[i]=read(maps[key]);});
+    ['region','area','calgary','centre'].forEach((key,i)=>{if(maps[key])photoPixels[i]=read(maps[key]);});
   });
-  loadMaps({region:'region.jpg',cloudMap:'clouds.jpg',lightMap:'lights.jpg',...(satellite&&{surface:'surface.jpg'})})
+  loadMaps({region:'region.jpg',cloudMap:'clouds.jpg',lightMap:'lights.jpg',...(galaxy.gpu&&{surface:'surface.jpg'})})
     .catch(()=>{}).finally(()=>{mapsAt||=performance.now();});
   setTimeout(()=>{mapsAt||=performance.now();},2500);
-  const loadCloseUps=()=>loadMaps({area:'area.webp',calgary:'calgary.webp'}).then(()=>{closeAt=performance.now();},()=>{});
+  const loadCloseUps=()=>loadMaps({area:'area.webp',calgary:'calgary.webp',centre:'centre.webp',
+    ...(galaxy.gpu&&{areaNight:'area-night.webp',calgaryNight:'calgary-night.webp',centreNight:'centre-night.webp'})})
+    .then(()=>{closeAt=performance.now();},()=>{});
   if(document.readyState==='complete')loadCloseUps();else addEventListener('load',loadCloseUps,{once:true});
 
   const frameTimings=[],profiling=new URLSearchParams(location.search).has('profile');
@@ -228,9 +228,9 @@
     const active=progress<.98&&scrollY<journey.offsetHeight;
     // The dive is one motion, from the first bit of scroll to 80% of the opening scroll: the zoom, the turn towards
     // Calgary, the axis straightening, and Earth gliding to the middle of the screen all run the whole way and settle
-    // together. Earth starts dissolving (at 74%) just as the words finish fading, while the camera is still settling,
-    // so the scroll never goes still.
-    const focus=paused?0:smooth(.03,.8,progress),dissolve=smooth(.74,.96,progress);
+    // together. Earth starts dissolving (at 76%) as the words finish fading, while the camera is still settling, so
+    // the scroll never goes still.
+    const focus=paused?0:smooth(.03,.8,progress),dissolve=smooth(.76,.97,progress);
     // Earth spins only while the page is at the top, so the turn towards Calgary is always the short way round.
     if(!paused&&!document.hidden&&t-frame>33){
       if(active&&focus===0)rotation+=.000022*Math.min(t-frame,100);
@@ -248,15 +248,15 @@
     const moveX=(innerWidth*.5-baseX)*centre+(driftX+(paused?0:pointerX))*(1-centre);
     const moveY=(viewportHeight*.5-baseY)*centre+(driftY+(paused?0:pointerY))*(1-centre);
     const diameter=mobile?117:Math.max(143,Math.min(innerWidth*.1365,208)),radius=diameter*.44;
-    // Zooming at an even pace (each bit of scroll multiplies the size by the same amount) until the city fills the
-    // screen.
-    const final=Math.max(radius,Math.min(innerWidth/CITY_SIZE[0],viewportHeight/CITY_SIZE[1])),depth=Math.log(final/radius);
+    // Zooming at an even pace (each bit of scroll multiplies the size by the same amount) until central Calgary fills
+    // the screen.
+    const final=Math.max(radius,Math.min(innerWidth,viewportHeight)/FINAL_SPAN),depth=Math.log(final/radius);
     const earth={x:baseX+moveX,y:baseY+moveY+top,r:radius*Math.exp(depth*focus),spin:rotation};
     // How much of the turn is left: it shrinks a little faster than Earth grows, so the globe turns quickly while it
     // is small and, up close, the ground keeps drifting gently until Calgary settles in the middle. The axis
     // straightens at an even pace all the way down. Earth turns west to east, so its surface moves left to right.
     const left=(1-focus)*Math.exp(-.75*depth*focus),roll=TILT*(1-focus),restLon=.4-rotation;
-    const turned=earthTurn(REST_LAT+(CENTRE[0]*RAD-REST_LAT)*(1-left),restLon+wrap(CENTRE[1]*RAD-restLon)*(1-left),roll);
+    const turned=earthTurn(REST_LAT+(TARGET[0]*RAD-REST_LAT)*(1-left),restLon+wrap(TARGET[1]*RAD-restLon)*(1-left),roll);
     // Each sharper photo fades in only once it covers the whole screen (turned by the roll, around the ground in the
     // middle of it), so its edges never show; the close-up ones also wait until they have loaded.
     const closeUps=closeAt?paused?1:smooth(0,600,t-closeAt):0;
@@ -265,12 +265,15 @@
     const lon=Math.atan2(turned[0]*nx-turned[3]*ny+turned[6]*nz,turned[2]*nx-turned[5]*ny+turned[8]*nz)/RAD;
     const spanX=innerWidth/2*Math.abs(Math.cos(roll))+viewportHeight/2*Math.abs(Math.sin(roll));
     const spanY=innerWidth/2*Math.abs(Math.sin(roll))+viewportHeight/2*Math.abs(Math.cos(roll));
-    const layers=PHOTOS.map(([west,east,south,north],i)=>{
+    const covered=PHOTOS.map(([west,east,south,north])=>{
       const halfWidth=Math.min(lon-west,east-lon)*Math.cos(north*RAD)*RAD,halfHeight=Math.min(lat-south,north-lat)*RAD;
-      if(!nz||halfWidth<=0||halfHeight<=0)return 0;
-      const covered=1.05*Math.max(spanX/halfWidth,spanY/halfHeight);
-      return covered<final?smooth(covered,Math.min(covered*1.35,final),earth.r)*(i?closeUps:1):0;
+      return nz&&halfWidth>0&&halfHeight>0?1.05*Math.max(spanX/halfWidth,spanY/halfHeight):Infinity;
     });
+    const layers=covered.map((radius,i)=>radius<final?smooth(radius,Math.min(radius*1.35,final),earth.r)*(i?closeUps:1):0);
+    // Night falls from when southern Alberta's photos fill the screen until the camera is well into the city (by
+    // even steps of zoom), so the towns glow first and Calgary's streets light up on the way down.
+    const dusk=covered[1]*1.35,dark=final*.7;
+    const nightfall=galaxy.gpu&&dusk<dark?smooth(0,1,Math.log(earth.r/dusk)/Math.log(dark/dusk))*closeUps:0;
     const arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
     // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.
     const state={
@@ -278,7 +281,7 @@
       jupiter:{x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.000085+1)*innerWidth*.035+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00007)*22-focus*130+top,r:mobile?28:44,spin:-spaceTime*.00015},
       earth,time:spaceTime,near:(1-dissolve)*arrive,clouds:1-smooth(150,900,earth.r),
       earthTurn:turned,
-      cloudShift:spaceTime*6e-7,satellite,layers
+      cloudShift:spaceTime*6e-7,layers,nightfall
     };
     state.far=(1-smooth(.05,.6,progress))*(1-dissolve);
     galaxy.setPlanets(galaxy.gpu?state:cellsFor(state));
