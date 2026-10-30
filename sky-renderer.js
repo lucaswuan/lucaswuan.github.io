@@ -78,26 +78,34 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     if(inBox(at))colour=mix(colour,averaged(centre,at,radians(CENTRE.y-CENTRE.x),cellAngle).rgb,layers.w);
     return colour;
   }
-  // How brightly a cell's ground is lit at night: the brightest light anywhere in the patch it covers (sampled finer
-  // than averaged() and at four spots around the middle as well), so a thin bright street stays an unbroken line.
-  // reach: a quarter of a cell or so, in the map's own units.
+  // A road's brightest light anywhere in the patch a cell covers (sampled finer than averaged() and at four spots
+  // around the middle as well), so a thin bright road stays an unbroken line. reach: a quarter of a cell or so, in the
+  // map's own units.
   float brightest(sampler2D map,vec2 uv,float span,float cellAngle,vec2 reach){
     float lod=max(0.0,log2(float(textureSize(map,0).x)/span*cellAngle)-1.5);
-    float v=max(textureLod(map,uv,lod).r,textureLod(map,uv+reach,lod).r);
-    v=max(v,max(textureLod(map,uv-reach,lod).r,textureLod(map,uv+vec2(reach.x,-reach.y),lod).r));
-    return max(v,textureLod(map,uv+vec2(-reach.x,reach.y),lod).r);
+    float v=max(textureLod(map,uv,lod).g,textureLod(map,uv+reach,lod).g);
+    v=max(v,max(textureLod(map,uv-reach,lod).g,textureLod(map,uv+vec2(reach.x,-reach.y),lod).g));
+    return max(v,textureLod(map,uv+vec2(-reach.x,reach.y),lod).g);
   }
-  // Light at night: NASA's for southern Alberta, then Calgary's streets (cell: a cell's size in degrees). Night only
-  // falls once southern Alberta fills the screen.
-  float nightLight(vec2 deg,float cellAngle,vec2 cell){
+  // A light map at a cell: homes and buildings, roads (unbroken), and the busiest places (span: the map's size in
+  // degrees; cell: a cell's).
+  vec3 lightsAt(sampler2D map,vec2 at,vec2 span,float cellAngle,vec2 cell){
+    vec4 around=averaged(map,at,radians(span.x),cellAngle);
+    return vec3(around.r,brightest(map,at,radians(span.x),cellAngle,cell/span*.25),around.b);
+  }
+  // Lights at night: NASA's for southern Alberta, then Calgary's. Night only falls once southern Alberta fills the
+  // screen.
+  vec3 nightLight(vec2 deg,float cellAngle,vec2 cell){
     vec2 span=vec2(AREA.y-AREA.x,AREA.w-AREA.z);
-    float light=brightest(areaNight,boxUv(deg,AREA),radians(span.x),cellAngle,cell/span*.35);
+    vec3 light=lightsAt(areaNight,boxUv(deg,AREA),span,cellAngle,cell);
     vec2 at=boxUv(deg,CALGARY);span=vec2(CALGARY.y-CALGARY.x,CALGARY.w-CALGARY.z);
-    if(inBox(at))light=mix(light,brightest(calgaryNight,at,radians(span.x),cellAngle,cell/span*.35),layers.z);
+    if(inBox(at))light=mix(light,lightsAt(calgaryNight,at,span,cellAngle,cell),layers.z);
     at=boxUv(deg,CENTRE);span=vec2(CENTRE.y-CENTRE.x,CENTRE.w-CENTRE.z);
-    if(inBox(at))light=mix(light,brightest(centreNight,at,radians(span.x),cellAngle,cell/span*.35),layers.w);
+    if(inBox(at))light=mix(light,lightsAt(centreNight,at,span,cellAngle,cell),layers.w);
     return light;
   }
+  // A steady random number for a spot on the ground.
+  float hash(vec2 p){vec3 q=fract(p.xyx*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
   // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
   // Cassini division, and the grey-tan A ring.
   bool ring(vec2 d,float r,out int ch,out int row,out float alpha,out bool front){
@@ -159,12 +167,19 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       tint=mix(mix(vivid,vec3(.95,.97,1.0),smoothstep(.18,.42,cloud)*.55),vec3(1.0,.97,.9),glint);
       if(fine&&wet)tint=mix(tint,vec3(.3,.58,.95),.65);
       if(nightfall>0.0&&fine){
-        // As night falls the ground fades to black and the lights come on, the brightest first, as seen from orbit:
-        // faint streets as dots, brighter ones as lines, orange where the light is dim and white where it is bright.
-        float glow=nightLight(deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
-        if(glow>.06&&nightfall>fract(threshold*7.31)*(.75-.6*glow)){
-          ch=lamp(glow);alpha=(.62+.38*glow)*smoothstep(0.0,.35,nightfall);
-          tint=mix(mix(vec3(1.0,.62,.28),vec3(1.0,.92,.8),smoothstep(.12,.42,glow)),vec3(1.0,.98,.95),smoothstep(.6,.9,glow));
+        // As night falls the ground fades to black and the lights come on, the brightest first, as seen from a plane:
+        // homes and buildings glitter in warm white, orange, and some cool white (each spot its own brightness, some
+        // dark); major roads are sodium-orange lines and other roads golden white; downtown is bright white with the
+        // odd blue, pink, or green sign.
+        vec3 night=nightLight(deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
+        vec2 spot=floor(deg*vec2(1000.0,1600.0));
+        float sparkle=hash(spot),pick=hash(spot+vec2(17.0,31.0));
+        float homes=night.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=night.z*(.6+.5*sparkle),glow=max(homes,max(night.y,busy));
+        if(glow>.1&&nightfall>fract(threshold*7.31)*(.75-.6*min(glow,1.0))){
+          tint=pick<.55?vec3(1.0,.88,.66):pick<.85?vec3(1.0,.72,.38):vec3(.9,.94,1.0);
+          if(busy>=homes&&busy>=night.y)tint=pick<.1?vec3(.42,.62,1.0):pick<.15?vec3(1.0,.42,.86):pick<.19?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
+          else if(night.y>=homes)tint=mix(vec3(1.0,.88,.66),vec3(1.0,.58,.2),smoothstep(.72,.95,night.y));
+          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(0.0,.35,nightfall);
         }else{
           alpha*=pow(1.0-nightfall,1.5);
           if(alpha<.04)ch=-1;

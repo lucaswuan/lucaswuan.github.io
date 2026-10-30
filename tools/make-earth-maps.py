@@ -6,8 +6,8 @@
   area.webp            southern Alberta at about 750 m (AREA below; NASA VIIRS, 9 July 2024)
   calgary.webp         the Calgary area at about 125 m (CALGARY below; NASA HLS Sentinel-2, 9 July 2024)
   centre.webp          central Calgary at about 40 m, where the dive ends (CENTRE below; the same)
-  area-night.webp      southern Alberta's light at night, grey (NASA Black Marble, VIIRS, 2016): night falls on the way down
-  calgary-night.webp   Calgary's light at night at about 125 m, grey, drawn from OpenStreetMap streets
+  area-night.webp      southern Alberta's lights at night by kind (NASA Black Marble, VIIRS, 2016; see night_lights)
+  calgary-night.webp   Calgary's lights at night by kind at about 125 m, drawn from OpenStreetMap streets
   centre-night.webp    the same for central Calgary at about 40 m
   clouds.jpg           512×256    cloud cover, grey (NASA Blue Marble clouds)
   lights.jpg           1024×512   city lights on the globe's night side, grey (NASA Black Marble 2016)
@@ -57,6 +57,7 @@ AREA = dict(west=-119.6, east=-108.6, south=48.28, north=53.78)
 CALGARY = dict(west=-115.3, east=-112.9, south=50.55, north=51.5)
 CENTRE = dict(west=-114.33, east=-113.81, south=50.915, north=51.185)
 STREET_METRES = 35                                                      # street lights are drawn at this size
+DOWNTOWN = (51.047, -114.066)                                           # lat, lon
 
 
 def size(box, metres):
@@ -119,46 +120,54 @@ def night(sources):
 
 
 def night_lights(sources):
-    """How brightly each place is lit at night (grey, 0 to 255), as seen from orbit: nothing but the lights.
+    """The lights at night, as seen from a plane, in three kinds (each 0 to 255): red is the glow of homes and buildings
+    across the built-up city, green the street lights along roads, and blue the brightest, busiest places (downtown,
+    shopping and industrial areas). sky-renderer.js colours each kind its own way; parks, rivers, and open land stay
+    dark.
 
-    Southern Alberta's comes from NASA's night photo (its warm city light above the dark ground, leaving out moonlit
-    snow). Calgary's is drawn from its streets, the way cities look from the space station: major roads bright,
-    smaller roads fainter, side streets faint, downtown and the busiest places brightest, all a little brighter where
-    NASA's photo is, and nothing between the streets or along roads through farmland and the mountains."""
+    Southern Alberta's lights come from NASA's night photo (its warm city light above the dark ground, leaving out
+    moonlit snow). Calgary's are drawn from its streets: built-up places from how many local streets they have, roads
+    from the major and other through roads, and the busiest places from where NASA's photo is brightest."""
     area = np.asarray(Image.open(sources / 'area-night.jpg').convert('RGB'), dtype=float)
     luma = area @ [.299, .587, .114]
     warm = np.clip((area[..., 0] - area[..., 2] + 5) / 25, 0, 1)
     glow = np.clip((luma - np.percentile(luma, 60)) * warm / 200, 0, 1)
-    Image.fromarray((glow * 255).astype(np.uint8)).resize((1024, 820), Image.LANCZOS).convert('RGB').save(OUT / 'area-night.webp', quality=82, method=6)
+    kinds = np.stack([glow, glow * .5, smoothstep(.8, 1, glow)], axis=-1)
+    Image.fromarray((kinds * 255).astype(np.uint8)).resize((1024, 820), Image.LANCZOS).save(OUT / 'area-night.webp', quality=82, method=6)
 
     width, height = size(CALGARY, STREET_METRES)
     xy = lambda p: ((p['lon'] - CALGARY['west']) / (CALGARY['east'] - CALGARY['west']) * width,
                     (CALGARY['north'] - p['lat']) / (CALGARY['north'] - CALGARY['south']) * height)
-    streets, blocks = Image.new('L', (width, height), 0), Image.new('L', (width, height), 0)
-    draw, outline = ImageDraw.Draw(streets), ImageDraw.Draw(blocks)
-    for name, value, line in [('minor', 60, 1), ('medium', 150, 2), ('major', 255, 3)]:
+    roads, local = Image.new('L', (width, height), 0), Image.new('L', (width, height), 0)
+    draw = {'roads': ImageDraw.Draw(roads), 'local': ImageDraw.Draw(local)}
+    for name, value, line in [('minor', 255, 1), ('medium', 170, 1), ('major', 255, 2)]:
         for way in json.loads((sources / f'{name}.json').read_text(encoding='utf8'))['elements']:
             points = [xy(p) for p in way.get('geometry', [])]
             if len(points) > 1:
-                draw.line(points, fill=value, width=line)
-                if name != 'major':
-                    outline.line(points, fill=255, width=1)
-    # How built up each place is (how much local street there is within about 350 m, so highways through farmland
-    # don't count), and the busiest places (within about a kilometre).
-    built = np.asarray(blocks.filter(ImageFilter.GaussianBlur(10)), dtype=float)
-    busy = np.asarray(blocks.filter(ImageFilter.GaussianBlur(30)), dtype=float)
-    city = smoothstep(14, 40, built) * (1 + smoothstep(45, 85, busy))
+                draw['local' if name == 'minor' else 'roads'].line(points, fill=value, width=line)
+    # How built up each place is: how much local street there is within about 350 m (so highways through farmland
+    # don't count), and a little more widely for which roads are lit.
+    streets = np.asarray(local, dtype=float)
+    built = smoothstep(10, 30, np.asarray(local.filter(ImageFilter.GaussianBlur(10)), dtype=float))
+    around = smoothstep(4, 18, np.asarray(local.filter(ImageFilter.GaussianBlur(25)), dtype=float))
     nasa = np.asarray(crop(Image.fromarray((glow * 255).astype(np.uint8)), AREA, CALGARY).resize((width, height), Image.BICUBIC), dtype=float) / 255
-    light = np.asarray(streets, dtype=float) * city * (.55 + .45 * nasa)
-    light = 255 * (1 - np.exp(-light / 220))
-    return Image.fromarray(light.astype(np.uint8))
+    homes = np.clip(built * (.42 + .3 * nasa) + streets / 255 * built * .3, 0, 1)
+    lit_roads = np.asarray(roads, dtype=float) / 255 * around * (.75 + .25 * nasa)
+    # Downtown (about a kilometre around its middle) and the very brightest places in NASA's photo.
+    x, y = xy(dict(lat=DOWNTOWN[0], lon=DOWNTOWN[1]))
+    reach = 1300 / STREET_METRES
+    downtown = np.outer(np.exp(-((np.arange(height) - y) / reach) ** 2 / 2), np.exp(-((np.arange(width) - x) / reach) ** 2 / 2))
+    busiest = np.maximum(downtown, .5 * smoothstep(.97, 1, nasa)) * built
+    return Image.fromarray((np.stack([homes, np.clip(lit_roads, 0, 1), busiest], axis=-1) * 255).astype(np.uint8))
 
 
-def save_lights(streets):
-    # The wider map keeps each street's full brightness (the brightest 105 m in each pixel) rather than averaging it
-    # away, so streets stay bright lines on the way down.
-    streets.filter(ImageFilter.MaxFilter(3)).resize(size(CALGARY, 125), Image.BOX).convert('RGB').save(OUT / 'calgary-night.webp', quality=82, method=6)
-    crop(streets, CALGARY, CENTRE).resize(size(CENTRE, 40), Image.BOX).convert('RGB').save(OUT / 'centre-night.webp', quality=82, method=6)
+def save_lights(lights):
+    # The wider map keeps each road's full brightness (the brightest 105 m in each pixel) rather than averaging it
+    # away, so roads stay bright lines on the way down.
+    homes, roads, busiest = lights.split()
+    wide = Image.merge('RGB', [homes, roads.filter(ImageFilter.MaxFilter(3)), busiest])
+    wide.resize(size(CALGARY, 125), Image.BOX).save(OUT / 'calgary-night.webp', quality=82, method=6)
+    crop(lights, CALGARY, CENTRE).resize(size(CENTRE, 40), Image.BOX).save(OUT / 'centre-night.webp', quality=82, method=6)
 
 
 def photos(sources):
