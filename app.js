@@ -270,11 +270,13 @@
       return nz&&halfWidth>0&&halfHeight>0?1.05*Math.max(spanX/halfWidth,spanY/halfHeight):Infinity;
     });
     const layers=covered.map((radius,i)=>radius<final?smooth(radius,Math.min(radius*1.35,final),earth.r)*(i?closeUps:1):0);
-    // The sun sets during the dive: the line between day and night sweeps across the globe from the east, and night
-    // spreads over North America, then southern Alberta, then Calgary, reaching full night as the camera arrives. The
-    // sun's height over the middle of the screen goes from afternoon to well below the horizon, and the sun turns
-    // round the screen's vertical to get there.
-    const noon=.72,below=-.2,overhead=mix(noon,below,paused?0:smooth(.05,.78,progress)),side=Math.sqrt(1-.42*.42);
+    // The sun sets during the dive: the line between day and night sweeps across the globe from the east, the sun
+    // goes down as the camera comes in over Alberta, and the evening deepens into night over Calgary, the sun sinking
+    // further below the horizon as the lights come on. Close up the ground is brighter than the globe (no sea), so it
+    // dims as it fills the screen and the view only ever gets darker. The sun's height over the middle of the screen
+    // (afternoon at the start), and the way it turns round the screen's vertical to get there:
+    const evening=paused?0:.1*smooth(.02,.3,progress)+.45*smooth(.24,.37,progress)+.45*smooth(.4,.72,progress)+.2*smooth(.6,.78,progress);
+    const overhead=.72-.87*evening,side=Math.sqrt(1-.42*.42);
     const bearing=-Math.acos(clamp(overhead/side*.5+.5)*2-1),sun=[Math.sin(bearing)*side,-.42,Math.cos(bearing)*side];
     const arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
     // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.

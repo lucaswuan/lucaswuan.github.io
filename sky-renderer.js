@@ -97,7 +97,7 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   // Lights at night: NASA's for the whole Earth, then (as each fills the screen) for southern Alberta, and Calgary's.
   vec3 nightLight(vec2 uv,vec2 deg,float cellAngle,vec2 cell){
     float glow=averaged(lightMap,uv,PI*2.0,cellAngle).r;
-    vec3 light=vec3(glow,glow*.5,smoothstep(.8,1.0,glow));
+    vec3 light=vec3(min(1.0,glow*1.4),glow*.6,smoothstep(.75,1.0,glow));
     vec2 span=vec2(AREA.y-AREA.x,AREA.w-AREA.z),at=boxUv(deg,AREA);
     if(inBox(at))light=mix(light,lightsAt(areaNight,at,span,cellAngle,cell),layers.y);
     at=boxUv(deg,CALGARY);span=vec2(CALGARY.y-CALGARY.x,CALGARY.w-CALGARY.z);
@@ -108,6 +108,14 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   }
   // A steady random number for a spot on the ground.
   float hash(vec2 p){vec3 q=fract(p.xyx*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+  // A steady random number (0 to 1) for the patch of ground under a cell, the patches about a cell across (footprint:
+  // a cell's size in degrees). They are fixed to the ground, so the numbers move with it instead of flickering as the
+  // camera dives. As the cells shrink over the ground, each cell moves to the next size of patch down once, at its own
+  // moment (chance: the cell's own random number), so the pattern never changes all at once.
+  float scattered(vec2 deg,vec2 footprint,float chance,float seed){
+    float level=log2(max(footprint.x,footprint.y)*1000.0),size=exp2(floor(level)+step(chance,fract(level)));
+    return hash(floor(deg*1000.0/size)+seed);
+  }
   // Saturn's rings, tilted a little: the dusky C ring, the B ring (warmer inside, brightest outside), the dark
   // Cassini division, and the grey-tan A ring.
   bool ring(vec2 d,float r,out int ch,out int row,out float alpha,out bool front){
@@ -130,12 +138,17 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     vec3 p=earthTurn*vec3(n.x,-n.y,z);
     float lat=asin(clamp(p.y,-1.0,1.0)),lon=atan(p.x,p.z);
     vec2 uv=vec2(fract(lon/(PI*2.0)+.5),.5-lat/PI),deg=degrees(vec2(lon,lat));
-    // How high the sun is here (below 0 it has set), the light it gives, and how far into the night this ground is:
-    // the edge of the night is a wide, soft band, so night fades in gradually where it passes.
+    // How high the sun is here (below 0 it has set), and the light it gives the plain globe before the photos load.
     float lam=dot(vec3(n,z),sun),light=smoothstep(-.03,.16,lam)*(.25+.75*max(0.0,lam)),cellAngle=CELL.x/radius;
-    float night=1.0-smoothstep(-.15,.35,lam);
-    // Dusk as it looks from above: the light warms a little at first, then the ground slowly darkens into night.
-    float warmth=smoothstep(0.0,.35,night)*(1.0-smoothstep(.35,.75,night))*.3,dark=smoothstep(.05,1.0,night);
+    // How far into the evening this ground is: 0 in the afternoon sun of the start, 1 once the sun is well below the
+    // horizon (so the edge of the night is a wide, soft band). The photos dim evenly through the evening, whichever
+    // is showing, so the ground only ever gets darker; they warm a little around sunset and fade into the night, while
+    // the lights come on (on: 0 to 1).
+    float dusk=clamp((.72-lam)/.87,0.0,1.0),daylight=1.0-dusk,on=clamp((.33-lam)/.65,0.0,1.0);
+    float warmth=smoothstep(.2,.5,dusk)*(1.0-smoothstep(.5,.8,dusk))*.3,dark=smoothstep(.45,1.0,dusk);
+    // The size of the ground a cell covers, in degrees, and a random number of the cell's own.
+    vec2 footprint=degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0);
+    float chance=fract(threshold*13.7);
     bool water=texture(land,uv).a<=.24,photographed=earthMaps>.5,fine=layers.y>threshold;
     vec3 day=photographed?photo(uv,deg,cellAngle):vec3(0);
     // Water (dark, with little red) is drawn blue by day.
@@ -157,47 +170,44 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     // Up close the ground is lit evenly by day and its own brightness sets the character: tone spreads the photos'
     // usual range over the ramp.
     float bright=dot(day,vec3(.299,.587,.114)),tone=clamp((bright-.15)/.19,0.0,1.0);
-    light=mix(light,max(light,1.0-night),layers.x);
     if(cloud>.42){
       ch=shade(.2+.45*light*cloud);alpha=.35+.55*light;row=PLANET+9;
       // Clouds are the brightest thing on the globe by day, as in photos; at dusk they catch the sunset, then darken.
       if(photographed){
-        ch=shade((.35+.65*cloud)*max(light,.4*(1.0-night)));alpha=(.45+.5*light)*(1.0-.95*dark);
+        ch=shade((.35+.65*cloud)*daylight);alpha=(.45+.5*daylight)*(1.0-.95*dark);
         tint=mix(vec3(.95,.97,1.0),vec3(1.0,.72,.52),warmth);
         if(alpha<.04)ch=-1;
       }
     }else if(photographed){
       // Brighter ground gets denser characters, though the dark sea stays solid enough to read as a globe; thin
       // cloud whitens it.
-      if(fine){ch=ramp(.4+.6*tone);alpha=.8+.2*tone;}
-      else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*max(light,.35)+glint*.5);alpha=.4+.55*light+glint*.3;}
+      // Through the evening the ground dims steadily and its characters thin out.
+      if(fine){ch=ramp((.4+.6*tone)*(.75+.25*daylight));alpha=(.8+.2*tone)*(1.0-.94*dusk);}
+      else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*(.75+.25*daylight)+glint*.5);alpha=(.95+glint*.3)*(1.0-.94*dusk);}
       tint=mix(mix(vivid,vec3(.95,.97,1.0),smoothstep(.18,.42,cloud)*.55),vec3(1.0,.97,.9),glint);
       if(fine&&wet)tint=mix(tint,vec3(.3,.58,.95),.65);
-      if(night>0.0){
-        // In the night, the ground fades to black and the lights come on, the brightest first, as seen from a plane:
-        // homes and buildings glitter in warm white, orange, and some cool white (each spot its own brightness, some
-        // dark); major roads are sodium-orange lines and other roads golden white; downtown is bright white with the
-        // odd blue, pink, or green sign.
-        vec3 lights=nightLight(uv,deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
-        vec2 spot=floor(deg*vec2(1000.0,1600.0));
-        float sparkle=hash(spot),pick=hash(spot+vec2(17.0,31.0));
-        float homes=lights.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=lights.z*(.6+.5*sparkle),glow=max(homes,max(lights.y,busy));
-        // The lights switch on as it gets dark, a few at first (the brightest), more and more, and brighter, until all
-        // are on at night.
-        if(glow>.1&&night>.15+.75*fract(threshold*7.31)*(1.0-.35*min(glow,1.0))){
-          tint=pick<.55?vec3(1.0,.88,.66):pick<.85?vec3(1.0,.72,.38):vec3(.9,.94,1.0);
-          if(busy>=homes&&busy>=lights.y)tint=pick<.1?vec3(.42,.62,1.0):pick<.15?vec3(1.0,.42,.86):pick<.19?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
+      // It warms a little around sunset and fades into the night, keeping a few very faint specks so parks, the river,
+      // and open land read as land at night rather than holes.
+      tint=mix(tint,vec3(1.0,.68,.4),warmth);
+      float speck=scattered(deg,footprint,chance,5.0);
+      if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*dark);tint=mix(vec3(.62,.58,.52),vivid,.3);}
+      else if(alpha<.04)ch=-1;
+      if(on>0.0){
+        // The lights come on through the evening, a few at first (the brightest sooner), then more and more until all
+        // are on at night, each growing to its full brightness. Up close, as from a plane, homes and buildings glitter
+        // in warm white, orange, and some cool white (each its own brightness, some dark); main roads are sodium-orange
+        // lines and other roads golden white; downtown is bright white with the odd blue, pink, or green sign. Further
+        // out each cell takes in many lights, so it shows them evened out.
+        vec3 lights=nightLight(uv,deg,cellAngle,footprint);
+        float close=1.0-smoothstep(.0025,.009,footprint.y),sparkle=scattered(deg,footprint,chance,0.0),pick=scattered(deg,footprint,chance,17.0);
+        float homes=lights.x*mix(.6,(.15+.85*sparkle*sparkle)*step(.33,sparkle),close),busy=lights.z*mix(.85,.6+.5*sparkle,close);
+        float glow=min(1.0,max(homes,max(lights.y,busy))),order=.4*(1.0-glow)+.55*scattered(deg,footprint,chance,41.0);
+        if(glow>.1&&on>order){
+          float grown=smoothstep(order,order+.1,on);
+          tint=mix(vec3(1.0,.84,.6),pick<.55?vec3(1.0,.88,.66):pick<.85?vec3(1.0,.72,.38):vec3(.9,.94,1.0),close);
+          if(busy>=homes&&busy>=lights.y)tint=pick<.1*close?vec3(.42,.62,1.0):pick<.15*close?vec3(1.0,.42,.86):pick<.19*close?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
           else if(lights.y>=homes)tint=mix(vec3(1.0,.88,.66),vec3(1.0,.58,.2),smoothstep(.72,.95,lights.y));
-          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(.15,.8,night);
-        }else{
-          // The ground warms a little, then darkens into night (dimmer and sparser), keeping a few very faint specks
-          // so parks, the river, and open land read as land at night rather than holes.
-          tint=mix(tint,vec3(1.0,.68,.4),warmth);
-          if(fine)ch=ramp((.4+.6*tone)*(1.0-.55*dark));
-          alpha*=1.0-.94*dark;
-          float speck=hash(spot+vec2(5.0,9.0));
-          if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*night);tint=mix(vec3(.62,.58,.52),vivid,.3);}
-          else if(alpha<.04)ch=-1;
+          ch=lamp(glow*(.4+.6*grown));alpha=(.6+.4*glow)*(.55+.45*grown);
         }
       }
     }else if(!water){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}
