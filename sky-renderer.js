@@ -93,12 +93,13 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     vec4 around=averaged(map,at,radians(span.x),cellAngle);
     return vec3(around.r,brightest(map,at,radians(span.x),cellAngle,cell/span*.25),around.b);
   }
-  // Lights at night: NASA's for southern Alberta, then Calgary's. Night only falls once southern Alberta fills the
-  // screen.
-  vec3 nightLight(vec2 deg,float cellAngle,vec2 cell){
-    vec2 span=vec2(AREA.y-AREA.x,AREA.w-AREA.z);
-    vec3 light=lightsAt(areaNight,boxUv(deg,AREA),span,cellAngle,cell);
-    vec2 at=boxUv(deg,CALGARY);span=vec2(CALGARY.y-CALGARY.x,CALGARY.w-CALGARY.z);
+  // Lights at night: NASA's for the whole Earth, then (as each fills the screen) for southern Alberta, and Calgary's.
+  vec3 nightLight(vec2 uv,vec2 deg,float cellAngle,vec2 cell){
+    float glow=averaged(lightMap,uv,PI*2.0,cellAngle).r;
+    vec3 light=vec3(glow,glow*.5,smoothstep(.8,1.0,glow));
+    vec2 span=vec2(AREA.y-AREA.x,AREA.w-AREA.z),at=boxUv(deg,AREA);
+    if(inBox(at))light=mix(light,lightsAt(areaNight,at,span,cellAngle,cell),layers.y);
+    at=boxUv(deg,CALGARY);span=vec2(CALGARY.y-CALGARY.x,CALGARY.w-CALGARY.z);
     if(inBox(at))light=mix(light,lightsAt(calgaryNight,at,span,cellAngle,cell),layers.z);
     at=boxUv(deg,CENTRE);span=vec2(CENTRE.y-CENTRE.x,CENTRE.w-CENTRE.z);
     if(inBox(at))light=mix(light,lightsAt(centreNight,at,span,cellAngle,cell),layers.w);
@@ -166,12 +167,12 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*light+glint*.5);alpha=.4+.55*light+glint*.3;}
       tint=mix(mix(vivid,vec3(.95,.97,1.0),smoothstep(.18,.42,cloud)*.55),vec3(1.0,.97,.9),glint);
       if(fine&&wet)tint=mix(tint,vec3(.3,.58,.95),.65);
-      if(nightfall>0.0&&fine){
+      if(nightfall>0.0){
         // As night falls the ground fades to black and the lights come on, the brightest first, as seen from a plane:
         // homes and buildings glitter in warm white, orange, and some cool white (each spot its own brightness, some
         // dark); major roads are sodium-orange lines and other roads golden white; downtown is bright white with the
         // odd blue, pink, or green sign.
-        vec3 night=nightLight(deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
+        vec3 night=nightLight(uv,deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
         vec2 spot=floor(deg*vec2(1000.0,1600.0));
         float sparkle=hash(spot),pick=hash(spot+vec2(17.0,31.0));
         float homes=night.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=night.z*(.6+.5*sparkle),glow=max(homes,max(night.y,busy));
@@ -182,7 +183,11 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
           ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(0.0,.35,nightfall);
         }else{
           alpha*=pow(1.0-nightfall,1.5);
-          if(alpha<.04)ch=-1;
+          // The dark ground keeps a few very faint specks, so parks, the river, and open land read as land at night
+          // rather than holes.
+          float speck=hash(spot+vec2(5.0,9.0));
+          if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*nightfall);tint=mix(vec3(.62,.58,.52),vivid,.3);}
+          else if(alpha<.04)ch=-1;
         }
       }
     }else if(!water){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}

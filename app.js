@@ -270,10 +270,10 @@
       return nz&&halfWidth>0&&halfHeight>0?1.05*Math.max(spanX/halfWidth,spanY/halfHeight):Infinity;
     });
     const layers=covered.map((radius,i)=>radius<final?smooth(radius,Math.min(radius*1.35,final),earth.r)*(i?closeUps:1):0);
-    // Night falls from when southern Alberta's photos fill the screen until the camera is well into the city (by
-    // even steps of zoom), so the towns glow first and Calgary's streets light up on the way down.
-    const dusk=covered[1]*1.35,dark=final*.7;
-    const nightfall=galaxy.gpu&&dusk<dark?smooth(0,1,Math.log(earth.r/dusk)/Math.log(dark/dusk))*closeUps:0;
+    // Night falls over a long stretch of the dive (by even steps of zoom): from when the globe fills the screen, with
+    // the cities of North America lighting up first, until the camera is well into Calgary.
+    const dusk=Math.max(1500,1.6*Math.hypot(innerWidth/2,viewportHeight/2)),dark=final*.35;
+    const nightfall=galaxy.gpu&&dusk<dark?smooth(0,1,Math.log(earth.r/dusk)/Math.log(dark/dusk)):0;
     const arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
     // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.
     const state={
