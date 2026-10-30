@@ -134,9 +134,8 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     // the edge of the night is a wide, soft band, so night fades in gradually where it passes.
     float lam=dot(vec3(n,z),sun),light=smoothstep(-.03,.16,lam)*(.25+.75*max(0.0,lam)),cellAngle=CELL.x/radius;
     float night=1.0-smoothstep(-.15,.35,lam);
-    // Dusk, not a fade to black: at the edge of the night the light turns sunset gold, then the deep blue of the
-    // blue hour (when the lights come on), then it is night.
-    float gold=smoothstep(0.0,.3,night)*(1.0-smoothstep(.3,.6,night)),blueHour=smoothstep(.3,.65,night);
+    // Dusk as it looks from above: the light warms a little at first, then the ground slowly darkens into night.
+    float warmth=smoothstep(0.0,.35,night)*(1.0-smoothstep(.35,.75,night))*.3,dark=smoothstep(.05,1.0,night);
     bool water=texture(land,uv).a<=.24,photographed=earthMaps>.5,fine=layers.y>threshold;
     vec3 day=photographed?photo(uv,deg,cellAngle):vec3(0);
     // Water (dark, with little red) is drawn blue by day.
@@ -163,8 +162,8 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       ch=shade(.2+.45*light*cloud);alpha=.35+.55*light;row=PLANET+9;
       // Clouds are the brightest thing on the globe by day, as in photos; at dusk they catch the sunset, then darken.
       if(photographed){
-        ch=shade((.35+.65*cloud)*max(light,.4*(1.0-night)));alpha=(.45+.5*light)*(1.0-.95*smoothstep(.45,1.0,night));
-        tint=mix(mix(vec3(.95,.97,1.0),vec3(1.0,.62,.42),gold*.8),vec3(.36,.42,.75),blueHour*.8);
+        ch=shade((.35+.65*cloud)*max(light,.4*(1.0-night)));alpha=(.45+.5*light)*(1.0-.95*dark);
+        tint=mix(vec3(.95,.97,1.0),vec3(1.0,.72,.52),warmth);
         if(alpha<.04)ch=-1;
       }
     }else if(photographed){
@@ -183,16 +182,19 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
         vec2 spot=floor(deg*vec2(1000.0,1600.0));
         float sparkle=hash(spot),pick=hash(spot+vec2(17.0,31.0));
         float homes=lights.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=lights.z*(.6+.5*sparkle),glow=max(homes,max(lights.y,busy));
-        if(glow>.1&&night>fract(threshold*7.31)*(.75-.6*min(glow,1.0))){
+        // The lights switch on as it gets dark, a few at first (the brightest), more and more, and brighter, until all
+        // are on at night.
+        if(glow>.1&&night>.15+.75*fract(threshold*7.31)*(1.0-.35*min(glow,1.0))){
           tint=pick<.55?vec3(1.0,.88,.66):pick<.85?vec3(1.0,.72,.38):vec3(.9,.94,1.0);
           if(busy>=homes&&busy>=lights.y)tint=pick<.1?vec3(.42,.62,1.0):pick<.15?vec3(1.0,.42,.86):pick<.19?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
           else if(lights.y>=homes)tint=mix(vec3(1.0,.88,.66),vec3(1.0,.58,.2),smoothstep(.72,.95,lights.y));
-          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(0.0,.35,night);
+          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(.15,.8,night);
         }else{
-          // The ground warms to sunset gold, cools to blue-hour blue, then darkens into night, keeping a few very faint
-          // specks so parks, the river, and open land read as land at night rather than holes.
-          tint=mix(mix(tint,vec3(1.0,.6,.3),gold*.65),vec3(.32,.42,.85),blueHour*.8);
-          alpha*=1.0-.92*smoothstep(.5,1.0,night);
+          // The ground warms a little, then darkens into night (dimmer and sparser), keeping a few very faint specks
+          // so parks, the river, and open land read as land at night rather than holes.
+          tint=mix(tint,vec3(1.0,.68,.4),warmth);
+          if(fine)ch=ramp((.4+.6*tone)*(1.0-.55*dark));
+          alpha*=1.0-.94*dark;
           float speck=hash(spot+vec2(5.0,9.0));
           if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*night);tint=mix(vec3(.62,.58,.52),vivid,.3);}
           else if(alpha<.04)ch=-1;
