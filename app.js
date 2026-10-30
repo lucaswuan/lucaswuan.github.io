@@ -270,10 +270,12 @@
       return nz&&halfWidth>0&&halfHeight>0?1.05*Math.max(spanX/halfWidth,spanY/halfHeight):Infinity;
     });
     const layers=covered.map((radius,i)=>radius<final?smooth(radius,Math.min(radius*1.35,final),earth.r)*(i?closeUps:1):0);
-    // Night falls over a long stretch of the dive (by even steps of zoom): from when the globe fills the screen, with
-    // the cities of North America lighting up first, until the camera is well into Calgary.
-    const dusk=Math.max(1500,1.6*Math.hypot(innerWidth/2,viewportHeight/2)),dark=final*.35;
-    const nightfall=galaxy.gpu&&dusk<dark?smooth(0,1,Math.log(earth.r/dusk)/Math.log(dark/dusk)):0;
+    // The sun sets during the dive: the line between day and night sweeps across the globe from the east, and night
+    // spreads over North America, then southern Alberta, then Calgary, reaching full night as the camera arrives. The
+    // sun's height over the middle of the screen goes from afternoon to well below the horizon, and the sun turns
+    // round the screen's vertical to get there.
+    const noon=.72,below=-.2,overhead=mix(noon,below,paused?0:smooth(.05,.78,progress)),side=Math.sqrt(1-.42*.42);
+    const bearing=-Math.acos(clamp(overhead/side*.5+.5)*2-1),sun=[Math.sin(bearing)*side,-.42,Math.cos(bearing)*side];
     const arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
     // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.
     const state={
@@ -281,7 +283,7 @@
       jupiter:{x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.000085+1)*innerWidth*.035+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00007)*22-focus*130+top,r:mobile?28:44,spin:-spaceTime*.00015},
       earth,time:spaceTime,near:(1-dissolve)*arrive,clouds:1-smooth(150,900,earth.r),
       earthTurn:turned,
-      cloudShift:spaceTime*6e-7,layers,nightfall
+      cloudShift:spaceTime*6e-7,layers,sun
     };
     state.far=(1-smooth(.05,.6,progress))*(1-dissolve);
     galaxy.setPlanets(galaxy.gpu?state:cellsFor(state));

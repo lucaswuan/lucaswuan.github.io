@@ -20,12 +20,13 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   uniform sampler2D land;
   // Earth: how the globe is turned (from the view to Earth's own frame), whether its maps have loaded, how far the
   // clouds have drifted, how far each sharper photo has faded in (around Alberta, southern Alberta, the Calgary area,
-  // central Calgary), how far night has fallen on the way down, and the maps themselves (by day and by night).
+  // central Calgary), the way to Earth's sun (x right, y down, z towards the viewer; it sets during the dive), and the
+  // maps themselves (by day and by night).
   uniform mat3 earthTurn;
   uniform float earthMaps;
   uniform float cloudShift;
   uniform vec4 layers;
-  uniform float nightfall;
+  uniform vec3 sun;
   uniform sampler2D surface,region,area,calgary,centre,areaNight,calgaryNight,centreNight,cloudMap,lightMap;
   out vec4 outputColor;
   const vec2 CELL=vec2(${cellWidth}.0,${cellHeight}.0);
@@ -123,12 +124,19 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   }
   // Earth at a point n of its disc (z towards the viewer), tinted with the photos' colours (before they load, in the
   // planet colour rows, with tint -1). Coming down over Calgary, sharper photos take over and the whole ramp draws
-  // them (cell by cell, as their layers fade in), while night falls and the city's lights come on.
+  // them (cell by cell, as their layers fade in), while the sun sets: the night side, with its lights, spreads across
+  // the globe and over the city.
   void earth(vec2 n,float z,float radius,float threshold,out int ch,out int row,out float alpha,out vec3 tint){
     vec3 p=earthTurn*vec3(n.x,-n.y,z);
     float lat=asin(clamp(p.y,-1.0,1.0)),lon=atan(p.x,p.z);
     vec2 uv=vec2(fract(lon/(PI*2.0)+.5),.5-lat/PI),deg=degrees(vec2(lon,lat));
-    float lam=-n.x*.55-n.y*.42+z*.72,light=sunlight(n,z),cellAngle=CELL.x/radius;
+    // How high the sun is here (below 0 it has set), the light it gives, and how far into the night this ground is:
+    // the edge of the night is a wide, soft band, so night fades in gradually where it passes.
+    float lam=dot(vec3(n,z),sun),light=smoothstep(-.03,.16,lam)*(.25+.75*max(0.0,lam)),cellAngle=CELL.x/radius;
+    float night=1.0-smoothstep(-.15,.35,lam);
+    // Dusk, not a fade to black: at the edge of the night the light turns sunset gold, then the deep blue of the
+    // blue hour (when the lights come on), then it is night.
+    float gold=smoothstep(0.0,.3,night)*(1.0-smoothstep(.3,.6,night)),blueHour=smoothstep(.3,.65,night);
     bool water=texture(land,uv).a<=.24,photographed=earthMaps>.5,fine=layers.y>threshold;
     vec3 day=photographed?photo(uv,deg,cellAngle):vec3(0);
     // Water (dark, with little red) is drawn blue by day.
@@ -138,61 +146,61 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     float saturation=1.0+1.8*(1.0-min(vivid.r,min(vivid.g,vivid.b)))*layers.y;
     vivid=clamp(mix(vec3(dot(vivid,vec3(.299,.587,.114))),vivid,saturation),0.0,1.0);
     tint=vec3(-1);
-    // The night side: city lights where there are any, otherwise faint land and sea.
-    if(light<.01){
-      float glow=earthMaps*averaged(lightMap,uv,PI*2.0,cellAngle).r;
-      if(glow>.1){ch=glow>.45?2:0;alpha=.3+.7*glow;row=PLANET+14;if(photographed)tint=vec3(1.0,.78,.42);}
-      else{ch=0;alpha=.14;row=PLANET+(water?10:8);if(photographed)tint=vivid;}
-      return;
-    }
+    // Before the photos load, the night side is faint land and sea.
+    if(!photographed&&light<.01){ch=0;alpha=.14;row=PLANET+(water?10:8);return;}
     // Clouds drift east a little faster than the ground, and thin out as the camera dives in.
     float cloud=earthMaps>.5?averaged(cloudMap,vec2(fract(uv.x-cloudShift),uv.y),PI*2.0,cellAngle).r:
       (sin(lon*12.0+lat*9.0+sin(lat*7.0))*sin(lat*18.0-lon*5.0)>.66&&fract(sin(n.x*129.89+n.y*78.233)*43758.5453)<.6?1.0:0.0);
     cloud*=cloudStrength;
     // Sunlight glints off the sea (seen on the whole globe, not up close), and turns orange near the day/night line.
-    float glint=water?pow(max(dot(vec3(n,z),vec3(-.297,-.227,.928)),0.0),90.0)*(1.0-smoothstep(300.0,900.0,radius)):0.0;
+    float glint=water?pow(max(dot(vec3(n,z),normalize(sun+vec3(0,0,1))),0.0),90.0)*(1.0-smoothstep(300.0,900.0,radius)):0.0;
     float twilight=smoothstep(-.05,.02,lam)*(1.0-smoothstep(.02,.16,lam));
-    // Up close the ground is lit evenly and its own brightness sets the character: tone spreads the photos' usual
-    // range over the ramp.
+    // Up close the ground is lit evenly by day and its own brightness sets the character: tone spreads the photos'
+    // usual range over the ramp.
     float bright=dot(day,vec3(.299,.587,.114)),tone=clamp((bright-.15)/.19,0.0,1.0);
-    light=mix(light,1.0,layers.x);
+    light=mix(light,max(light,1.0-night),layers.x);
     if(cloud>.42){
       ch=shade(.2+.45*light*cloud);alpha=.35+.55*light;row=PLANET+9;
-      // Clouds are the brightest thing on the globe, as in photos.
-      if(photographed){ch=shade((.35+.65*cloud)*light);alpha=.45+.5*light;tint=vec3(.95,.97,1.0);}
+      // Clouds are the brightest thing on the globe by day, as in photos; at dusk they catch the sunset, then darken.
+      if(photographed){
+        ch=shade((.35+.65*cloud)*max(light,.4*(1.0-night)));alpha=(.45+.5*light)*(1.0-.95*smoothstep(.45,1.0,night));
+        tint=mix(mix(vec3(.95,.97,1.0),vec3(1.0,.62,.42),gold*.8),vec3(.36,.42,.75),blueHour*.8);
+        if(alpha<.04)ch=-1;
+      }
     }else if(photographed){
       // Brighter ground gets denser characters, though the dark sea stays solid enough to read as a globe; thin
       // cloud whitens it.
       if(fine){ch=ramp(.4+.6*tone);alpha=.8+.2*tone;}
-      else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*light+glint*.5);alpha=.4+.55*light+glint*.3;}
+      else{ch=shade((.4+.5*sqrt(clamp(bright*2.0,0.0,1.0)))*max(light,.35)+glint*.5);alpha=.4+.55*light+glint*.3;}
       tint=mix(mix(vivid,vec3(.95,.97,1.0),smoothstep(.18,.42,cloud)*.55),vec3(1.0,.97,.9),glint);
       if(fine&&wet)tint=mix(tint,vec3(.3,.58,.95),.65);
-      if(nightfall>0.0){
-        // As night falls the ground fades to black and the lights come on, the brightest first, as seen from a plane:
+      if(night>0.0){
+        // In the night, the ground fades to black and the lights come on, the brightest first, as seen from a plane:
         // homes and buildings glitter in warm white, orange, and some cool white (each spot its own brightness, some
         // dark); major roads are sodium-orange lines and other roads golden white; downtown is bright white with the
         // odd blue, pink, or green sign.
-        vec3 night=nightLight(uv,deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
+        vec3 lights=nightLight(uv,deg,cellAngle,degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0));
         vec2 spot=floor(deg*vec2(1000.0,1600.0));
         float sparkle=hash(spot),pick=hash(spot+vec2(17.0,31.0));
-        float homes=night.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=night.z*(.6+.5*sparkle),glow=max(homes,max(night.y,busy));
-        if(glow>.1&&nightfall>fract(threshold*7.31)*(.75-.6*min(glow,1.0))){
+        float homes=lights.x*(.15+.85*sparkle*sparkle)*step(.33,sparkle),busy=lights.z*(.6+.5*sparkle),glow=max(homes,max(lights.y,busy));
+        if(glow>.1&&night>fract(threshold*7.31)*(.75-.6*min(glow,1.0))){
           tint=pick<.55?vec3(1.0,.88,.66):pick<.85?vec3(1.0,.72,.38):vec3(.9,.94,1.0);
-          if(busy>=homes&&busy>=night.y)tint=pick<.1?vec3(.42,.62,1.0):pick<.15?vec3(1.0,.42,.86):pick<.19?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
-          else if(night.y>=homes)tint=mix(vec3(1.0,.88,.66),vec3(1.0,.58,.2),smoothstep(.72,.95,night.y));
-          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(0.0,.35,nightfall);
+          if(busy>=homes&&busy>=lights.y)tint=pick<.1?vec3(.42,.62,1.0):pick<.15?vec3(1.0,.42,.86):pick<.19?vec3(.48,1.0,.62):vec3(1.0,.97,.92);
+          else if(lights.y>=homes)tint=mix(vec3(1.0,.88,.66),vec3(1.0,.58,.2),smoothstep(.72,.95,lights.y));
+          ch=lamp(min(glow,1.0));alpha=(.6+.4*min(glow,1.0))*smoothstep(0.0,.35,night);
         }else{
-          alpha*=pow(1.0-nightfall,1.5);
-          // The dark ground keeps a few very faint specks, so parks, the river, and open land read as land at night
-          // rather than holes.
+          // The ground warms to sunset gold, cools to blue-hour blue, then darkens into night, keeping a few very faint
+          // specks so parks, the river, and open land read as land at night rather than holes.
+          tint=mix(mix(tint,vec3(1.0,.6,.3),gold*.65),vec3(.32,.42,.85),blueHour*.8);
+          alpha*=1.0-.92*smoothstep(.5,1.0,night);
           float speck=hash(spot+vec2(5.0,9.0));
-          if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*nightfall);tint=mix(vec3(.62,.58,.52),vivid,.3);}
+          if(alpha<.1&&speck<.3){ch=speck<.1?1:0;alpha=max(alpha,(.1+.1*tone)*night);tint=mix(vec3(.62,.58,.52),vivid,.3);}
           else if(alpha<.04)ch=-1;
         }
       }
     }else if(!water){ch=shade(.33+.67*light);alpha=.55+.45*light;row=PLANET+8;}
     else{ch=shade(.22+.55*light+glint*.5);alpha=.45+.5*light+glint*.3;row=PLANET+(glint>.5?9:10);}
-    if(twilight>.3&&cloud<=.42){if(tint.x>=0.0)tint=mix(tint,vec3(1.0,.6,.35),twilight*.6);else row=PLANET+15;}
+    if(!photographed&&twilight>.3&&cloud<=.42)row=PLANET+15;
   }
   // A planet's character at offset d from its centre, shaded by sunlight: Earth (above), bands on Saturn and
   // Jupiter (with the Great Red Spot).
@@ -276,7 +284,7 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   const tileSize=uniform('tile'),buffer=uniform('bufferSize'),ratio=uniform('pixelRatio'),fade=uniform('starFade');
   const positions=uniform('worlds[0]'),planetFades=uniform('fades'),clouds=uniform('cloudStrength'),clock=uniform('time');
   const turn=uniform('earthTurn'),loaded=uniform('earthMaps'),drift=uniform('cloudShift');
-  const photos=uniform('layers'),night=uniform('nightfall');
+  const photos=uniform('layers'),sunward=uniform('sun');
   const values=new Float32Array(12),still=new Float32Array([1,0,0,0,1,0,0,0,1]);
   let starColumns=0,starLines=0;
   gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);
@@ -302,7 +310,7 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       gl.uniform1f(loaded,1);
     },
     // planets: {saturn, jupiter, earth (each {x, y, r, spin} in CSS px), earthTurn (a column-major 3×3 matrix),
-    // cloudShift, layers ([region, area, calgary, centre], each 0 to 1), nightfall (0 to 1), time, far, near, clouds}
+    // cloudShift, layers ([region, area, calgary, centre], each 0 to 1), sun (a direction), time, far, near, clouds}
     // or null.
     render(starFade,planets){
       values.fill(0);
@@ -312,7 +320,7 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       gl.uniform4fv(positions,values);gl.uniform2f(planetFades,planets?planets.far:0,planets?planets.near:0);
       gl.uniform1f(clouds,planets?planets.clouds:0);gl.uniform1f(clock,planets?planets.time:0);
       gl.uniformMatrix3fv(turn,false,planets?planets.earthTurn:still);gl.uniform1f(drift,planets?planets.cloudShift:0);
-      gl.uniform4fv(photos,planets?planets.layers:[0,0,0,0]);gl.uniform1f(night,planets?planets.nightfall:0);
+      gl.uniform4fv(photos,planets?planets.layers:[0,0,0,0]);gl.uniform3fv(sunward,planets?planets.sun:[-.55,-.42,.72]);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
   };
