@@ -226,8 +226,10 @@
     arrival.style.transform=`translate3d(0,${(1-smooth(.28,.6,progress))*20}px,0)`;
     galaxy.setStarFade(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
     const active=progress<.98&&scrollY<journey.offsetHeight;
-    // The dive: the camera reaches Calgary at 70% of the opening scroll and holds it until Earth dissolves.
-    const focus=paused?0:smooth(.03,.7,progress),turn=smooth(0,.3,focus);
+    // The dive is one motion, from the first bit of scroll to 70% of the opening scroll: the zoom, the turn towards
+    // Calgary, the axis straightening, and Earth gliding to the middle of the screen all run the whole way and settle
+    // together. The camera then holds over Calgary until Earth dissolves.
+    const focus=paused?0:smooth(.03,.7,progress);
     // Earth spins only while the page is at the top, so the turn towards Calgary is always the short way round.
     if(!paused&&!document.hidden&&t-frame>33){
       if(active&&focus===0)rotation+=.000022*Math.min(t-frame,100);
@@ -241,30 +243,40 @@
     const baseY=viewportHeight*(mobile?.73:innerWidth<=1000?.53:.52);
     const driftX=Math.sin(spaceTime*.00019)*innerWidth*(mobile?.075:.09);
     const driftY=Math.sin(spaceTime*.00014)*viewportHeight*.055;
-    const centre=smooth(0,.35,focus);
+    const centre=1-(1-focus)**1.5;
     const moveX=(innerWidth*.5-baseX)*centre+(driftX+(paused?0:pointerX))*(1-centre);
     const moveY=(viewportHeight*.5-baseY)*centre+(driftY+(paused?0:pointerY))*(1-centre);
     const diameter=mobile?117:Math.max(143,Math.min(innerWidth*.1365,208)),radius=diameter*.44;
     // Zooming at an even pace (each bit of scroll multiplies the size by the same amount) until the city fills the
     // screen.
-    const final=Math.max(radius,Math.min(innerWidth/CITY_SIZE[0],viewportHeight/CITY_SIZE[1]));
-    const earth={x:baseX+moveX,y:baseY+moveY+top,r:radius*Math.exp(Math.log(final/radius)*focus),spin:rotation};
-    // Each sharper photo fades in only once it covers the whole screen (the camera is over Calgary by then), so its
-    // edges never show; the close-up ones also wait until they have loaded.
+    const final=Math.max(radius,Math.min(innerWidth/CITY_SIZE[0],viewportHeight/CITY_SIZE[1])),depth=Math.log(final/radius);
+    const earth={x:baseX+moveX,y:baseY+moveY+top,r:radius*Math.exp(depth*focus),spin:rotation};
+    // How much of the turn is left: it shrinks a little faster than Earth grows, so the globe turns quickly while it
+    // is small and, up close, the ground keeps drifting gently until Calgary settles in the middle. The axis
+    // straightens at an even pace all the way down. Earth turns west to east, so its surface moves left to right.
+    const left=(1-focus)*Math.exp(-.75*depth*focus),roll=TILT*(1-focus),restLon=.4-rotation;
+    const turned=earthTurn(REST_LAT+(CENTRE[0]*RAD-REST_LAT)*(1-left),restLon+wrap(CENTRE[1]*RAD-restLon)*(1-left),roll);
+    // Each sharper photo fades in only once it covers the whole screen (turned by the roll, around the ground in the
+    // middle of it), so its edges never show; the close-up ones also wait until they have loaded.
     const closeUps=closeAt?paused?1:smooth(0,600,t-closeAt):0;
+    const nx=(innerWidth/2-earth.x)/earth.r,ny=(top+viewportHeight/2-earth.y)/earth.r,nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+    const lat=Math.asin(Math.max(-1,Math.min(1,turned[1]*nx-turned[4]*ny+turned[7]*nz)))/RAD;
+    const lon=Math.atan2(turned[0]*nx-turned[3]*ny+turned[6]*nz,turned[2]*nx-turned[5]*ny+turned[8]*nz)/RAD;
+    const spanX=innerWidth/2*Math.abs(Math.cos(roll))+viewportHeight/2*Math.abs(Math.sin(roll));
+    const spanY=innerWidth/2*Math.abs(Math.sin(roll))+viewportHeight/2*Math.abs(Math.cos(roll));
     const layers=PHOTOS.map(([west,east,south,north],i)=>{
-      const halfWidth=Math.min(CENTRE[1]-west,east-CENTRE[1])*Math.cos(north*RAD)*RAD,halfHeight=Math.min(CENTRE[0]-south,north-CENTRE[0])*RAD;
-      const covered=1.05*Math.max(innerWidth/2/halfWidth,viewportHeight/2/halfHeight);
+      const halfWidth=Math.min(lon-west,east-lon)*Math.cos(north*RAD)*RAD,halfHeight=Math.min(lat-south,north-lat)*RAD;
+      if(!nz||halfWidth<=0||halfHeight<=0)return 0;
+      const covered=1.05*Math.max(spanX/halfWidth,spanY/halfHeight);
       return covered<final?smooth(covered,Math.min(covered*1.35,final),earth.r)*(i?closeUps:1):0;
     });
-    // Earth turns west to east, so its surface moves left to right.
-    const restLon=.4-rotation,arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
+    const arrive=mapsAt?paused?1:smooth(0,700,t-mapsAt):0;
     // Saturn and Jupiter drift slowly around their places; both step aside as the camera closes in on Earth.
     const state={
       saturn:{x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00008)*innerWidth*.05-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00009)*24+focus*100+top,r:mobile?24:36,spin:-spaceTime*.00012},
       jupiter:{x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.000085+1)*innerWidth*.035+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00007)*22-focus*130+top,r:mobile?28:44,spin:-spaceTime*.00015},
       earth,time:spaceTime,near:(1-smooth(.8,.98,progress))*arrive,clouds:1-smooth(150,900,earth.r),
-      earthTurn:earthTurn(REST_LAT+(CENTRE[0]*RAD-REST_LAT)*turn,restLon+wrap(CENTRE[1]*RAD-restLon)*turn,TILT*(1-turn)),
+      earthTurn:turned,
       cloudShift:spaceTime*6e-7,satellite,layers
     };
     state.far=(1-smooth(.05,.6,progress))*(1-smooth(.8,.98,progress));
