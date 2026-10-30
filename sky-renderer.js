@@ -1,18 +1,61 @@
-// Draws the whole ASCII sky in one GPU pass. Every cell of the text grid shows exactly one character: a planet's
-// (worked out here from each planet's position, size, and spin) or else a star's (from a texture galaxy.js fills,
-// one texel per cell). The glyph sheet holds every character in every colour at the screen's pixel density, so
-// glyphs land on whole device pixels and are copied 1:1. app.js shades the planets the same way for the 2D fallback.
+// Draws the whole ASCII sky on the GPU. Every cell of the text grid shows exactly one character: a planet's (worked
+// out here from each planet's position, size, and spin) or else a star's (from a texture galaxy.js fills, one texel
+// per cell). Each frame takes two steps: the cell step works out each cell's planet character once, into textures
+// with one texel per cell, and the pixel step draws every pixel's share of its cell's glyph. The glyph sheet holds
+// every character in every colour at the screen's pixel density, so glyphs land on whole device pixels and are copied
+// 1:1. app.js shades the planets the same way for the 2D fallback.
 window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   const vertex = `#version 300 es
   void main(){ vec2 p=vec2((gl_VertexID==1)?3.0:-1.0,(gl_VertexID==2)?3.0:-1.0);gl_Position=vec4(p,0,1);}`;
-  const fragment = `#version 300 es
+  // The fragment shaders (below) are put together from these parts.
+  const prelude = `#version 300 es
   precision highp float;
+  precision highp int;
+  const vec2 CELL=vec2(${cellWidth}.0,${cellHeight}.0);
+  const int PLANET=${planetRow};
+  const float PI=3.14159265359;`;
+  // Drawing on the screen: the cell a pixel lies in, and the pixel's share of that cell's glyph.
+  const drawing = `
   uniform vec2 bufferSize;
   uniform float pixelRatio;
   uniform vec2 tile;
   uniform sampler2D glyphs;
   uniform sampler2D stars;
   uniform float starFade;
+  // Characters are galaxy.js's ramp (. , : ; - = + * # % @ = 0 to 10); colour rows from PLANET are the planets'.
+  vec4 character(int ch,int row,float alpha,vec2 offset){
+    vec2 uv=(vec2(float(ch),float(row))*tile+offset+.5)/vec2(textureSize(glyphs,0));
+    vec4 ink=texture(glyphs,uv);
+    float a=ink.a*clamp(alpha,0.0,1.0);
+    return vec4(ink.rgb*a,a);
+  }
+  // A character in any colour: the shape from the white row, the colour given.
+  vec4 tinted(int ch,vec3 colour,float alpha,vec2 offset){
+    vec4 ink=texture(glyphs,(vec2(float(ch),float(PLANET+9))*tile+offset+.5)/vec2(textureSize(glyphs,0)));
+    float a=ink.a*clamp(alpha,0.0,1.0);
+    return vec4(clamp(colour,0.0,1.0)*a,a);
+  }
+  // The cell of the grid a pixel lies in (device: the pixel, from the top left).
+  vec2 cellOf(vec2 device){return floor(device/pixelRatio/CELL+.5);}
+  // A pixel's colour: its share of the planet character covering its cell (ch -1: the cell is left blank; tint -1: the
+  // character's colour row), or else of the cell's star.
+  vec4 draw(vec2 device,vec2 index,bool covered,int ch,int row,float alpha,vec3 tint){
+    // This pixel's place in its cell's glyph tile, with the tile snapped to whole device pixels.
+    vec2 cell=index*CELL,offset=clamp(floor(device)-floor(cell*pixelRatio-tile*.5+.5),vec2(0),tile-1.0);
+    vec4 result=vec4(0);
+    if(covered){if(ch>=0)result=tint.x>=0.0?tinted(ch,tint,alpha*.94,offset):character(ch,row,alpha*.94,offset);}
+    else{
+      ivec2 size=textureSize(stars,0);
+      if(index.x<float(size.x)&&index.y<float(size.y)){
+        vec4 star=texelFetch(stars,ivec2(index),0);
+        int glyph=int(star.r*255.0+.5)-1;
+        if(glyph>=0)result=character(glyph,int(star.g*255.0+.5),star.b*starFade,offset);
+      }
+    }
+    return result;
+  }`;
+  // The planets: which character each cell of the grid shows.
+  const planets = `
   uniform vec4 worlds[3];
   uniform vec2 fades;
   uniform float cloudStrength;
@@ -28,26 +71,9 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
   uniform vec4 layers;
   uniform vec3 sun;
   uniform sampler2D surface,region,area,calgary,centre,areaNight,calgaryNight,centreNight,cloudMap,lightMap;
-  out vec4 outputColor;
-  const vec2 CELL=vec2(${cellWidth}.0,${cellHeight}.0);
-  const int PLANET=${planetRow};
-  const float PI=3.14159265359;
   // Where the sharper photos lie: west, east, south, north in degrees (the same bounds as tools/make-earth-maps.py).
   const vec4 REGION=vec4(-125.0,-103.0,44.0,58.0),AREA=vec4(-119.6,-108.6,48.28,53.78),CALGARY=vec4(-115.3,-112.9,50.55,51.5);
   const vec4 CENTRE=vec4(-114.33,-113.81,50.915,51.185);
-  // Characters are galaxy.js's ramp (. , : ; - = + * # % @ = 0 to 10); colour rows from PLANET are the planets'.
-  vec4 character(int ch,int row,float alpha,vec2 offset){
-    vec2 uv=(vec2(float(ch),float(row))*tile+offset+.5)/vec2(textureSize(glyphs,0));
-    vec4 ink=texture(glyphs,uv);
-    float a=ink.a*clamp(alpha,0.0,1.0);
-    return vec4(ink.rgb*a,a);
-  }
-  // A character in any colour: the shape from the white row, the colour given.
-  vec4 tinted(int ch,vec3 colour,float alpha,vec2 offset){
-    vec4 ink=texture(glyphs,(vec2(float(ch),float(PLANET+9))*tile+offset+.5)/vec2(textureSize(glyphs,0)));
-    float a=ink.a*clamp(alpha,0.0,1.0);
-    return vec4(clamp(colour,0.0,1.0)*a,a);
-  }
   // Planets use the smoother half of the ramp, from 0 (.) to 1 (#): . : - = + * #
   int shade(float v){int i=int(floor(clamp(v,0.0,1.0)*6.0+.5));return i==0?0:i==1?2:i+2;}
   // Saturn's body skips the line characters (- =), which belong to its rings: . : + * #
@@ -149,7 +175,7 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     // The size of the ground a cell covers, in degrees, and a random number of the cell's own.
     vec2 footprint=degrees(CELL/radius)*vec2(1.0/max(.05,cos(lat)),1.0);
     float chance=fract(threshold*13.7);
-    bool water=texture(land,uv).a<=.24,photographed=earthMaps>.5,fine=layers.y>threshold;
+    bool water=textureLod(land,uv,0.0).a<=.24,photographed=earthMaps>.5,fine=layers.y>threshold;
     vec3 day=photographed?photo(uv,deg,cellAngle):vec3(0);
     // Water (dark, with little red) is drawn blue by day.
     bool wet=day.r<day.g*.7&&(day.b>day.g*.65||day.r<day.g*.3);
@@ -241,14 +267,13 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     if(light<.01){ch=0;alpha=.12;}else{ch=shade(value);alpha=.25+.6*value;}
     return true;
   }
-  void main(){
-    vec2 device=vec2(gl_FragCoord.x,bufferSize.y-gl_FragCoord.y);
-    vec2 index=floor(device/pixelRatio/CELL+.5),cell=index*CELL;
-    // This pixel's place in its cell's glyph tile, with the tile snapped to whole device pixels.
-    vec2 offset=clamp(floor(device)-floor(cell*pixelRatio-tile*.5+.5),vec2(0),tile-1.0);
+  // The planet character a cell of the grid shows, if any planet covers it (index: the cell's place in the grid, from
+  // the top left; ch -1: the cell is left blank; tint -1: the character's colour row).
+  bool planetAt(vec2 index,out int ch,out int row,out float alpha,out vec3 tint){
+    vec2 cell=index*CELL;
     // A fading planet gives its cells back to the stars one by one, rather than showing both at once.
     float threshold=fract(sin(dot(index,vec2(12.9898,78.233)))*43758.5453);
-    int ch=-1,row=0;float alpha=0.0;bool covered=false;vec3 tint=vec3(-1);
+    bool covered=false;ch=-1;row=0;alpha=0.0;tint=vec3(-1);
     for(int k=0;k<3;k++){
       vec4 world=worlds[k];
       float fade=k==2?fades.y:fades.x;
@@ -260,21 +285,45 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
       if(body(k,d,world,threshold,bc,br,ba,bt)){covered=true;ch=bc;row=br;alpha=ba*fade;tint=bt;}
       if(hasRing&&front){covered=true;ch=rc;row=rr;alpha=ra*fade;tint=vec3(-1);}
     }
-    vec4 result=vec4(0);
-    if(covered){if(ch>=0)result=tint.x>=0.0?tinted(ch,tint,alpha*.94,offset):character(ch,row,alpha*.94,offset);}
-    else{
-      ivec2 size=textureSize(stars,0);
-      if(index.x<float(size.x)&&index.y<float(size.y)){
-        vec4 star=texelFetch(stars,ivec2(index),0);
-        int glyph=int(star.r*255.0+.5)-1;
-        if(glyph>=0)result=character(glyph,int(star.g*255.0+.5),star.b*starFade,offset);
-      }
-    }
-    outputColor=result;
+    return covered;
+  }`;
+  // The cell step: one texel per cell of the grid (in two integer textures), holding its planet character exactly:
+  // whether a planet covers it, the character and colour row, and the opacity and tint as their bits.
+  const cellStep = prelude + planets + `
+  layout(location=0) out uvec4 cellOut;
+  layout(location=1) out uvec4 blueOut;
+  void main(){
+    int ch,row;float alpha;vec3 tint;
+    bool covered=planetAt(floor(gl_FragCoord.xy),ch,row,alpha,tint);
+    cellOut=uvec4(uint(covered)|uint(ch+1)<<1|uint(row)<<9,floatBitsToUint(alpha),floatBitsToUint(tint.r),floatBitsToUint(tint.g));
+    blueOut=uvec4(floatBitsToUint(tint.b),0u,0u,0u);
+  }`;
+  // The pixel step: every pixel draws its share of its cell's character, as the cell step left it.
+  const pixelStep = prelude + drawing + `
+  uniform highp usampler2D cells,blues;
+  out vec4 outputColor;
+  void main(){
+    vec2 device=vec2(gl_FragCoord.x,bufferSize.y-gl_FragCoord.y),index=cellOf(device);
+    uvec4 c=texelFetch(cells,ivec2(index),0);
+    vec3 tint=vec3(uintBitsToFloat(c.z),uintBitsToFloat(c.w),uintBitsToFloat(texelFetch(blues,ivec2(index),0).x));
+    outputColor=draw(device,index,(c.x&1u)==1u,int((c.x>>1)&255u)-1,int(c.x>>9),uintBitsToFloat(c.y),tint);
+  }`;
+  // Both steps at once, for where the cell textures can't be drawn into: every pixel works out its cell's character
+  // itself (the same character, in the same way).
+  const oneStep = prelude + drawing + planets + `
+  out vec4 outputColor;
+  void main(){
+    vec2 device=vec2(gl_FragCoord.x,bufferSize.y-gl_FragCoord.y),index=cellOf(device);
+    int ch,row;float alpha;vec3 tint;
+    bool covered=planetAt(index,ch,row,alpha,tint);
+    outputColor=draw(device,index,covered,ch,row,alpha,tint);
   }`;
   function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
-  const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
-  gl.useProgram(program);
+  function link(fragment){
+    const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));
+    gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+    return program;
+  }
   // smooth: blend between texels, with smaller copies for averaged() (maps); wrap: repeat around the globe from
   // west to east.
   function texture(unit,{smooth=false,wrap=false}={}){
@@ -285,23 +334,49 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     if(smooth)gl.generateMipmap(gl.TEXTURE_2D);
     return t;
   }
-  const uniform=name=>gl.getUniformLocation(program,name);
   const glyphTexture=texture(0),starTexture=texture(1),landTexture=texture(2);
   const mapTextures={surface:texture(3,{smooth:true,wrap:true}),region:texture(4,{smooth:true}),area:texture(5,{smooth:true}),
     calgary:texture(6,{smooth:true}),centre:texture(7,{smooth:true}),areaNight:texture(8,{smooth:true}),
     calgaryNight:texture(9,{smooth:true}),centreNight:texture(10,{smooth:true}),cloudMap:texture(11,{smooth:true,wrap:true}),
     lightMap:texture(12,{smooth:true,wrap:true})};
-  gl.uniform1i(uniform('glyphs'),0);gl.uniform1i(uniform('stars'),1);gl.uniform1i(uniform('land'),2);
-  Object.keys(mapTextures).forEach((name,i)=>gl.uniform1i(uniform(name),3+i));
-  const tileSize=uniform('tile'),buffer=uniform('bufferSize'),ratio=uniform('pixelRatio'),fade=uniform('starFade');
-  const positions=uniform('worlds[0]'),planetFades=uniform('fades'),clouds=uniform('cloudStrength'),clock=uniform('time');
-  const turn=uniform('earthTurn'),loaded=uniform('earthMaps'),drift=uniform('cloudShift');
-  const photos=uniform('layers'),sunward=uniform('sun');
+  // The cell step's results: one texel per cell of the grid in two integer textures (units 13 and 14), sized to the
+  // canvas as it changes, and the framebuffer that draws into them.
+  const cellTextures=[13,14].map(unit=>{
+    const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    return t;
+  }),cellFrame=gl.createFramebuffer();
+  let cellColumns=0,cellLines=0;
+  function sizeCells(columns,lines){
+    if(columns===cellColumns&&lines===cellLines)return;
+    cellColumns=columns;cellLines=lines;
+    cellTextures.forEach((t,i)=>{gl.activeTexture(gl.TEXTURE13+i);gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32UI,columns,lines,0,gl.RGBA_INTEGER,gl.UNSIGNED_INT,null);});
+  }
+  sizeCells(1,1);
+  // A program's uniforms (null for any it doesn't use), with its textures pointed at their units.
+  const samplers=['glyphs','stars','land',...Object.keys(mapTextures),'cells','blues'];
+  const inputs=['tile','bufferSize','pixelRatio','starFade','worlds[0]','fades','cloudStrength','time','earthTurn','earthMaps','cloudShift','layers','sun'];
+  function prepare(program){
+    gl.useProgram(program);samplers.forEach((name,unit)=>gl.uniform1i(gl.getUniformLocation(program,name),unit));
+    return Object.fromEntries([['program',program],...inputs.map(name=>[name,gl.getUniformLocation(program,name)])]);
+  }
+  // Two steps where the cell textures can be drawn into (as WebGL2 should always allow), otherwise one.
+  let steps=null;
+  try{
+    steps={cells:prepare(link(cellStep)),pixels:prepare(link(pixelStep))};
+    gl.bindFramebuffer(gl.FRAMEBUFFER,cellFrame);
+    cellTextures.forEach((t,i)=>gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0+i,gl.TEXTURE_2D,t,0));
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)steps=null;
+  }catch(error){steps=null;}
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const single=steps?null:prepare(link(oneStep));
+  let tileW=0,tileH=0,mapsLoaded=0;
   const values=new Float32Array(12),still=new Float32Array([1,0,0,0,1,0,0,0,1]);
   let starColumns=0,starLines=0;
   gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);
   return {
-    uploadGlyphs(sheet){gl.useProgram(program);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,glyphTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sheet.canvas);gl.uniform2f(tileSize,sheet.tileW,sheet.tileH);},
+    uploadGlyphs(sheet){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,glyphTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sheet.canvas);tileW=sheet.tileW;tileH=sheet.tileH;},
     // One RGBA texel per cell: character + 1 (0 = empty), colour row, and opacity.
     uploadStars(cells,columns,lines){
       gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,starTexture);
@@ -312,14 +387,13 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     // Images from assets/earth (any of mapTextures' names; the close-up photos, by day and by night, come later than
     // the rest).
     uploadEarthMaps(maps){
-      gl.useProgram(program);
       Object.entries(mapTextures).forEach(([name,t],i)=>{
         if(!maps[name])return;
         gl.activeTexture(gl.TEXTURE3+i);gl.bindTexture(gl.TEXTURE_2D,t);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,maps[name]);
         gl.generateMipmap(gl.TEXTURE_2D);
       });
-      gl.uniform1f(loaded,1);
+      mapsLoaded=1;
     },
     // planets: {saturn, jupiter, earth (each {x, y, r, spin} in CSS px), earthTurn (a column-major 3×3 matrix),
     // cloudShift, layers ([region, area, calgary, centre], each 0 to 1), sun (a direction), time, far, near, clouds}
@@ -327,13 +401,27 @@ window.createSkyRenderer = function(gl, {cellWidth, cellHeight, planetRow}) {
     render(starFade,planets){
       values.fill(0);
       if(planets)[planets.saturn,planets.jupiter,planets.earth].forEach((w,k)=>{values[k*4]=w.x;values[k*4+1]=w.y;values[k*4+2]=w.r;values[k*4+3]=w.spin;});
-      gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.useProgram(program);
-      gl.uniform2f(buffer,gl.canvas.width,gl.canvas.height);gl.uniform1f(ratio,gl.canvas.width/innerWidth);gl.uniform1f(fade,starFade);
-      gl.uniform4fv(positions,values);gl.uniform2f(planetFades,planets?planets.far:0,planets?planets.near:0);
-      gl.uniform1f(clouds,planets?planets.clouds:0);gl.uniform1f(clock,planets?planets.time:0);
-      gl.uniformMatrix3fv(turn,false,planets?planets.earthTurn:still);gl.uniform1f(drift,planets?planets.cloudShift:0);
-      gl.uniform4fv(photos,planets?planets.layers:[0,0,0,0]);gl.uniform3fv(sunward,planets?planets.sun:[-.55,-.42,.72]);
-      gl.drawArrays(gl.TRIANGLES,0,3);
+      const ratio=gl.canvas.width/innerWidth;
+      // The planets' inputs go to the program that works out the cells' characters, the screen's to the one that draws.
+      const planetInputs=u=>{
+        gl.uniform4fv(u['worlds[0]'],values);gl.uniform2f(u.fades,planets?planets.far:0,planets?planets.near:0);
+        gl.uniform1f(u.cloudStrength,planets?planets.clouds:0);gl.uniform1f(u.time,planets?planets.time:0);
+        gl.uniformMatrix3fv(u.earthTurn,false,planets?planets.earthTurn:still);gl.uniform1f(u.earthMaps,mapsLoaded);
+        gl.uniform1f(u.cloudShift,planets?planets.cloudShift:0);gl.uniform4fv(u.layers,planets?planets.layers:[0,0,0,0]);
+        gl.uniform3fv(u.sun,planets?planets.sun:[-.55,-.42,.72]);
+      };
+      const screenInputs=u=>{gl.uniform2f(u.tile,tileW,tileH);gl.uniform2f(u.bufferSize,gl.canvas.width,gl.canvas.height);gl.uniform1f(u.pixelRatio,ratio);gl.uniform1f(u.starFade,starFade);};
+      if(steps){
+        // A cell for every pixel (the grid's edge cells lie half off the screen), with one to spare each way.
+        sizeCells(Math.floor(gl.canvas.width/ratio/cellWidth+.5)+2,Math.floor(gl.canvas.height/ratio/cellHeight+.5)+2);
+        gl.bindFramebuffer(gl.FRAMEBUFFER,cellFrame);gl.viewport(0,0,cellColumns,cellLines);
+        gl.useProgram(steps.cells.program);planetInputs(steps.cells);gl.drawArrays(gl.TRIANGLES,0,3);
+        gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      }
+      const screen=steps?steps.pixels:single;
+      gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.useProgram(screen.program);
+      if(!steps)planetInputs(screen);
+      screenInputs(screen);gl.drawArrays(gl.TRIANGLES,0,3);
     }
   };
 };
