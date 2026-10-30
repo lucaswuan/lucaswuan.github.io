@@ -156,6 +156,8 @@ mark[data-tone="5"] { background: #1d3242; color: #d8eeff; }
 .footer-links a { font-size: 14px; color: var(--soft); transition: color .2s; }
 .footer-links a:hover { color: var(--paper); }
 .coordinate { font: 13px/1.8 var(--sans); color: var(--tertiary); }
+.earth-credit { display: block; }
+.earth-credit a:hover { color: var(--soft); }
 .back-top { font-size: 14px; color: var(--link); }
 .back-top:hover { color: var(--link-hover); }
 
