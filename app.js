@@ -222,14 +222,15 @@
     hero.style.transform=`translate3d(0,${paused?0:-progress*100}px,0)`;
     hero.inert=heroOpacity<.05;
     bottom.style.opacity=String(1-smooth(.01,.18,progress));
-    arrival.style.opacity=paused?'0':String(smooth(.28,.43,progress)*(1-smooth(.59,.77,progress)));
+    arrival.style.opacity=paused?'0':String(smooth(.28,.43,progress)*(1-smooth(.56,.74,progress)));
     arrival.style.transform=`translate3d(0,${(1-smooth(.28,.6,progress))*20}px,0)`;
     galaxy.setStarFade(1-.48*smooth(.45,1,clamp(scrollY/trackLength)));
     const active=progress<.98&&scrollY<journey.offsetHeight;
-    // The dive is one motion, from the first bit of scroll to 70% of the opening scroll: the zoom, the turn towards
+    // The dive is one motion, from the first bit of scroll to 80% of the opening scroll: the zoom, the turn towards
     // Calgary, the axis straightening, and Earth gliding to the middle of the screen all run the whole way and settle
-    // together. The camera then holds over Calgary until Earth dissolves.
-    const focus=paused?0:smooth(.03,.7,progress);
+    // together. Earth starts dissolving (at 74%) just as the words finish fading, while the camera is still settling,
+    // so the scroll never goes still.
+    const focus=paused?0:smooth(.03,.8,progress),dissolve=smooth(.74,.96,progress);
     // Earth spins only while the page is at the top, so the turn towards Calgary is always the short way round.
     if(!paused&&!document.hidden&&t-frame>33){
       if(active&&focus===0)rotation+=.000022*Math.min(t-frame,100);
@@ -275,11 +276,11 @@
     const state={
       saturn:{x:innerWidth*(mobile?.22:.23)+Math.sin(spaceTime*.00008)*innerWidth*.05-focus*130,y:viewportHeight*(mobile?.64:.79)+Math.sin(spaceTime*.00009)*24+focus*100+top,r:mobile?24:36,spin:-spaceTime*.00012},
       jupiter:{x:innerWidth*(mobile?.82:.84)+Math.sin(spaceTime*.000085+1)*innerWidth*.035+focus*120,y:viewportHeight*(mobile?.17:.23)+Math.sin(spaceTime*.00007)*22-focus*130+top,r:mobile?28:44,spin:-spaceTime*.00015},
-      earth,time:spaceTime,near:(1-smooth(.8,.98,progress))*arrive,clouds:1-smooth(150,900,earth.r),
+      earth,time:spaceTime,near:(1-dissolve)*arrive,clouds:1-smooth(150,900,earth.r),
       earthTurn:turned,
       cloudShift:spaceTime*6e-7,satellite,layers
     };
-    state.far=(1-smooth(.05,.6,progress))*(1-smooth(.8,.98,progress));
+    state.far=(1-smooth(.05,.6,progress))*(1-dissolve);
     galaxy.setPlanets(galaxy.gpu?state:cellsFor(state));
     shown=true;
   });
