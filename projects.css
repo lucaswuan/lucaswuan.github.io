@@ -131,6 +131,24 @@
 .gallery-item img{display:block;width:auto;max-width:100%;height:auto;max-height:650px}
 .gallery-item video{display:block;width:auto;max-width:100%;height:auto;max-height:650px;margin:0 auto;background:var(--card);border-radius:var(--radius)}
 .gallery-item figcaption{font-size:13px;line-height:1.5;color:var(--tertiary);margin-top:10px}
+/* A slide deck: one slide at a time, framed like the gallery, with square buttons and a counter below (site.js).
+   Without JavaScript the slides scroll sideways. */
+.slide-track{display:flex;gap:16px;margin:0;padding:0;list-style:none;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;border-radius:var(--radius)}
+.slide-track:focus-visible{outline:2px solid var(--link);outline-offset:4px}
+.slide-deck.is-ready .slide-track{scrollbar-width:none}
+.slide-deck.is-ready .slide-track::-webkit-scrollbar{display:none}
+.slide-track .slide{flex:0 0 100%;margin:0;padding:0;scroll-snap-align:start}
+.slide img{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:var(--radius);background:var(--card)}
+.slide-deck.is-ready .slide img{cursor:pointer}
+.slide-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px}
+.slide-controls{display:flex;align-items:center;gap:10px}
+.slide-controls[hidden]{display:none}
+.slide-step{display:grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid var(--edge);border-radius:var(--radius);background:var(--card);color:var(--paper);font-size:16px;cursor:pointer;transition:background .2s,color .2s}
+.slide-step:hover{background:var(--card-hover)}
+.slide-step:disabled{background:var(--card);color:#48484a;cursor:default}
+.slide-count{min-width:4.5em;text-align:center;font:500 14px var(--sans);color:var(--soft);font-variant-numeric:tabular-nums}
+.slide-pdf{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:var(--link);transition:color .2s}
+.slide-pdf:hover{color:var(--link-hover)}
 /* Bottom of each project page: back to the index, and on to the next project (the main action, in white). */
 .project-pagination{border-top:1px solid var(--divider);padding-top:33px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:35px}
 

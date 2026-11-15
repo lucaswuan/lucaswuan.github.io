@@ -108,6 +108,62 @@
     }
   }
 
+  // Slide decks on project pages show one slide at a time. The slides already scroll sideways (a swipe, a trackpad or
+  // the scrollbar); this adds the buttons, the counter, the arrow keys, and clicking a slide to move on (its left
+  // third goes back). It glides from slide to slide unless motion is off.
+  document.querySelectorAll('[data-slides]').forEach(deck => {
+    const track = deck.querySelector('.slide-track');
+    const slides = [...track.children];
+    const [back, forward] = deck.querySelectorAll('.slide-step');
+    const count = deck.querySelector('.slide-count');
+    const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      (window.portfolioGalaxy ? window.portfolioGalaxy.paused : document.body.classList.contains('motion-paused'));
+    const left = i => slides[i].offsetLeft - slides[0].offsetLeft;
+    let current = 0, target = null, settle = 0;
+    const update = () => {
+      count.textContent = `${current + 1} / ${slides.length}`;
+      back.disabled = current === 0;
+      forward.disabled = current === slides.length - 1;
+      // The neighbours load early, so stepping on never shows an empty frame.
+      [current - 1, current + 1].forEach(i => { const img = slides[i] && slides[i].querySelector('img'); if (img) img.loading = 'eager'; });
+    };
+    const go = i => {
+      current = Math.max(0, Math.min(slides.length - 1, i));
+      // Until the glide arrives, the scroll positions on the way don't count as other slides.
+      target = left(current);
+      clearTimeout(settle);
+      settle = setTimeout(() => { target = null; }, 800);
+      track.scrollTo({ left: target, behavior: still() ? 'auto' : 'smooth' });
+      update();
+    };
+    // A swipe or a scroll changes the slide too: the counter follows the slide nearest the start.
+    track.addEventListener('scroll', () => {
+      if (target !== null) {
+        if (Math.abs(track.scrollLeft - target) < 2) target = null;
+        return;
+      }
+      const i = Math.round(track.scrollLeft / Math.max(1, slides.length > 1 ? left(1) : track.clientWidth));
+      if (i !== current && slides[i]) { current = i; update(); }
+    }, { passive: true });
+    back.addEventListener('click', () => go(current - 1));
+    forward.addEventListener('click', () => go(current + 1));
+    track.addEventListener('click', event => {
+      const box = track.getBoundingClientRect();
+      go(event.clientX - box.left < box.width / 3 ? current - 1 : current + 1);
+    });
+    track.addEventListener('keydown', event => {
+      const keys = { ArrowLeft: current - 1, ArrowRight: current + 1, PageUp: current - 1, PageDown: current + 1, Home: 0, End: slides.length - 1 };
+      if (!(event.key in keys)) return;
+      event.preventDefault();
+      go(keys[event.key]);
+    });
+    // A new width moves the slides, so line the current one up again.
+    if ('ResizeObserver' in window) new ResizeObserver(() => { track.scrollLeft = left(current); }).observe(track);
+    deck.querySelector('.slide-controls').hidden = false;
+    deck.classList.add('is-ready');
+    update();
+  });
+
   if (!('IntersectionObserver' in window)) return;
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {

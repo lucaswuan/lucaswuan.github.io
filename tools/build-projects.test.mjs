@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { gallery, artwork, card, homeCards, moreProjects, validate, rich, toneMarks, stamp, assetVersions, ASSETS, SIZES } from './build-projects.mjs';
+import { gallery, slideDeck, extraSections, artwork, card, homeCards, moreProjects, validate, validateExperience, timeline, TIMELINE_COLOURS, rich, toneMarks, stamp, assetVersions, ASSETS, SIZES } from './build-projects.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
@@ -74,6 +74,50 @@ test('content validation catches duplicate pages, invalid image paths, and missi
   const videoCover=structuredClone(data);
   videoCover.projects[0].cover={src:'/assets/projects/vex-robotics/catapult-launch.mp4',alt:'Clip'};
   await assert.rejects(validate(videoCover),/cover must be an image/);
+});
+
+test('slide decks list every slide, load only the first at once, and number the sections after them',async()=>{
+  assert.equal(slideDeck(undefined),'');
+  assert.equal(slideDeck({items:[]}),'');
+  const html=slideDeck({pdf:'/assets/deck.pdf',items:[fixture,fixture,fixture]},'03');
+  assert.equal((html.match(/<li class="slide">/g) ?? []).length,3);
+  assert.equal((html.match(/loading="lazy"/g) ?? []).length,2);
+  assert.ok(html.includes('id="slides"') && html.includes('03 / Presentation'));
+  assert.ok(html.includes('<div class="slide-controls" hidden>') && html.includes('1 / 3'),'the buttons wait for site.js');
+  assert.ok(html.includes('href="/assets/deck.pdf"'));
+  assert.ok(html.includes('A robot &amp; its &quot;intake&quot;'));
+  const both=extraSections({slides:{items:[fixture]},images:[fixture]});
+  assert.ok(both.links.includes('href="#slides">03 / The slides') && both.links.includes('href="#gallery">04 / In pictures'));
+  assert.ok(both.sections.includes('04 / In pictures'));
+  assert.equal(both.outcomeNumber,'05');
+  assert.deepEqual(extraSections({}),{links:'',sections:'',outcomeNumber:'03'});
+  for (const [slides,message] of [[{items:[{src:'/assets/missing-slide.webp',alt:'Slide'}]},/Image not found/],[{items:[{...fixture,alt:''}]},/alt text/],[{pdf:'/assets/missing.pdf',items:[]},/not found/]]) {
+    const invalid=structuredClone(data);
+    invalid.projects[0].slides=slides;
+    await assert.rejects(validate(invalid),message);
+  }
+  for (const project of data.projects.filter(p=>p.slides?.items?.length)) {
+    const page=await readFile(path.join(root,`projects/${project.slug}/index.html`),'utf8');
+    assert.equal((page.match(/<li class="slide">/g) ?? []).length,project.slides.items.length);
+  }
+});
+
+test('experience entries are checked, and each becomes a button that opens its summary',async()=>{
+  const experience=JSON.parse(await readFile(path.join(root,'content/experience.json'),'utf8'));
+  await validateExperience(experience,data.projects);
+  const entry={company:'Roofing & Co',role:'Roofer',start:'2025-05',end:'2025-08',summary:'Shingles <fast>.'};
+  for (const [change,message] of [[{start:'May 2025'},/YYYY/],[{end:'2025-03'},/ends before/],[{project:'nope'},/no project/],[{logo:'/assets/missing.png'},/Logo not found/],[{colour:'green'},/hex/],[{role:''},/missing role/]]) {
+    await assert.rejects(validateExperience({entries:[{...entry,...change}]},data.projects),message);
+  }
+  const html=timeline([entry,{...entry,end:null,start:'2024',project:data.projects[0].slug}]);
+  assert.equal((html.match(/<button class="timeline-head"/g) ?? []).length,2);
+  assert.ok(html.includes('May 2025 – Aug 2025') && html.includes('2024 – Present'));
+  assert.ok(html.includes('Roofing &amp; Co') && html.includes('Shingles &lt;fast&gt;.'));
+  assert.ok(html.includes('data-start="2025.33') && html.includes('data-start="2024.5" data-end=""'));
+  assert.ok(html.includes(`href="/projects/${data.projects[0].slug}/"`));
+  assert.ok(html.includes(`--c:${TIMELINE_COLOURS[0]}`) && html.includes(`--c:${TIMELINE_COLOURS[1]}`));
+  const home=await readFile(path.join(root,'index.html'),'utf8');
+  assert.equal((home.match(/class="timeline-entry"/g) ?? []).length,experience.entries.length);
 });
 
 test('every generated page and homepage has working local navigation and assets',async()=>{

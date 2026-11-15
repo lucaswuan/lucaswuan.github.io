@@ -1,0 +1,71 @@
+{
+  "entries": [
+    {
+      "company": "JDX Advance Services Inc.",
+      "role": "Project Assistant Intern",
+      "start": "2027-01",
+      "end": "2027-04",
+      "summary": "My first co-op term, starting in January 2027.",
+      "logo": "/assets/logos/jdx.webp"
+    },
+    {
+      "company": "UWAFT",
+      "role": "Electrical Subteam Member",
+      "start": "2026-09",
+      "end": null,
+      "summary": "Designed a battery monitor and relay board in Altium, now fabricated.",
+      "project": "uwaft",
+      "logo": "/assets/logos/uwaft.webp"
+    },
+    {
+      "company": "UWASIC",
+      "role": "RTL Design Member",
+      "start": "2026-09",
+      "end": null,
+      "summary": "Wrote the functional-unit control RTL for the ray-tracing ASIC we’re building.",
+      "project": "uwasic",
+      "logo": "/assets/logos/uwasic.webp"
+    },
+    {
+      "company": "Code Ninjas",
+      "role": "Coding Instructor",
+      "start": "2026-05",
+      "end": "2026-08",
+      "summary": "Taught game development to 15 students aged 6 to 15 in MakeCode Arcade.",
+      "logo": "/assets/logos/code-ninjas.svg"
+    },
+    {
+      "company": "Superior Roofing",
+      "role": "Roofer",
+      "start": "2025-08",
+      "end": "2025-09",
+      "summary": "Worked on a roofing crew for the summer.",
+      "logo": "/assets/logos/superior-roofing.svg"
+    },
+    {
+      "company": "Calgary Ace Learning Center",
+      "role": "Co-founder & Volunteer",
+      "start": "2024-03",
+      "end": null,
+      "summary": "Co-founded a tutoring nonprofit that has donated $5,335 to children’s healthcare.",
+      "project": "calgary-ace",
+      "logo": "/assets/logos/calgary-ace.webp"
+    },
+    {
+      "company": "Hockey Calgary",
+      "role": "Level 2 Referee",
+      "start": "2023-10",
+      "end": "2026-03",
+      "summary": "Refereed minor hockey games for three seasons.",
+      "logo": "/assets/logos/hockey-calgary.webp"
+    },
+    {
+      "company": "Asian Buffet",
+      "role": "Busser",
+      "start": "2022-07",
+      "end": "2023-07",
+      "summary": "Cleared and reset tables between guests.",
+      "logo": "/assets/logos/asian-buffet.webp"
+    }
+  ]
+}

@@ -35,7 +35,7 @@ A highlight marks the phrase a reader should take away from a paragraph. Every p
 3. **Where.** Body text only: paragraphs and list items. Never headings, labels, buttons, captions, link text, or a project's `summary`.
 4. **Punctuation.** Punctuation right after the phrase goes inside the highlight: a full stop, comma, colon, semicolon, question or exclamation mark, ellipsis, or closing bracket or quote. `==won first place==.` and `==won first place.==` both show "won first place." highlighted; the generator moves it in for you. A possessive (’s) and dashes stay outside.
 5. **Edges.** Start and end on a word (or its punctuation), never a space.
-6. **Colour.** Don't pick one. The generator tints highlights in page order (peach, lavender, butter, rose, sage, sky), so neighbouring ones never match. The light-blue labels, such as "01 — Projects", are not highlights.
+6. **Colour.** Don't pick one. The generator tints highlights in page order (peach, lavender, butter, rose, sage, sky), so neighbouring ones never match. The exception is the homepage hero, whose highlight is always lavender with white text (set in `styles.css`). The light-blue labels, such as "01 — Projects", are not highlights.
 7. **How.** In `content/projects.json` (a project's `overview`, section `body` or `bullets`, or `outcome`), wrap the phrase in double equals signs: `"I wrote the ==functional-unit control module== in SystemVerilog."` On the homepage, wrap it in `<mark>…</mark>`. Then run `node tools/build-projects.mjs`.
 
 ## Add your images
@@ -97,6 +97,19 @@ Gallery items can also be short videos. Use an `.mp4` (H.264, plays in every bro
 
 Videos play in place, muted, with the browser's controls. Keep them short and compressed; phone videos also carry location data, so re-encode them without metadata before adding them. Covers must be images.
 
+A project can also show a slide deck that visitors click through one slide at a time. Export each slide as a 16:9 image (1600px wide is plenty) into `assets/projects/<slug>/slides/`, run `tools/make-image-sizes.py` on them as you would on a cover, and list them under `slides`, with an optional `pdf` of the whole deck:
+
+```json
+"slides": {
+  "pdf": "/assets/projects/quantum-mic-planner/primalquant-slides.pdf",
+  "items": [
+    {"src": "/assets/projects/quantum-mic-planner/slides/slide-01.webp", "alt": "Say what the slide says"}
+  ]
+}
+```
+
+The deck gets its own section after The work, with back and next buttons, a counter, and the arrow keys; clicking a slide moves on, and clicking its left third goes back. Without JavaScript, the slides scroll sideways.
+
 ## Add a project
 
 Copy an object in `content/projects.json`, give it a unique lowercase hyphenated `slug`, and replace its content. Keep `links`, `highlights`, and `images` as empty lists when unused. `cover: null` uses the symbolic illustration. Supported illustration styles are `chip`, `board`, `landmarks`, `robot`, `rays`, and `community`.
@@ -105,10 +118,21 @@ Run the generator to create its page and add it to the index. If it has a cover,
 
 To check galleries, content validation, local links, `?v=` stamps, favicons and link-preview tags, and that no CSS rule is defined twice, run `node --test tools/build-projects.test.mjs`.
 
+## Edit your experience
+
+The homepage's Experience timeline comes from `content/experience.json`, newest first. Each entry has a `company`, a `role`, a `start` and an `end` (`"2025-05"` for May 2025, or just `"2025"`; `null` for ongoing), a one-line `summary` that opens when the entry is clicked, and optionally:
+
+- `project`: a project's `slug`, which adds a "See the project" link to its page.
+- `logo`: an image under `/assets/`, kept in `assets/logos/`. Make it square with its own background (white, dark, or the brand's colour), 144px or larger, so it fills the tile sharply. Without one, the entry shows a placeholder.
+- `colour`: a hex colour such as `#9be07a`. Without one, entries take the timeline's colours from the oldest up, so adding a newer entry keeps the others' colours.
+
+Run the generator afterwards. The timeline is drawn to scale, so months place each entry more exactly than a bare year (which sits mid-year). An entry that hasn't started yet, such as an upcoming co-op, sits above Now with an outlined bar and date.
+
 ## File map
 
-- `index.html`: homepage. Content between the `<!-- …:start -->` and `<!-- …:end -->` markers is generated (header, featured projects, more-projects button, footer), as is the project count on the Projects button. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
+- `index.html`: homepage. Content between the `<!-- …:start -->` and `<!-- …:end -->` markers is generated (header, featured projects, more-projects button, experience timeline, footer), as is the project count on the Projects button. The About section's photos are listed directly in it, in two `wall-track` columns; each photo has a 300px and a 600px copy in `assets/about/` (strip phone photos' location data when adding new ones). `site.js` repeats each column so the drift loops.
 - `content/projects.json`: editable project content and image lists.
+- `content/experience.json`: the Experience timeline's entries (see Edit your experience).
 - `templates/`: shared page layouts, plus `header.html` and `footer.html`, used on every page.
 - `tools/build-projects.mjs`: dependency-free static page generator. Also stamps `?v=` on CSS and JS links and numbers the highlights.
 - `tools/make-favicon.py`: draws the site icon (“LW” in DM Serif Display, black on sage, traced from `tools/fonts/`, which holds the font and its SIL Open Font License) as `assets/favicon.svg`, `favicon.ico`, and `assets/apple-touch-icon.png`. Needs `pip install pillow fonttools`.
@@ -116,7 +140,8 @@ To check galleries, content validation, local links, `?v=` stamps, favicons and 
 - `projects/`: generated project index and individual pages.
 - `projects.css`: project previews, page layouts, galleries, and responsive styles.
 - `styles.css`: site styling and homepage layout, one readable rule per selector, media queries at the end. Its `:root` holds the shared look: SF Pro on Apple devices with Inter elsewhere (linked in each page's `<head>`), sage headline accent words and links (`--sage`), black cards and buttons with a thin white `--edge`, one corner `--radius`, light-blue label highlights (`--label`, on `.eyebrow`), and dark key-phrase tints (`--phrase` and `mark[data-tone]`).
-- `site.js`: shared reveal effects, the About photo drift, the side navigation, and the footer year.
+- `site.js`: shared reveal effects, the About photo drift, the side navigation, the footer year, and project slide decks.
+- `timeline.js`: draws the homepage's Experience list as a timeline to scale: a coloured bar for each entry from its start to its end, bars in the middle with entries either side on a wide screen (on the left on a narrow one), entries that open on click, and open or hovered entries staying lit while the other bars dim. Without it the list shows every summary.
 - `galaxy.js`: the shared ASCII sky (the Milky Way, and the planets app.js places) and the motion preference on every page. Stars and planets share one canvas and one text grid, one character per cell.
 - `sky-renderer.js`: draws that sky on the GPU (WebGL2); without it, galaxy.js draws on a 2D canvas.
 - `app.js`: homepage planets (Saturn, Jupiter, Earth) and scroll effects. Scrolling turns Earth to Calgary and dives in, past the whole city, to central Calgary, as night falls and the city's lights come on. Earth is drawn from photos (in the site's green and blue on the 2D canvas, without the dusk).

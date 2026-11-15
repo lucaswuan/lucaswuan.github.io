@@ -77,15 +77,44 @@ function media(image) {
   return `<a href="${escape(image.src)}" target="_blank" rel="noopener" aria-label="Open image: ${escape(image.alt)}"><img src="${escape(image.src)}" alt="${escape(image.alt)}" loading="lazy" decoding="async"></a>`;
 }
 
-export function gallery(images=[], heading=true) {
+export function gallery(images=[], heading=true, n='03') {
   if (!images.length) return '';
   const items=images.map((image,i) => `<figure class="gallery-item${image.wide || (images.length%2 && i===0) ? ' gallery-wide' : ''}">${media(image)}${image.caption ? `<figcaption>${escape(image.caption)}</figcaption>` : ''}</figure>`).join('\n');
   const grid=`<div class="project-gallery">${items}</div>`;
-  return heading ? `<section id="gallery" class="case-section"><p class="eyebrow">03 / In pictures</p><h2>A closer look</h2>${grid}</section>` : grid;
+  return heading ? `<section id="gallery" class="case-section"><p class="eyebrow">${n} / In pictures</p><h2>A closer look</h2>${grid}</section>` : grid;
+}
+
+// A slide deck shows one slide at a time. Without JavaScript the slides sit in a row that scrolls sideways; site.js
+// adds the buttons, arrow keys and counter, and clicking a slide moves on. Slides can have sized copies, like covers.
+export const SLIDE_SIZES = '(max-width: 650px) 86vw, (max-width: 1000px) 62vw, 870px';
+export function slideDeck(slides, n='03') {
+  const items=slides?.items ?? [];
+  if (!items.length) return '';
+  const list=items.map((slide,i) => {
+    const img=`<img src="${escape(slide.src)}" alt="${escape(slide.alt)}"${i ? ' loading="lazy"' : ''} decoding="async">`;
+    const sources=sizedCopies(slide.src).map(s => `<source type="image/${s.type}" srcset="${escape(s.srcset)}" sizes="${SLIDE_SIZES}">`).join('');
+    return `<li class="slide">${sources ? `<picture>${sources}${img}</picture>` : img}</li>`;
+  }).join('');
+  const pdf=slides.pdf ? `<a class="slide-pdf" href="${escape(slides.pdf)}" target="_blank" rel="noopener">Open the PDF <span aria-hidden="true">↗</span></a>` : '';
+  const controls=`<div class="slide-controls" hidden><button class="slide-step" type="button" data-step="-1" aria-label="Previous slide"><span class="chevron back" aria-hidden="true"></span></button><span class="slide-count" aria-live="polite">1 / ${items.length}</span><button class="slide-step" type="button" data-step="1" aria-label="Next slide"><span class="chevron" aria-hidden="true"></span></button></div>`;
+  return `<section id="slides" class="case-section"><p class="eyebrow">${n} / Presentation</p><h2>The slides</h2><div class="slide-deck" data-slides><ol class="slide-track" tabindex="0" aria-label="Slides, ${items.length} in all">${list}</ol><div class="slide-bar">${controls}${pdf}</div></div></section>`;
+}
+
+// The case study's optional sections, numbered after Overview (01) and The work (02); Outcome comes last.
+export function extraSections(project) {
+  const parts=[
+    project.slides?.items?.length && ['slides','The slides',n=>slideDeck(project.slides,n)],
+    project.images?.length && ['gallery','In pictures',n=>gallery(project.images,true,n)]
+  ].filter(Boolean);
+  return {
+    links:parts.map(([id,label],i)=>`<a href="#${id}">${number(i+3)} / ${label}</a>`).join(''),
+    sections:parts.map(([,,html],i)=>html(number(i+3))).join('\n'),
+    outcomeNumber:number(parts.length+3)
+  };
 }
 
 // Every CSS and JS file is linked as name?v=<hash of its contents>, so browsers fetch it again whenever it changes.
-export const ASSETS = ['styles.css', 'projects.css', 'galaxy.js', 'site.js', 'sky-renderer.js', 'app.js'];
+export const ASSETS = ['styles.css', 'projects.css', 'galaxy.js', 'site.js', 'sky-renderer.js', 'app.js', 'timeline.js'];
 // Line endings are normalised first, so a Windows checkout (CRLF) stamps the same version as the published files.
 export async function assetVersions(assetRoot=root) {
   return Object.fromEntries(await Promise.all(ASSETS.map(async name => {
@@ -139,23 +168,65 @@ export async function validate(data, assetRoot=root) {
     for (const link of project.links ?? []) {
       if (!link.label || !/^https:\/\//.test(link.url)) throw new Error(`${project.slug}: links need a label and an HTTPS URL.`);
     }
-    for (const image of [project.cover,...(project.images ?? []),...(project.sections ?? []).flatMap(s=>s.images ?? [])].filter(Boolean)) {
+    const asset=async src=>{
+      if (!src?.startsWith('/assets/')) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
+      const file=path.resolve(assetRoot, '.'+src);
+      if (!file.startsWith(path.resolve(assetRoot,'assets')+path.sep)) throw new Error('Image path must stay inside assets/.');
+      await access(file).catch(()=>{throw new Error(`Image not found: ${src}`);});
+    };
+    for (const image of [project.cover,...(project.images ?? []),...(project.sections ?? []).flatMap(s=>s.images ?? []),...(project.slides?.items ?? [])].filter(Boolean)) {
       if (!image.alt?.trim()) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
-      for (const src of [image.src, ...(image.poster ? [image.poster] : [])]) {
-        if (!src?.startsWith('/assets/')) throw new Error(`${project.slug}: images need alt text and a /assets/ path.`);
-        const file=path.resolve(assetRoot, '.'+src);
-        if (!file.startsWith(path.resolve(assetRoot,'assets')+path.sep)) throw new Error('Image path must stay inside assets/.');
-        await access(file).catch(()=>{throw new Error(`Image not found: ${src}`);});
-      }
+      for (const src of [image.src, ...(image.poster ? [image.poster] : [])]) await asset(src);
     }
+    if (project.slides?.items?.some(slide=>isVideo(slide.src))) throw new Error(`${project.slug}: slides must be images.`);
+    if (project.slides?.pdf) await asset(project.slides.pdf);
     if (isVideo(project.cover?.src)) throw new Error(`${project.slug}: the cover must be an image; put videos in a gallery.`);
   }
   if (!Array.isArray(data.featured) || !data.featured.length || new Set(data.featured).size!==data.featured.length || data.featured.some(slug=>!seen.has(slug))) throw new Error('Choose one or more distinct existing projects for the homepage.');
 }
 
+// The homepage's experience timeline (content/experience.json). Dates are "YYYY" or "YYYY-MM"; no end means ongoing.
+const DATE = /^(\d{4})(?:-(0[1-9]|1[0-2]))?$/;
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dateLabel = date => { const [,year,month]=date.match(DATE); return month ? `${MONTHS[month-1]} ${year}` : year; };
+// A date as a year with a fraction, for drawing to scale: a month starts on its first day, a bare year sits mid-year.
+const dateValue = date => { const [,year,month]=date.match(DATE); return Number(year)+(month ? (month-1)/12 : .5); };
+// Each entry's colour, unless it names its own. They are given from the oldest entry up, so adding a newer one leaves
+// the others' colours alone.
+export const TIMELINE_COLOURS = ['#9be07a','#b3a2ff','#ff9f73','#ffd84d','#6fc3ff','#f49ac2','#5ed6c8','#ff7a7a'];
+
+export async function validateExperience(data, projects, assetRoot=root) {
+  if (!Array.isArray(data.entries) || !data.entries.length) throw new Error('Experience needs at least one entry.');
+  for (const entry of data.entries) {
+    for (const key of ['company','role','start','summary']) if (!entry[key]) throw new Error(`Experience ${entry.company ?? 'entry'}: missing ${key}`);
+    if (!DATE.test(entry.start) || (entry.end!=null && !DATE.test(entry.end))) throw new Error(`${entry.company}: dates are "YYYY" or "YYYY-MM".`);
+    if (entry.end!=null && dateValue(entry.end)<dateValue(entry.start)) throw new Error(`${entry.company}: ends before it starts.`);
+    if (entry.project && !projects.some(p=>p.slug===entry.project)) throw new Error(`${entry.company}: no project called ${entry.project}.`);
+    if (entry.colour && !/^#[0-9a-f]{6}$/i.test(entry.colour)) throw new Error(`${entry.company}: colour is a hex such as #9be07a.`);
+    if (entry.logo) {
+      if (!entry.logo.startsWith('/assets/')) throw new Error(`${entry.company}: the logo needs a /assets/ path.`);
+      await access(path.resolve(assetRoot,'.'+entry.logo)).catch(()=>{throw new Error(`Logo not found: ${entry.logo}`);});
+    }
+  }
+}
+
+// Each entry is a button (logo, company, dates, role) that opens its summary. timeline.js draws the list as a timeline;
+// without it, every summary shows.
+export function timeline(entries) {
+  return '<ol class="timeline-list">\n'+entries.map((entry,i)=>{
+    const id=`experience-${i+1}`, colour=entry.colour ?? TIMELINE_COLOURS[(entries.length-1-i)%TIMELINE_COLOURS.length];
+    const dates=`${dateLabel(entry.start)} – ${entry.end==null ? 'Present' : dateLabel(entry.end)}`;
+    const logo=entry.logo ? `<img class="timeline-logo" src="${escape(entry.logo)}" alt="" loading="lazy" decoding="async">` : '<span class="timeline-logo" aria-hidden="true">Logo</span>';
+    const link=entry.project ? `<a class="timeline-link" href="${url({slug:entry.project})}">See the project <span class="chevron" aria-hidden="true"></span></a>` : '';
+    return `<li class="timeline-entry" style="--c:${colour}" data-start="${dateValue(entry.start)}" data-end="${entry.end==null ? '' : dateValue(entry.end)}"><button class="timeline-head" type="button" aria-expanded="true" aria-controls="${id}">${logo}<span class="timeline-title"><span class="timeline-company">${escape(entry.company)}</span><span class="timeline-dates">${dates}</span></span><span class="timeline-role">${escape(entry.role)}</span></button><div class="timeline-more" id="${id}"><p>${escape(entry.summary)}</p>${link}</div></li>`;
+  }).join('\n')+'\n</ol>';
+}
+
 export async function build() {
   const data=JSON.parse(await readFile(path.join(root,'content/projects.json'),'utf8'));
   await validate(data);
+  const experience=JSON.parse(await readFile(path.join(root,'content/experience.json'),'utf8'));
+  await validateExperience(experience,data.projects);
   const count=number(data.projects.length);
   const site='https://'+(await readFile(path.join(root,'CNAME'),'utf8')).trim();
   const versions=await assetVersions();
@@ -174,6 +245,7 @@ export async function build() {
   for (const [i,project] of data.projects.entries()) {
     const next=data.projects[(i+1)%data.projects.length];
     const links=(project.links ?? []).map(link=>`<a class="outline-link" href="${escape(link.url)}" target="_blank" rel="noopener">${escape(link.label)} <span aria-hidden="true">↗</span></a>`).join('');
+    const extras=extraSections(project);
     const values={...shared,...Object.fromEntries(['slug','title','role','year','status'].map(key=>[key,escape(project[key])])),
       description:escape(project.summary),
       ...previewImage(project),
@@ -183,9 +255,9 @@ export async function build() {
       highlights:project.highlights?.length ? `<dl class="project-highlights">${project.highlights.map(h=>`<div><dt>${escape(h.label)}</dt><dd>${escape(h.value)}</dd></div>`).join('')}</dl>` : '',
       overview:paragraphs(project.overview),
       sections:(project.sections ?? []).map(section=>`<div class="work-section"><h3>${escape(section.title)}</h3>${paragraphs(section.body)}${section.bullets?.length ? `<ul>${section.bullets.map(b=>`<li>${rich(b)}</li>`).join('')}</ul>` : ''}${gallery(section.images,false)}</div>`).join('\n'),
-      gallery:gallery(project.images),
-      galleryLink:project.images?.length ? '<a href="#gallery">03 / In pictures</a>' : '',
-      outcomeNumber:project.images?.length ? '04' : '03',
+      extraSections:extras.sections,
+      extraLinks:extras.links,
+      outcomeNumber:extras.outcomeNumber,
       outcome:paragraphs(project.outcome),nextUrl:url(next),nextTitle:escape(next.title)
     };
     await mkdir(path.join(root,'projects',project.slug),{recursive:true});
@@ -204,6 +276,7 @@ export async function build() {
   between('site-header',homeChrome.header);
   between('featured-projects',homeCards(featured));
   between('more-projects',moreProjects(data.projects,featured));
+  between('experience',timeline(experience.entries));
   between('site-footer',homeChrome.footer);
   home=home.replace(/(<a class="outline-link" href="\/projects\/">)View all(?: \d+)? projects/,(_,before)=>before+viewAll(data.projects.length));
   await writeFile(homeFile,finish(home));
