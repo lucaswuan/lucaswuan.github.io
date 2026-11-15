@@ -7,7 +7,7 @@
       "category": "PCB design",
       "year": "2026–Present",
       "role": "Electrical Subteam Member",
-      "status": "v1.0 being fabricated",
+      "status": "Rev 2 fabricated",
       "art": "board",
       "artTitle": "Power,\nmeasured.",
       "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
@@ -21,16 +21,20 @@
       },
       "highlights": [],
       "overview": [
-        "I’m on the electrical subteam of UWAFT, the University of Waterloo Alternative Fuels Team. I designed a ==battery monitor and relay switch board== in Altium Designer, from schematic to layout. It monitors a single Li-ion cell and can connect or disconnect a load.",
+        "I’m on the electrical subteam of UWAFT, the University of Waterloo Automotive Future Team. I designed a ==battery monitor and relay switch board== in Altium Designer, from schematic to layout. It monitors a single Li-ion cell and can connect or disconnect a load.",
         "An STC3100 gas gauge measures the battery’s voltage and current, sensing the current through a 30\u00a0mΩ shunt and counting the charge that flows in and out. An STM32F030 microcontroller reads the gauge over I2C and switches a relay to turn the load on or off."
       ],
       "sections": [
         {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
         {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it ==passes DRC with zero violations==."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.5\u00a0mm traces over solid ground on both layers; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
-        {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. ==The shunt is Kelvin-sensed==: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]}
+        {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. ==The shunt is Kelvin-sensed==: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]},
+        {"title": "Rev 2, fabricated", "body": ["For the team’s soldering tutorials, I adapted the design to the team-standard STM32L011 and a 2\u00a0A relay. That version, Rev 2, has come back from fabrication."], "images": [
+          {"src": "/assets/projects/uwaft/rev2-board.webp", "alt": "The fabricated Rev 2 board on a wooden desk: a black PCB with the UWAFT logo and “LUCAS WU, Electrical Onboarding Challenge, Rev 2” on the silkscreen, the STM32L011 at top left, the 2×4 debug header, the empty relay footprint K1, and white LOAD and BATT connectors beside “2A MAX”.", "caption": "Rev 2, assembled, before the relay went on."},
+          {"src": "/assets/projects/uwaft/rev2-bench.webp", "alt": "The Rev 2 board on a lab bench with the relay fitted, jumper wires on its debug header, and an LED and resistors wired to the load connector.", "caption": "Wired up on the bench, with the relay fitted and an LED as the load."}
+        ]}
       ],
       "images": [],
-      "outcome": ["Version 1.0 of the board passes DRC with zero violations and is ==now being fabricated==. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "I’m now adapting the design for the team’s soldering tutorials, moving it to the team-standard STM32L011 and a 2\u00a0A relay."]
+      "outcome": ["Version 1.0 of the board passes DRC with zero violations. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "Rev 2, adapted for the team’s soldering tutorials with the STM32L011 and a 2\u00a0A relay, ==has now been fabricated==."]
     },
     {
       "slug": "uwasic",
@@ -65,6 +69,61 @@
       ],
       "images": [],
       "outcome": ["==The functional-unit control module is written==, connecting the micro-op channel to all three arithmetic units. I’m now supporting the verification team as the module is tested and integrated into the chip’s RTL-to-GDS flow.", "The onboarding peripheral is complete, with automated simulation tests and GDS generation, and it gave me the foundation for the functional-unit control RTL."]
+    },
+    {
+      "slug": "quantum-mic-planner",
+      "title": "Quantum Mic Planner",
+      "category": "Quantum computing",
+      "year": "2026",
+      "role": "Team member, primalQuant",
+      "status": "Hackathon project, poster presented",
+      "art": "rays",
+      "artTitle": "Clean\nfrequencies.",
+      "artLabel": "QAOA / QISKIT / 16 QUBITS",
+      "summary": "A Qiskit tool that uses QAOA to plan wireless mic frequencies without interference.",
+      "tags": ["Qiskit", "QAOA", "Python", "Quantum circuits", "Optimization", "Jupyter", "Research poster"],
+      "links": [{"label": "Project code", "url": "https://github.com/lucaswuan/quantum-hackathon"}, {"label": "UW Quantum’s post", "url": "https://www.linkedin.com/posts/waterloo-quantum_quantumcomputing-uwaterloo-uwquantum-activity-7527075570195726336-wO0J"}],
+      "cover": {
+        "src": "/assets/projects/quantum-mic-planner/team-poster.webp",
+        "alt": "The five members of team primalQuant standing in a row in front of our poster, “IM-free wireless microphone planning with QAOA”, at the Quantum Fields Symposium.",
+        "caption": "Our team with our poster at the Quantum Fields Symposium, November 7, 2026.",
+        "position": "50% 25%"
+      },
+      "highlights": [
+        {"value": "7.1%", "label": "QAOA samples with no IM hits, against 0.55% of random plans"},
+        {"value": "16", "label": "Qubits, where the same problem as a QUBO needs 121 variables"}
+      ],
+      "overview": [
+        "We built Quantum Mic Planner as team primalQuant (Nojan Pourjafar, Jayden Cho, Jayden Wang, Noah Kim, and me) in five days at the University of Waterloo Quantum Club’s 2026 Qiskit Fall Fest hackathon. The next day, we ==presented it as a poster at the Quantum Fields Symposium==.",
+        "Wireless mics that transmit at the same time mix and create intermodulation (IM) products, signals at new frequencies. When one lands on another mic’s frequency, that mic picks it up as interference. You describe the venue’s band in plain words, and the tool returns a frequency plan with ==no third-order IM hits==."
+      ],
+      "sections": [
+        {"title": "Why it gets hard", "body": ["Two mics at f₁ and f₂ create third-order products at 2f₁ − f₂ and 2f₂ − f₁, and three mics add f₁ + f₂ − f₃. Shure notes that most manufacturers recommend at least 250\u00a0kHz between any product and any mic. The number of products grows quickly. Five mics make 50, and 40 mics, a size professional shows run routinely, make 31,200.", "Professionals use vendor software or an RF coordinator. We built the tool for someone without either, like a school AV technician or a theatre sound designer."]},
+        {"title": "From rules to qubits", "body": ["Our demo plans five mics on 16 candidate frequencies, from 470 to 474\u00a0MHz in 250\u00a0kHz steps. Each frequency is a qubit, set to 1 when a mic sits there. The cost counts every set of mics that breaks a rule, so a plan is IM-free exactly when its cost is 0."], "bullets": ["15 pairs of frequencies closer than the 500\u00a0kHz carrier spacing.", "56 triples where a two-tone product lands on a third mic.", "252 quadruples where a three-tone product lands on a fourth."]},
+        {"title": "The circuit", "body": ["The IM rules go into the circuit directly as three- and four-qubit Z terms, 948 in all. Written as a QUBO, the usual form for quantum optimization, the same cost needs 121 binary variables, so using the rules directly ==keeps the problem at 16 qubits==.", "We used QAOA in Qiskit. The circuit starts in a Dicke state, an equal mix of every five-mic plan, and its XY mixer only swaps a 1 with a 0, so every sample has exactly five mics and no penalty weight needs tuning. We tuned the angles with COBYLA on a CVaR objective, using an exact NumPy simulation that matches the Qiskit circuit to 12 digits. With three layers, the full circuit has 12,716 CNOTs."]},
+        {"title": "Results", "body": ["At three layers, ==7.1% of 8,000 samples were IM-free==, about 13 times the 0.55% of uniform random plans. More layers help, and five layers reach 12% on the exact simulation. The most sampled clean plan puts the mics at 470.000, 470.500, 471.500, 472.750, and 473.500\u00a0MHz.", "We claim no speed-up. Brute force finds all 24 clean plans in about 10\u00a0ms, and greedy search and simulated annealing solve this instance too. Our case for the quantum approach is the modelling, since the IM rules map straight onto the circuit’s gates."]},
+        {"title": "The poster", "body": ["At the symposium, we presented the project as a poster and walked visitors through it."], "images": [
+          {"src": "/assets/projects/quantum-mic-planner/poster.webp", "alt": "Our poster, “IM-free wireless microphone planning with QAOA”, pinned to a corkboard. It has sections on the problem, the demo instance, the interface, the formulation, the circuit, the results and the limitations, with charts comparing an evenly spaced plan with 20 hits to the QAOA plan with 0, and 7.1%, 0.55% and 16 qubits across the top.", "caption": "Our poster. Open it to read it at full size."}
+        ]}
+      ],
+      "slides": {
+        "pdf": "/assets/projects/quantum-mic-planner/primalquant-slides.pdf",
+        "items": [
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-01.webp", "alt": "Title slide: “IM-free wireless mic planner. Get a clean mic plan with QAOA on Qiskit.” Team primalQuant: Nojan Pourjafar, Jayden Cho, Jayden Wang, Noah Kim, Lucas Wu."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-02.webp", "alt": "The problem. Picture a show at the Humanities Theatre with five wireless mics, and one starts to crackle. Mics transmitting at once create ghost signals called third-order products, and manufacturers recommend at least 250 kHz between any product and any mic. A diagram shows two mics at 470.50 and 471.25 MHz with ghosts at 469.75 and 472.00 MHz."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-03.webp", "alt": "Products grow with the cube of the mic count: 50 third-order products from 5 mics and 31,200 from 40, a size pros run routinely. A log-scale chart shows two-tone and three-tone products rising up to 40 mics."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-04.webp", "alt": "Our tool. A single plan_mics call with the band, mic count, step, spacing and guard, made for a school AV tech or theatre sound designer, with no QUBO or Hamiltonian in sight. Below it, a spectrum of five Shure channels between 470 and 474 MHz."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-05.webp", "alt": "How it works, in four steps: the rules, the conflict sets (15 pairs, 56 triples and 252 quadruples), the cost on 16 qubits, and QAOA with a Dicke start and an XY mixer, above the cost function C(x)."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-06.webp", "alt": "Demo: even spacing is the worst case. Evenly spaced mics, as a newcomer might pick them, get 20 hits; the plan from QAOA gets 0."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-07.webp", "alt": "How well does it work? 7.1% of 8,000 QAOA samples are IM-free, against 0.55% of random plans, and 12% at five layers on the exact simulation. A histogram compares conflicting sets per plan for QAOA and random plans."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-08.webp", "alt": "Why quantum? No speed-up, since brute force checks all 4,368 plans in about 10 ms. A modelling fit, with 16 qubits against 121 variables as a QUBO. The price is 12,716 CNOTs at three layers. We found no earlier quantum approach that models IM products."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-09.webp", "alt": "Shortfalls: classically trivial at 16 frequencies, third-order products only, and not run on hardware. Planning 40 mics would take more than 782 qubits."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-10.webp", "alt": "What’s next: fifth-order products, real venues with receiver tuning ranges, TV channels and several rooms, and a one-layer hardware run with the leaner 2,570-CNOT cost layer."},
+          {"src": "/assets/projects/quantum-mic-planner/slides/slide-11.webp", "alt": "References, including Shure on intermodulation, the SoundPro coordination guide, the UW Theatres specs, D-Wave’s frequency-selection example, Vandelli et al., and the QAOA papers the circuit builds on."}
+        ]
+      },
+      "images": [],
+      "outcome": ["The tool turns a plain request into a plan with no IM hits, and QAOA found clean plans ==about 13 times as often as random guessing==. It has only run on a simulator, and the exact simulation we used to tune the angles can’t scale, since 40 mics would need at least 782 qubits on this kind of grid.", "Next, we’d add fifth-order products, real venue data such as receiver tuning ranges and local TV channels, and a one-layer run on real hardware with a leaner 2,570-CNOT cost layer."]
     },
     {
       "slug": "signed",
