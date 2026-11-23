@@ -7,7 +7,7 @@
       "category": "PCB design",
       "year": "2026–Present",
       "role": "Electrical Subteam Member",
-      "status": "Rev 2 fabricated",
+      "status": "Rev 2 fabricated and assembled",
       "art": "board",
       "artTitle": "Power,\nmeasured.",
       "artLabel": "STC3100 / STM32 / RELAY / 2-LAYER PCB",
@@ -28,13 +28,13 @@
         {"title": "The circuit", "body": ["The STM32 reads the gauge on I2C (PB6 and PB7, with 4.7\u00a0kΩ pull-ups) and drives the relay from PA8 through an AO3400A MOSFET on the low side of the coil, with a flyback diode across the coil. An MCP1700 LDO supplies 3.3\u00a0V, and the MCU runs on its internal 8\u00a0MHz oscillator, so the board needs no crystal."], "bullets": ["Every VDD and VDDA pin has its own decoupling capacitor, and the LDO has input and output capacitors.", "BOOT0 has a 10\u00a0kΩ pull-down, and NRST has a 100\u00a0nF filter capacitor.", "A 2×4 debug header brings out SWD for programming, plus I2C, battery voltage, 3.3\u00a0V, and ground for testing.", "Every part can be soldered by hand: 0805 passives and leaded packages, with no bottom-terminated parts."]},
         {"title": "Layout", "body": ["The board is 44 × 40\u00a0mm: 2-layer FR-4 with 1\u00a0oz copper and four M3 mounting holes. I laid it out to UWAFT’s 2-layer rule set (0.127\u00a0mm minimum clearance and trace width, 0.3/0.6\u00a0mm vias), and it ==passes DRC with zero violations==."], "bullets": ["The power path, from the battery through the relay to the load, runs on 1.5\u00a0mm traces over solid ground on both layers; signals use 0.25\u00a0mm.", "Solid ground pours fill both layers. Ground pads use thermal reliefs, except the high-current shunt-ground and load-return pads, which connect directly.", "Almost all routing is on the top layer. Only two short traces, SWDIO and the header’s battery-voltage feed, run on the bottom.", "The silkscreen marks polarity, the BATT and LOAD connectors, the header pins, and the board name and revision."]},
         {"title": "Measuring across the shunt", "body": ["The shunt is only 30\u00a0mΩ, so its voltage drop is small: 30\u00a0mV at 1\u00a0A. Even a little resistance in a shared ground trace would add a noticeable error to that measurement. ==The shunt is Kelvin-sensed==: the gauge’s sense lines run straight to the shunt pads, and a cutout in the ground pour means ground meets the gauge only at the shunt. Several vias tie the shunt’s ground pad to the bottom plane."]},
-        {"title": "Rev 2, fabricated", "body": ["For the team’s soldering tutorials, I adapted the design to the team-standard STM32L011 and a 2\u00a0A relay. That version, Rev 2, has come back from fabrication."], "images": [
+        {"title": "Rev 2, fabricated and assembled", "body": ["For the team’s soldering tutorials, I adapted the design to the team-standard STM32L011 and a 2\u00a0A relay. That version, Rev 2, has been fabricated and assembled."], "images": [
           {"src": "/assets/projects/uwaft/rev2-board.webp", "alt": "The fabricated Rev 2 board on a wooden desk: a black PCB with the UWAFT logo and “LUCAS WU, Electrical Onboarding Challenge, Rev 2” on the silkscreen, the STM32L011 at top left, the 2×4 debug header, the empty relay footprint K1, and white LOAD and BATT connectors beside “2A MAX”.", "caption": "Rev 2, assembled, before the relay went on."},
           {"src": "/assets/projects/uwaft/rev2-bench.webp", "alt": "The Rev 2 board on a lab bench with the relay fitted, jumper wires on its debug header, and an LED and resistors wired to the load connector.", "caption": "Wired up on the bench, with the relay fitted and an LED as the load."}
         ]}
       ],
       "images": [],
-      "outcome": ["Version 1.0 of the board passes DRC with zero violations. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "Rev 2, adapted for the team’s soldering tutorials with the STM32L011 and a 2\u00a0A relay, ==has now been fabricated==."]
+      "outcome": ["Version 1.0 of the board passes DRC with zero violations. It took me from schematic to a finished two-layer layout, including the details that matter on a measurement board: Kelvin sensing, solid ground, and wide traces for the high-current path.", "Rev 2, adapted for the team’s soldering tutorials with the STM32L011 and a 2\u00a0A relay, ==has now been fabricated and assembled==."]
     },
     {
       "slug": "uwasic",
